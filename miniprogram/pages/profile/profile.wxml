@@ -23,7 +23,7 @@
           <view class="user-stats__label">点过的菜</view>
         </view>
         <view class="user-stats__divider"></view>
-        <view class="user-stats__item">
+        <view class="user-stats__item" bindtap="onFavoriteTap">
           <view class="user-stats__num">{{stats.favoriteDishes}}</view>
           <view class="user-stats__label">收藏</view>
         </view>
@@ -65,7 +65,7 @@
         <text class="section__title">我的厨房</text>
       </view>
       <view class="feature-grid">
-        <view class="feature-item" wx:for="{{features}}" wx:key="id" data-name="{{item.name}}" bindtap="onFeatureTap">
+        <view class="feature-item" wx:for="{{features}}" wx:key="id" data-id="{{item.id}}" bindtap="onFeatureTap">
           <view class="feature-item__icon" style="background-color:{{item.bgColor}};color:{{item.color}}">{{item.icon}}</view>
           <text class="feature-item__name">{{item.name}}</text>
         </view>

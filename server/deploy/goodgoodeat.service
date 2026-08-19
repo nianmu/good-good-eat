@@ -1,0 +1,22 @@
+# 好大一颗菜 · systemd 服务（服务器端）
+# 放到 /etc/systemd/system/goodgoodeat.service 后：
+#   systemctl daemon-reload && systemctl enable --now goodgoodeat
+# 说明：uv 在服务器上需要用系统 PATH（非沙箱），正常安装 uv 即可。
+
+[Unit]
+Description=GoodGoodEat FastAPI
+After=network.target mysql.service
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/good-good-eat/server
+EnvironmentFile=/opt/good-good-eat/server/.env
+Environment=UV_CACHE_DIR=/tmp/uv-cache
+ExecStart=/opt/good-good-eat/server/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=always
+RestartSec=3
+# 为了支持 WebSocket 长连接
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -141,9 +141,10 @@ def me(current_user: User = Depends(get_current_user), db: Session = Depends(get
 
 
 def _user_stats(db: Session, user_id: int) -> dict:
-    """个人统计：总订单 / 点过的菜（数量合计）/ 收藏（四期占位 0）。"""
+    """个人统计：总订单 / 点过的菜（数量合计）/ 收藏菜品数。"""
     from sqlalchemy import func, select as _select
 
+    from app.models.favorite import Favorite
     from app.models.order import Order, OrderItem
 
     total_orders = db.scalar(
@@ -157,8 +158,11 @@ def _user_stats(db: Session, user_id: int) -> dict:
         )
         or 0
     )
+    favorite_dishes = db.scalar(
+        _select(func.count(Favorite.id)).where(Favorite.user_id == user_id)
+    ) or 0
     return {
         "total_orders": int(total_orders),
         "total_dishes": int(total_dishes),
-        "favorite_dishes": 0,  # 四期接入收藏后更新
+        "favorite_dishes": int(favorite_dishes),
     }

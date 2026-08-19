@@ -49,7 +49,8 @@
         <dish-card wx:for="{{dishes}}" wx:key="id"
           dish="{{item}}" quantity="{{cart[item.id] || 0}}"
           joined-count="{{joinedCount[item.id] || 0}}"
-          bind:tap="onDishTap" bind:qtychange="onQtyChange" />
+          favorited="{{favoritedMap[item.id] || false}}"
+          bind:tap="onDishTap" bind:qtychange="onQtyChange" bind:favorite="onFavorite" />
       </block>
       <empty-state wx:if="{{!loading && dishes.length === 0}}" icon="🍽" text="没有找到相关菜品" />
     </scroll-view>

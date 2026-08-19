@@ -9,7 +9,13 @@
     "pages/messages/messages",
     "pages/profile/profile",
     "pages/team-list/team-list",
-    "pages/team-detail/team-detail"
+    "pages/team-detail/team-detail",
+    "pages/recipe-list/recipe-list",
+    "pages/recipe-edit/recipe-edit",
+    "pages/recipe-detail/recipe-detail",
+    "pages/fridge/fridge",
+    "pages/basket/basket",
+    "pages/favorites/favorites"
   ],
   "window": {
     "navigationBarBackgroundColor": "#4CAF50",

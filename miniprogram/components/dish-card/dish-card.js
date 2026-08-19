@@ -13,7 +13,8 @@ Component({
   properties: {
     dish: { type: Object, value: null },
     quantity: { type: Number, value: 0 },
-    joinedCount: { type: Number, value: 0 } // 团队多人：已有 N 人点了这道菜
+    joinedCount: { type: Number, value: 0 }, // 团队多人：已有 N 人点了这道菜
+    favorited: { type: Boolean, value: false } // 收藏状态（四期）
   },
 
   data: {
@@ -40,6 +41,9 @@ Component({
     },
     onQtyChange: function (e) {
       this.triggerEvent('qtychange', { id: this.data.dish.id, value: e.detail.value });
+    },
+    onFavorite: function () {
+      this.triggerEvent('favorite', { id: this.data.dish.id, favorited: this.data.favorited });
     }
   }
 });

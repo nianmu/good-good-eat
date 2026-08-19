@@ -12,9 +12,10 @@ const { request, toastError } = require('../../utils/request');
 const store = require('../../utils/store');
 
 const FEATURES = [
-  { id: 'kitchen', name: '厨房管理', icon: '🍳', color: '#FF9800' },
-  { id: 'fridge', name: '厨房冰箱', icon: '🧊', color: '#2196F3' },
-  { id: 'basket', name: '厨房菜篮', icon: '🛒', color: '#4CAF50' },
+  { id: 'kitchen', name: '厨房管理', icon: '🍳', color: '#FF9800', url: '/pages/recipe-list/recipe-list' },
+  { id: 'fridge', name: '厨房冰箱', icon: '🧊', color: '#2196F3', url: '/pages/fridge/fridge' },
+  { id: 'basket', name: '厨房菜篮', icon: '🛒', color: '#4CAF50', url: '/pages/basket/basket' },
+  { id: 'favorite', name: '我的收藏', icon: '❤️', color: '#E91E63', url: '/pages/favorites/favorites' },
   { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0' },
   { id: 'tutorial', name: '新手教程', icon: '📖', color: '#607D8B' },
   { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722' },
@@ -103,12 +104,21 @@ Page({
   },
 
   onFeatureTap: function (e) {
-    const name = e.currentTarget.dataset.name;
-    wx.showToast({ title: '「' + name + '」开发中，敬请期待', icon: 'none' });
+    const id = e.currentTarget.dataset.id;
+    const feat = FEATURES.find(function (f) { return f.id === id; });
+    if (feat && feat.url) {
+      wx.navigateTo({ url: feat.url });
+      return;
+    }
+    wx.showToast({ title: '「' + (feat ? feat.name : '') + '」开发中，敬请期待', icon: 'none' });
   },
 
   onRefresh: function () {
     this.setData({ refreshing: true });
     this.loadMe(true);
+  },
+
+  onFavoriteTap: function () {
+    wx.navigateTo({ url: '/pages/favorites/favorites' });
   }
 });

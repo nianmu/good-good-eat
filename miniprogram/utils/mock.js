@@ -249,6 +249,64 @@ function seedOrders(dishes) {
   });
 }
 
+function seedFavorites() {
+  // 演示用户收藏了两道菜（红烧肉 dish-1、蛋炒饭 dish-13）
+  return [
+    { user_id: 'user-16tQW', dish_id: 'dish-1', created_at: '2026-08-15 10:00:00' },
+    { user_id: 'user-16tQW', dish_id: 'dish-13', created_at: '2026-08-16 19:30:00' }
+  ];
+}
+
+function seedRecipes() {
+  return [
+    {
+      id: 'recipe-1',
+      user_id: 'user-16tQW',
+      name: '妈妈的糖醋里脊',
+      emoji: '🍖',
+      color: '#EF9A9A',
+      description: '酸甜可口，外酥里嫩，全家都爱。',
+      ingredients: ['里脊肉', '番茄酱', '醋', '糖'],
+      steps: ['里脊切条腌 10 分钟', '裹淀粉下锅炸至金黄', '炒糖醋汁收汁裹匀'],
+      cook_time: 30,
+      difficulty: '中等',
+      image_url: null,
+      is_public: false,
+      created_at: '2026-08-10 12:00:00'
+    },
+    {
+      id: 'recipe-2',
+      user_id: 'user-mom',
+      name: '夏日凉拌木耳',
+      emoji: '🥗',
+      color: '#A5D6A7',
+      description: '清爽开胃，解腻必备的小凉菜。',
+      ingredients: ['木耳', '黄瓜', '蒜', '辣椒'],
+      steps: ['木耳泡发焯水', '黄瓜拍碎切段', '加蒜末辣椒拌匀'],
+      cook_time: 15,
+      difficulty: '简单',
+      image_url: null,
+      is_public: true,
+      created_at: '2026-08-05 09:00:00'
+    }
+  ];
+}
+
+function seedFridge() {
+  return [
+    { id: 'fridge-1', user_id: 'user-16tQW', name: '五花肉', quantity: '500g', updated_at: '2026-08-18 08:00:00' },
+    { id: 'fridge-2', user_id: 'user-16tQW', name: '冰糖', quantity: '少量', updated_at: '2026-08-18 08:00:00' },
+    { id: 'fridge-3', user_id: 'user-16tQW', name: '黄瓜', quantity: '2根', updated_at: '2026-08-17 20:00:00' }
+  ];
+}
+
+function seedBasket() {
+  return [
+    { id: 'basket-1', user_id: 'user-16tQW', name: '鸡蛋', quantity: '10个', checked: false, created_at: '2026-08-18 09:00:00' },
+    { id: 'basket-2', user_id: 'user-16tQW', name: '牛奶', quantity: '2盒', checked: true, created_at: '2026-08-18 09:05:00' }
+  ];
+}
+
 function seedDB() {
   const users = seedUsers();
   const dishes = seedDishes();
@@ -262,6 +320,10 @@ function seedDB() {
     dishes: dishes,
     orders: seedOrders(dishes),
     messages: seedMessages(users),
+    favorites: seedFavorites(),
+    recipes: seedRecipes(),
+    fridge: seedFridge(),
+    basket: seedBasket(),
     meta: { seeded: true }
   };
 }
@@ -480,7 +542,332 @@ function dishDetail(db, id) {
 /** /me：与真实后端契约一致 —— { user: {...含 teams}, teams: [...] } */
 function mePayload(db, user) {
   const u = attachTeams(db, user);
+  // stats：与后端一致（snake_case），收藏数按 favorites 集合实时计算
+  const stats = Object.assign({}, user.stats || {});
+  stats.favorite_dishes = (db.favorites || []).filter(function (f) {
+    return f.user_id === user.id;
+  }).length;
+  u.stats = stats;
   return { user: u, teams: u.teams };
+}
+
+/* =====================================================
+ * 四期：收藏（仅菜品）
+ * ===================================================== */
+
+function findFavorite(db, userId, dishId) {
+  return (db.favorites || []).find(function (f) {
+    return f.user_id === userId && String(f.dish_id) === String(dishId);
+  });
+}
+
+function favoriteDish(db, dishId, user) {
+  const dish = db.dishes.find(function (d) { return String(d.id) === String(dishId); });
+  if (!dish) fail(40401, '菜品不存在或已下架');
+  if (!findFavorite(db, user.id, dishId)) {
+    db.favorites.push({
+      user_id: user.id,
+      dish_id: String(dishId),
+      created_at: util.nowText()
+    });
+    saveDB(db);
+  }
+  return { dish_id: String(dishId), favorited: true };
+}
+
+function unfavoriteDish(db, dishId, user) {
+  const fav = findFavorite(db, user.id, dishId);
+  if (!fav) fail(40022, '尚未收藏该菜品');
+  db.favorites = db.favorites.filter(function (f) {
+    return !(f.user_id === user.id && String(f.dish_id) === String(dishId));
+  });
+  saveDB(db);
+  return { dish_id: String(dishId), favorited: false };
+}
+
+function listFavorites(db, params, user) {
+  const mine = (db.favorites || [])
+    .filter(function (f) { return f.user_id === user.id; })
+    .slice()
+    .sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+  const pageSize = Math.max(1, parseInt(params.page_size, 10) || 20);
+  const page = Math.max(1, parseInt(params.page, 10) || 1);
+  const start = (page - 1) * pageSize;
+  const items = mine
+    .slice(start, start + pageSize)
+    .map(function (f) {
+      const dish = db.dishes.find(function (d) { return String(d.id) === String(f.dish_id); });
+      return dish ? Object.assign({}, dish, { favorite: true }) : null;
+    })
+    .filter(Boolean);
+  return {
+    items: items,
+    total: mine.length,
+    page: page,
+    page_size: pageSize,
+    has_more: start + items.length < mine.length
+  };
+}
+
+/* =====================================================
+ * 四期：菜谱库 CRUD
+ * ===================================================== */
+
+function nextId(collection, prefix) {
+  const max = (collection || []).reduce(function (m, x) {
+    const n = Number(String(x.id).replace(prefix + '-', ''));
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return prefix + '-' + (max + 1);
+}
+
+function recipeToPayload(r) {
+  return {
+    id: r.id,
+    user_id: r.user_id,
+    name: r.name,
+    emoji: r.emoji,
+    color: r.color,
+    description: r.description,
+    ingredients: r.ingredients || [],
+    steps: r.steps || [],
+    cook_time: r.cook_time,
+    difficulty: r.difficulty,
+    image_url: r.image_url,
+    is_public: r.is_public,
+    created_at: r.created_at
+  };
+}
+
+function listRecipes(db, params, user) {
+  const owner = params.owner || 'me';
+  if (owner !== 'me') fail(40020, '公开菜谱库暂未开放，仅支持查看我的菜谱');
+  let list = (db.recipes || []).filter(function (r) { return r.user_id === user.id; });
+  list = list.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+  const pageSize = Math.max(1, parseInt(params.page_size, 10) || 20);
+  const page = Math.max(1, parseInt(params.page, 10) || 1);
+  const start = (page - 1) * pageSize;
+  const items = list.slice(start, start + pageSize).map(recipeToPayload);
+  return {
+    items: items,
+    total: list.length,
+    page: page,
+    page_size: pageSize,
+    has_more: start + items.length < list.length
+  };
+}
+
+function findRecipe(db, id) {
+  const r = (db.recipes || []).find(function (x) { return String(x.id) === String(id); });
+  if (!r) fail(40401, '菜谱不存在');
+  return r;
+}
+
+function getRecipe(db, id, user) {
+  const r = findRecipe(db, id);
+  if (r.user_id !== user.id && !r.is_public) fail(40301, '无权查看该菜谱');
+  return recipeToPayload(r);
+}
+
+function createRecipe(db, data, user) {
+  const name = (data.name || '').trim();
+  if (!name) fail(40001, '菜谱名称不能为空');
+  const r = {
+    id: nextId(db.recipes, 'recipe'),
+    user_id: user.id,
+    name: name,
+    emoji: (data.emoji || '').trim() || '🍽',
+    color: (data.color || '').trim() || '#4CAF50',
+    description: data.description || '',
+    ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+    steps: Array.isArray(data.steps) ? data.steps : [],
+    cook_time: data.cook_time != null ? data.cook_time : null,
+    difficulty: data.difficulty || null,
+    image_url: data.image_url || null,
+    is_public: !!data.is_public,
+    created_at: util.nowText()
+  };
+  db.recipes.push(r);
+  saveDB(db);
+  return recipeToPayload(r);
+}
+
+function updateRecipe(db, id, data, user) {
+  const r = findRecipe(db, id);
+  if (r.user_id !== user.id) fail(40301, '无权编辑他人菜谱');
+  const name = (data.name || '').trim();
+  if (!name) fail(40001, '菜谱名称不能为空');
+  r.name = name;
+  r.emoji = (data.emoji || '').trim() || '🍽';
+  r.color = (data.color || '').trim() || '#4CAF50';
+  r.description = data.description || '';
+  r.ingredients = Array.isArray(data.ingredients) ? data.ingredients : [];
+  r.steps = Array.isArray(data.steps) ? data.steps : [];
+  r.cook_time = data.cook_time != null ? data.cook_time : null;
+  r.difficulty = data.difficulty || null;
+  r.image_url = data.image_url || null;
+  r.is_public = !!data.is_public;
+  saveDB(db);
+  return recipeToPayload(r);
+}
+
+function deleteRecipe(db, id, user) {
+  const r = findRecipe(db, id);
+  if (r.user_id !== user.id) fail(40301, '无权删除他人菜谱');
+  db.recipes = db.recipes.filter(function (x) { return String(x.id) !== String(id); });
+  saveDB(db);
+  return { id: String(id) };
+}
+
+/* =====================================================
+ * 四期：厨房（冰箱 / 菜篮）
+ * ===================================================== */
+
+function listFridge(db, user) {
+  return (db.fridge || [])
+    .filter(function (i) { return i.user_id === user.id; })
+    .slice()
+    .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'zh'); })
+    .map(function (i) {
+      return { id: i.id, name: i.name, quantity: i.quantity, updated_at: i.updated_at };
+    });
+}
+
+function upsertFridge(db, data, user) {
+  const name = (data.name || '').trim();
+  if (!name) fail(40001, '食材名称不能为空');
+  const existing = (db.fridge || []).find(function (i) {
+    return i.user_id === user.id && i.name === name;
+  });
+  if (existing) {
+    existing.quantity = data.quantity || '';
+    existing.updated_at = util.nowText();
+  } else {
+    db.fridge.push({
+      id: nextId(db.fridge, 'fridge'),
+      user_id: user.id,
+      name: name,
+      quantity: data.quantity || '',
+      updated_at: util.nowText()
+    });
+  }
+  saveDB(db);
+  return { id: existing ? existing.id : db.fridge[db.fridge.length - 1].id };
+}
+
+function deleteFridge(db, id, user) {
+  const item = (db.fridge || []).find(function (i) {
+    return String(i.id) === String(id) && i.user_id === user.id;
+  });
+  if (!item) fail(40401, '冰箱食材不存在');
+  db.fridge = db.fridge.filter(function (i) { return String(i.id) !== String(id); });
+  saveDB(db);
+  return { id: String(id) };
+}
+
+/** 冰箱能做的菜推荐：命中食材数 ≥ 2，按命中数降序 */
+function fridgeSuggest(db, user) {
+  const owned = (db.fridge || [])
+    .filter(function (i) { return i.user_id === user.id; })
+    .map(function (i) { return i.name; });
+  if (!owned.length) return [];
+
+  const results = [];
+  // 平台菜品
+  (db.dishes || []).forEach(function (d) {
+    const ings = d.ingredients || [];
+    const matched = ings.filter(function (ing) { return owned.indexOf(ing) >= 0; });
+    if (matched.length >= 2) {
+      results.push({
+        source: 'dish',
+        id: d.id,
+        name: d.name,
+        emoji: d.emoji,
+        color: d.color,
+        description: d.description,
+        ingredients: ings,
+        matched: matched,
+        total: ings.length
+      });
+    }
+  });
+  // 我的菜谱 + 公开菜谱
+  (db.recipes || []).forEach(function (r) {
+    if (r.user_id !== user.id && !r.is_public) return;
+    const ings = r.ingredients || [];
+    const matched = ings.filter(function (ing) { return owned.indexOf(ing) >= 0; });
+    if (matched.length >= 2) {
+      results.push({
+        source: 'recipe',
+        id: r.id,
+        name: r.name,
+        emoji: r.emoji,
+        color: r.color,
+        description: r.description,
+        ingredients: ings,
+        matched: matched,
+        total: ings.length
+      });
+    }
+  });
+  results.sort(function (a, b) { return b.matched.length - a.matched.length; });
+  return results;
+}
+
+function listBasket(db, user) {
+  return (db.basket || [])
+    .filter(function (i) { return i.user_id === user.id; })
+    .slice()
+    .sort(function (a, b) {
+      if (a.checked !== b.checked) return a.checked ? 1 : -1;
+      return String(b.created_at).localeCompare(String(a.created_at));
+    })
+    .map(function (i) {
+      return { id: i.id, name: i.name, quantity: i.quantity, checked: i.checked, created_at: i.created_at };
+    });
+}
+
+function upsertBasket(db, data, user) {
+  const name = (data.name || '').trim();
+  if (!name) fail(40001, '菜篮项名称不能为空');
+  const existing = (db.basket || []).find(function (i) {
+    return i.user_id === user.id && i.name === name;
+  });
+  if (existing) {
+    if (data.quantity) existing.quantity = data.quantity;
+    existing.checked = false;
+  } else {
+    db.basket.push({
+      id: nextId(db.basket, 'basket'),
+      user_id: user.id,
+      name: name,
+      quantity: data.quantity || '',
+      checked: false,
+      created_at: util.nowText()
+    });
+  }
+  saveDB(db);
+  return existing || db.basket[db.basket.length - 1];
+}
+
+function checkBasket(db, id, data, user) {
+  const item = (db.basket || []).find(function (i) {
+    return String(i.id) === String(id) && i.user_id === user.id;
+  });
+  if (!item) fail(40401, '菜篮项不存在');
+  item.checked = !!data.checked;
+  saveDB(db);
+  return item;
+}
+
+function deleteBasket(db, id, user) {
+  const item = (db.basket || []).find(function (i) {
+    return String(i.id) === String(id) && i.user_id === user.id;
+  });
+  if (!item) fail(40401, '菜篮项不存在');
+  db.basket = db.basket.filter(function (i) { return String(i.id) !== String(id); });
+  saveDB(db);
+  return { id: String(id) };
 }
 
 function createTeam(db, data, user) {
@@ -867,9 +1254,41 @@ function dispatch(options) {
   // —— 需要登录（mock 自动兜底游客身份）——
   const user = ensureUser(db);
 
-  if (method === 'GET' && path === '/me') return ok({ user: mePayload(db, user) });
+  if (method === 'GET' && path === '/me') return ok(mePayload(db, user));
 
-  let m = /^\/dishes\/([^/]+)$/.exec(path);
+  // —— 四期：收藏（优先于菜品详情匹配）——
+  let m = /^\/dishes\/([^/]+)\/favorite$/.exec(path);
+  if (m && method === 'POST') return ok(favoriteDish(db, m[1], user));
+  if (m && method === 'DELETE') return ok(unfavoriteDish(db, m[1], user));
+
+  // —— 四期：收藏列表 ——
+  if (method === 'GET' && path === '/favorites') return ok(listFavorites(db, params, user));
+
+  // —— 四期：菜谱库 ——
+  if (method === 'GET' && path === '/recipes') return ok(listRecipes(db, params, user));
+  if (method === 'POST' && path === '/recipes') return ok(createRecipe(db, data, user));
+
+  m = /^\/recipes\/([^/]+)$/.exec(path);
+  if (m && method === 'GET') return ok(getRecipe(db, m[1], user));
+  if (m && method === 'PUT') return ok(updateRecipe(db, m[1], data, user));
+  if (m && method === 'DELETE') return ok(deleteRecipe(db, m[1], user));
+
+  // —— 四期：厨房冰箱 / 菜篮 ——
+  if (method === 'GET' && path === '/fridge') return ok(listFridge(db, user));
+  if (method === 'POST' && path === '/fridge') return ok(upsertFridge(db, data, user));
+  if (method === 'GET' && path === '/fridge/suggest') return ok(fridgeSuggest(db, user));
+
+  m = /^\/fridge\/([^/]+)$/.exec(path);
+  if (m && method === 'DELETE') return ok(deleteFridge(db, m[1], user));
+
+  if (method === 'GET' && path === '/basket') return ok(listBasket(db, user));
+  if (method === 'POST' && path === '/basket') return ok(upsertBasket(db, data, user));
+
+  m = /^\/basket\/([^/]+)$/.exec(path);
+  if (m && method === 'PUT') return ok(checkBasket(db, m[1], data, user));
+  if (m && method === 'DELETE') return ok(deleteBasket(db, m[1], user));
+
+  m = /^\/dishes\/([^/]+)$/.exec(path);
   if (m && method === 'GET') return ok(dishDetail(db, m[1]));
 
   if (method === 'POST' && path === '/teams') return ok(createTeam(db, data, user));

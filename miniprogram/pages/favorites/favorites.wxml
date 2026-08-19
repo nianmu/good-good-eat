@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="list">
+    <view class="list-header">
+      <text class="list-header__title">我的收藏</text>
+      <text class="list-header__count" wx:if="{{total > 0}}">共 {{total}} 道</text>
+    </view>
+
+    <view class="loading-tip" wx:if="{{loading}}">加载中…</view>
+
+    <block wx:if="{{!loading && list.length > 0}}">
+      <view class="fav-card" wx:for="{{list}}" wx:key="id">
+        <view class="fav-card__main" data-id="{{item.id}}" bindtap="onDishTap">
+          <view class="fav-card__thumb" style="background-color:{{item.color}}">{{item.emoji}}</view>
+          <view class="fav-card__body">
+            <view class="fav-card__name">{{item.name}}</view>
+            <view class="fav-card__meta">
+              <text class="fav-card__rating">★ {{item.rating}}</text>
+              <text>⏱ {{item.cook_time}}分钟</text>
+            </view>
+          </view>
+        </view>
+        <view class="fav-card__unfav" data-id="{{item.id}}" catchtap="onUnfavorite">取消收藏</view>
+      </view>
+      <view class="loading-tip" wx:if="{{loadingMore}}">加载中…</view>
+    </block>
+
+    <empty-state wx:if="{{!loading && list.length === 0}}" icon="🤍"
+      text="还没有收藏菜品，去菜谱页逛逛吧">
+      <view class="empty-btn" bindtap="onGoMenu">去逛逛</view>
+    </empty-state>
+  </view>
+</view>

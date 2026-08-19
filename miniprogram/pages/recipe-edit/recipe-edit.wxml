@@ -1,0 +1,57 @@
+<view class="page">
+  <scroll-view class="scroll-area" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="section">
+      <view class="form-label">菜谱名称</view>
+      <input class="form-input" placeholder="例如：妈妈的糖醋里脊" placeholder-class="form-placeholder"
+        value="{{form.name}}" data-field="name" bindinput="onInput" />
+
+      <view class="form-label">图标（emoji）</view>
+      <view class="emoji-picker">
+        <view wx:for="{{emojiOptions}}" wx:key="*this"
+          class="emoji-option {{form.emoji === item ? 'emoji-option--active' : ''}}"
+          data-value="{{item}}" bindtap="onPickEmoji">{{item}}</view>
+      </view>
+
+      <view class="form-label">色块颜色</view>
+      <view class="color-picker">
+        <view wx:for="{{colorOptions}}" wx:key="*this"
+          class="color-option {{form.color === item ? 'color-option--active' : ''}}"
+          style="background-color:{{item}}" data-value="{{item}}" bindtap="onPickColor"></view>
+      </view>
+
+      <view class="form-label">简介</view>
+      <textarea class="form-textarea" placeholder="用一句话介绍这道菜（可选）" placeholder-class="form-placeholder"
+        value="{{form.description}}" data-field="description" bindinput="onInput" maxlength="200" />
+    </view>
+
+    <view class="section">
+      <view class="form-label">食材（用逗号分隔）</view>
+      <textarea class="form-textarea" placeholder="例如：里脊肉，番茄酱，醋，糖" placeholder-class="form-placeholder"
+        value="{{form.ingredientsText}}" data-field="ingredientsText" bindinput="onInput" />
+
+      <view class="form-label">做法步骤（每行一步）</view>
+      <textarea class="form-textarea form-textarea--tall" placeholder="例如：&#10;里脊切条腌 10 分钟&#10;裹淀粉下锅炸至金黄&#10;炒糖醋汁收汁裹匀"
+        placeholder-class="form-placeholder"
+        value="{{form.stepsText}}" data-field="stepsText" bindinput="onInput" />
+    </view>
+
+    <view class="section">
+      <view class="form-label">耗时（分钟）</view>
+      <input class="form-input" type="number" placeholder="例如：30" placeholder-class="form-placeholder"
+        value="{{form.cookTime}}" data-field="cookTime" bindinput="onInput" />
+
+      <view class="form-label">难度</view>
+      <view class="difficulty-picker">
+        <view wx:for="{{difficultyOptions}}" wx:key="*this"
+          class="difficulty-option {{form.difficulty === item ? 'difficulty-option--active' : ''}}"
+          data-value="{{item}}" bindtap="onPickDifficulty">{{item}}</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="save-bar">
+    <view class="save-bar__btn {{saving ? 'save-bar__btn--disabled' : ''}}" bindtap="onSave">
+      {{saving ? '保存中…' : '保存菜谱'}}
+    </view>
+  </view>
+</view>

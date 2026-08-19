@@ -27,6 +27,7 @@ Page({
     keyword: '',
     cart: {},
     cartCount: 0,
+    favoritedMap: {}, // dish_id -> true（四期收藏）
     loading: true,
     refreshing: false,
     // 多人实时（三期）
@@ -44,6 +45,7 @@ Page({
   onShow: function () {
     this.syncCart();
     this.joinRoom();
+    this.loadFavorites();
   },
 
   onHide: function () {
@@ -117,6 +119,38 @@ Page({
       toastError(err);
       this.setData({ loading: false });
     }.bind(this));
+  },
+
+  // ===== 收藏（四期）=====
+  loadFavorites: function () {
+    request({ url: '/favorites', method: 'GET', data: { page: 1, page_size: 100 } })
+      .then(function (res) {
+        const map = {};
+        (res.items || []).forEach(function (d) {
+          map[d.id] = true;
+        });
+        this.setData({ favoritedMap: map });
+      }.bind(this))
+      .catch(function () { /* 收藏加载失败不阻塞浏览 */ });
+  },
+
+  onFavorite: function (e) {
+    const id = e.detail.id;
+    const cur = !!this.data.favoritedMap[id];
+    const next = !cur;
+    request({
+      url: '/dishes/' + id + '/favorite',
+      method: cur ? 'DELETE' : 'POST'
+    }).then(function () {
+      const map = Object.assign({}, this.data.favoritedMap);
+      if (next) map[id] = true; else delete map[id];
+      this.setData({ favoritedMap: map });
+      if (cur) {
+        wx.showToast({ title: '已取消收藏', icon: 'none' });
+      }
+    }.bind(this)).catch(function (err) {
+      toastError(err);
+    });
   },
 
   // ===== 本地过滤 =====

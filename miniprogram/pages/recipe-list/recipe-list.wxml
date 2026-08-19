@@ -1,0 +1,36 @@
+<view class="page">
+  <view class="list">
+    <view class="list-header">
+      <text class="list-header__title">我的菜谱</text>
+      <text class="list-header__count" wx:if="{{total > 0}}">共 {{total}} 份</text>
+    </view>
+
+    <view class="loading-tip" wx:if="{{loading}}">加载中…</view>
+
+    <block wx:if="{{!loading && list.length > 0}}">
+      <view class="recipe-card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="onRecipeTap">
+        <view class="recipe-card__thumb" style="background-color:{{item.color}}">{{item.emoji}}</view>
+        <view class="recipe-card__body">
+          <view class="recipe-card__name">{{item.name}}</view>
+          <view class="recipe-card__desc">{{item.description || '暂无描述'}}</view>
+          <view class="recipe-card__meta">
+            <text>⏱ {{item.cook_time ? item.cook_time + ' 分钟' : '—'}}</text>
+            <text wx:if="{{item.difficulty}}">难度 {{item.difficulty}}</text>
+            <text wx:if="{{item.is_public}}" class="recipe-card__pub">公开</text>
+          </view>
+        </view>
+        <text class="recipe-card__arrow">›</text>
+      </view>
+      <view class="loading-tip" wx:if="{{loadingMore}}">加载中…</view>
+    </block>
+
+    <empty-state wx:if="{{!loading && list.length === 0}}" icon="📝"
+      text="还没有菜谱，记录你的第一道拿手菜吧">
+      <view class="empty-btn" bindtap="onCreate">新建菜谱</view>
+    </empty-state>
+  </view>
+
+  <view class="fab" bindtap="onCreate">
+    <text class="fab__icon">＋</text>
+  </view>
+</view>
