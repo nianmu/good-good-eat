@@ -1,0 +1,250 @@
+/**
+ * 好大一颗菜 · 全局样式
+ * ----------------------------------------
+ * 设计 token 对齐 prototype/styles/tokens.css：
+ *   - 主绿 #4CAF50 / 深绿 #388E3C / 浅绿 #E8F5E9 / 橙 #FF9800 / 红 #F44336
+ *   - 文本 #1A1A1A / #666666 / #999999 / #CCCCCC
+ *   - 页面底 #F5F5F5、圆角 6/10/12/16/24、间距 4/8/12/16/24、三类阴影
+ * 单位换算：原型 1px = 2rpx（设计稿宽度 375px = 750rpx）
+ */
+
+page {
+  /* ===== 品牌色 ===== */
+  --color-primary: #4CAF50;
+  --color-primary-dark: #388E3C;
+  --color-primary-light: #81C784;
+  --color-primary-bg: #E8F5E9;
+  --color-accent: #FF9800;
+
+  /* ===== 语义色 ===== */
+  --color-success: #4CAF50;
+  --color-warning: #FF9800;
+  --color-danger: #F44336;
+  --color-info: #2196F3;
+
+  /* ===== 中性色 ===== */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #666666;
+  --color-text-placeholder: #999999;
+  --color-text-disabled: #CCCCCC;
+  --color-text-inverse: #FFFFFF;
+
+  /* ===== 背景与表面 ===== */
+  --color-bg-page: #F5F5F5;
+  --color-bg-card: #FFFFFF;
+  --color-border: #E0E0E0;
+  --color-divider: #EEEEEE;
+
+  /* ===== 字号（15px→30rpx 基准） ===== */
+  --font-size-xs: 22rpx;
+  --font-size-sm: 26rpx;
+  --font-size-base: 30rpx;
+  --font-size-md: 32rpx;
+  --font-size-lg: 36rpx;
+  --font-size-xl: 40rpx;
+  --font-size-xxl: 48rpx;
+  --font-size-display: 64rpx;
+
+  /* ===== 间距体系（8px 基准） ===== */
+  --space-xs: 8rpx;
+  --space-sm: 16rpx;
+  --space-md: 24rpx;
+  --space-base: 32rpx;
+  --space-lg: 48rpx;
+  --space-xl: 64rpx;
+  --space-xxl: 96rpx;
+
+  /* ===== 圆角 ===== */
+  --radius-sm: 12rpx;
+  --radius-md: 20rpx;
+  --radius-base: 24rpx;
+  --radius-lg: 32rpx;
+  --radius-xl: 48rpx;
+  --radius-full: 9999rpx;
+
+  /* ===== 阴影 ===== */
+  --shadow-sm: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+  --shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+  --shadow-primary: 0 8rpx 24rpx rgba(76, 175, 80, 0.3);
+
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  line-height: 1.6;
+}
+
+/* ===== 基础重置 ===== */
+view, text, scroll-view, input, button, picker, image {
+  box-sizing: border-box;
+}
+
+button {
+  padding: 0;
+  margin: 0;
+  background: none;
+  line-height: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button::after {
+  border: none;
+}
+
+/* ===== 布局 ===== */
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-page);
+  overflow: hidden;
+}
+
+/* 内容滚动区（flex 布局下自动占满剩余高度） */
+.scroll-area {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+}
+
+/* ===== Flex 工具类 ===== */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-1 { flex: 1; min-width: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.text-center { text-align: center; }
+
+/* ===== 文字颜色 ===== */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-placeholder { color: var(--color-text-placeholder); }
+.text-brand { color: var(--color-primary); }
+.text-accent { color: var(--color-accent); }
+.text-danger { color: var(--color-danger); }
+.text-inverse { color: var(--color-text-inverse); }
+.text-disabled { color: var(--color-text-disabled); }
+
+/* ===== 字号 ===== */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-xxl { font-size: var(--font-size-xxl); }
+.text-display { font-size: var(--font-size-display); }
+
+/* ===== 字重 ===== */
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* ===== 间距 ===== */
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-base { margin-top: var(--space-base); }
+.mt-lg { margin-top: var(--space-lg); }
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-base { margin-bottom: var(--space-base); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.p-base { padding: var(--space-base); }
+.p-lg { padding: var(--space-lg); }
+.px-base { padding-left: var(--space-base); padding-right: var(--space-base); }
+.py-base { padding-top: var(--space-base); padding-bottom: var(--space-base); }
+
+/* ===== 通用组件：卡片 ===== */
+.card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-base);
+  padding: var(--space-base);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== 通用组件：按钮 ===== */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  padding: 0 var(--space-base);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  transition: all 150ms ease-out;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-primary);
+}
+
+.btn--primary:active {
+  background: var(--color-primary-dark);
+  transform: scale(0.98);
+}
+
+.btn--secondary {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* 列表页空态引导按钮 */
+.empty-btn {
+  margin-top: var(--space-md);
+  padding: 16rpx 48rpx;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-primary);
+}
+
+/* ===== 通用组件：徽标 ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 12rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--color-text-inverse);
+  background: var(--color-danger);
+  border-radius: var(--radius-full);
+}
+
+/* ===== 分割线 ===== */
+.divider {
+  height: 1px;
+  background: var(--color-divider);
+}
+
+/* ===== 加载中 ===== */
+.loading-tip {
+  padding: var(--space-lg) 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+}

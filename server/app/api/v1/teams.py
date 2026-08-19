@@ -1,0 +1,186 @@
+"""团队模块：创建 / 加入 / 详情 / 指定固定厨师。
+
+契约对齐小程序端 mock（miniprogram/utils/mock.js）：
+- POST /teams        → {id,name,icon,invite_code,member_count,role,chef,chef_id,owner_id}
+- POST /teams/join   → 同上
+- GET  /teams/{id}   → {team:{...同上}, members:[{id,nickname,avatar,role}]}
+- PUT  /teams/{id}/chef {user_id} → {id, chef, chef_id}
+"""
+
+from __future__ import annotations
+
+import secrets
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
+
+from app.core.db import get_db
+from app.core.exceptions import ApiError
+from app.core.responses import ok
+from app.core.security import get_current_user
+from app.models.user import Team, TeamMember, User
+from app.schemas.teams import TeamCreateIn, TeamJoinIn, TeamSetChefIn
+
+router = APIRouter()
+
+# 邀请码字符集：去掉易混淆的 0/O/1/I
+_INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def _unique_invite_code(db: Session) -> str:
+    for _ in range(20):
+        code = "".join(secrets.choice(_INVITE_ALPHABET) for _ in range(8))
+        if db.scalar(select(Team.id).where(Team.invite_code == code)) is None:
+            return code
+    raise ApiError(500, 50000, "邀请码生成失败，请重试")
+
+
+def _load_team(db: Session, team_id: int) -> Team:
+    """加载团队（chef/members/member.user 预加载）；不存在 40401。
+    populate_existing：覆盖会话身份映射中已缓存的过期集合（commit 后成员变更需重新读取）。
+    """
+    team = db.scalar(
+        select(Team)
+        .where(Team.id == team_id)
+        .options(
+            joinedload(Team.chef),
+            joinedload(Team.members).joinedload(TeamMember.user),
+        )
+        .execution_options(populate_existing=True)
+    )
+    if team is None:
+        raise ApiError(404, 40401, "团队不存在")
+    return team
+
+
+def _member_role(db: Session, team_id: int, user_id: int) -> str | None:
+    return db.scalar(
+        select(TeamMember.role).where(
+            TeamMember.team_id == team_id, TeamMember.user_id == user_id
+        )
+    )
+
+
+def _team_payload(db: Session, team: Team, actor: User) -> dict:
+    """当前用户视角的团队载荷（对齐 mock 契约）。"""
+    role = _member_role(db, team.id, actor.id) or "member"
+    chef = team.chef
+    return {
+        "id": team.id,
+        "name": team.name,
+        "icon": "🏠",
+        "invite_code": team.invite_code,
+        "member_count": len(team.members),
+        "role": role,
+        "chef": chef.nickname if chef else None,
+        "chef_id": chef.id if chef else None,
+        "owner_id": team.owner_id,
+    }
+
+
+@router.post("/teams")
+def create_team(
+    body: TeamCreateIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """创建团队：创建者为组织者，自动入团，生成邀请码。"""
+    name = body.name.strip()
+    if not name:
+        raise ApiError(400, 40000, "团队名称不能为空")
+
+    team = Team(name=name, owner_id=user.id, invite_code=_unique_invite_code(db))
+    db.add(team)
+    db.flush()
+    db.add(TeamMember(team_id=team.id, user_id=user.id, role="organizer"))
+    db.commit()
+    db.refresh(team)
+    return ok(_team_payload(db, team, user))
+
+
+@router.post("/teams/join")
+def join_team(
+    body: TeamJoinIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """凭邀请码加入团队；已在团内 40005。"""
+    code = body.invite_code.strip().upper()
+    if not code:
+        raise ApiError(400, 40000, "请输入邀请码")
+
+    team = db.scalar(
+        select(Team)
+        .where(Team.invite_code == code)
+        .options(joinedload(Team.chef), joinedload(Team.members))
+    )
+    if team is None:
+        raise ApiError(404, 40403, "邀请码无效，请核对后重试")
+
+    if _member_role(db, team.id, user.id) is not None:
+        raise ApiError(400, 40005, "你已在团队中，无需重复加入")
+
+    db.add(TeamMember(team_id=team.id, user_id=user.id, role="member"))
+    db.commit()
+    # 刷新预加载数据以反映新成员
+    team = _load_team(db, team.id)
+    return ok(_team_payload(db, team, user))
+
+
+@router.get("/teams/{team_id}")
+def team_detail(
+    team_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """团队详情：仅成员可见（40301）；含成员列表。"""
+    if _member_role(db, team_id, user.id) is None:
+        raise ApiError(403, 40301, "无权查看该团队")
+    team = _load_team(db, team_id)
+
+    members = []
+    for m in team.members:
+        members.append(
+            {
+                "id": m.user_id,
+                "nickname": m.user.nickname if m.user else f"用户{m.user_id}",
+                "avatar": m.user.avatar if m.user else "👤",
+                "role": m.role,
+            }
+        )
+
+    return ok({"team": _team_payload(db, team, user), "members": members})
+
+
+@router.put("/teams/{team_id}/chef")
+def set_team_chef(
+    team_id: int,
+    body: TeamSetChefIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """指定固定厨师：仅组织者可操作；目标必须是团队内成员。"""
+    if _member_role(db, team_id, user.id) != "organizer":
+        raise ApiError(403, 40302, "仅组织者可指定厨师")
+
+    team = db.scalar(
+        select(Team).where(Team.id == team_id).options(joinedload(Team.chef), joinedload(Team.members))
+    )
+    if team is None:
+        raise ApiError(404, 40401, "团队不存在")
+
+    if _member_role(db, team_id, body.user_id) is None:
+        raise ApiError(400, 40002, "该成员不在团队中")
+
+    team.chef_id = body.user_id
+    db.commit()
+    db.refresh(team)
+    chef = team.chef
+    return ok(
+        {
+            "id": team.id,
+            "chef": chef.nickname if chef else None,
+            "chef_id": chef.id if chef else None,
+        }
+    )

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "菜品详情",
+  "usingComponents": {
+    "qty-stepper": "/components/qty-stepper/qty-stepper",
+    "empty-state": "/components/empty-state/empty-state"
+  }
+}

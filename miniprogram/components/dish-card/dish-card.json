@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "qty-stepper": "/components/qty-stepper/qty-stepper"
+  }
+}

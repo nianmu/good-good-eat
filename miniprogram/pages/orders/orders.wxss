@@ -1,0 +1,137 @@
+/* 顶部筛选 */
+.filter-bar {
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--color-divider);
+  white-space: nowrap;
+}
+
+.filter-tabs {
+  display: inline-flex;
+  padding: 16rpx 16rpx 0;
+}
+
+.filter-tab {
+  padding: 12rpx 28rpx;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  position: relative;
+  transition: color 150ms ease-out;
+}
+
+.filter-tab--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.filter-tab--active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 48rpx;
+  height: 6rpx;
+  border-radius: 6rpx;
+  background: var(--color-primary);
+}
+
+/* 角色切换 */
+.role-switch {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 32rpx;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.role-switch__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.role-switch__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+/* 订单列表 */
+.orders-scroll {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  padding: 24rpx;
+}
+
+.order-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-base);
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--shadow-sm);
+}
+
+.order-card:active {
+  opacity: 0.85;
+}
+
+.order-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.order-card__left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.order-card__team {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.order-card__code {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.order-card__summary {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  margin-bottom: 16rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-card__time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.order-card__amount {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 加载提示 */
+.load-tip {
+  padding: 24rpx 0 48rpx;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}

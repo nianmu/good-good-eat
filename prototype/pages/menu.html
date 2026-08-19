@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>好大一颗菜 · 菜谱</title>
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/common.css">
+  <link rel="stylesheet" href="../styles/menu.css">
+</head>
+<body>
+  <div class="phone-frame">
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <span class="status-bar__time">11:30</span>
+      <div class="status-bar__icons">
+        <span style="font-size:10px">📶</span>
+        <span style="font-size:10px">🔋</span>
+      </div>
+    </div>
+
+    <!-- 顶部用户区 + Slogan -->
+    <header class="menu-header">
+      <div class="menu-header__user">
+        <div class="menu-header__avatar" id="userAvatar">👨</div>
+        <div class="menu-header__info">
+          <div class="menu-header__name" id="userNickname">用户16tQW</div>
+          <div class="menu-header__slogan">一粥一饭皆是生活，一蔬一菜皆有温度。愿每一次下厨，都成为幸福的开始。</div>
+        </div>
+      </div>
+      <!-- 团队选择器 -->
+      <div class="menu-header__team" id="teamSelector">
+        <span class="menu-header__team-icon">🏠</span>
+        <span class="menu-header__team-name" id="teamName">我家</span>
+        <span class="menu-header__team-arrow">▾</span>
+      </div>
+    </header>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <div class="search-bar__input">
+        <span class="search-bar__icon">🔍</span>
+        <span class="search-bar__placeholder">搜索菜品或食材</span>
+      </div>
+      <div class="search-bar__cart-badge">
+        <span>点单</span>
+        <span class="badge">3</span>
+      </div>
+    </div>
+
+    <!-- 主体：左侧分类 + 右侧菜品列表 -->
+    <div class="menu-body">
+      <!-- 左侧分类（由 JS 按 mock 数据渲染） -->
+      <aside class="category-sidebar" id="categorySidebar"></aside>
+
+      <!-- 右侧菜品列表 -->
+      <main class="dish-list" id="dishList">
+        <!-- 菜品卡片由 JS 渲染 -->
+      </main>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="action-bar">
+      <button class="action-bar__btn action-bar__btn--random" id="btnRandom">
+        <span class="action-bar__btn-icon">🎲</span>
+        <span class="action-bar__btn-text">随机点菜</span>
+      </button>
+      <button class="action-bar__btn action-bar__btn--invite" id="btnInvite">
+        <span class="action-bar__btn-icon">📨</span>
+        <span class="action-bar__btn-text">邀请下单</span>
+      </button>
+      <button class="action-bar__btn action-bar__btn--submit" id="btnSubmit">
+        <span class="action-bar__btn-text">下单</span>
+        <span class="action-bar__btn-count" id="cartCount">3</span>
+      </button>
+    </div>
+
+    <!-- TabBar -->
+    <nav class="tabbar">
+      <div class="tabbar__item tabbar__item--active">
+        <span class="tabbar__icon">📋</span>
+        <span class="tabbar__label">菜谱</span>
+      </div>
+      <div class="tabbar__item" onclick="location.href='order-detail.html'">
+        <span class="tabbar__icon">📦</span>
+        <span class="tabbar__label">订单</span>
+      </div>
+      <div class="tabbar__item">
+        <span class="tabbar__icon">💬</span>
+        <span class="tabbar__label">消息</span>
+      </div>
+      <div class="tabbar__item" onclick="location.href='profile.html'">
+        <span class="tabbar__icon">👤</span>
+        <span class="tabbar__label">我的</span>
+      </div>
+    </nav>
+  </div>
+
+  <script src="../scripts/data/categories.js"></script>
+  <script src="../scripts/data/dishes.js"></script>
+  <script src="../scripts/data/orders.js"></script>
+  <script src="../scripts/data/user.js"></script>
+  <script src="../scripts/menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+/* 顶部绿色主题区 */
+.profile-header {
+  background: linear-gradient(160deg, #4CAF50 0%, #2E7D32 100%);
+  color: #FFFFFF;
+  padding: 32rpx;
+  padding-bottom: 64rpx;
+}
+
+.profile-header__slogan {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: 48rpx;
+}
+
+/* 用户卡片 */
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.user-card__avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60rpx;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.user-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-card__name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.user-card__code {
+  font-size: var(--font-size-xs);
+  opacity: 0.85;
+  margin-top: 8rpx;
+}
+
+.user-card__qr {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+}
+
+/* 数据统计 */
+.user-stats {
+  display: flex;
+  align-items: center;
+  margin-top: 48rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-base);
+  padding: 24rpx 0;
+}
+
+.user-stats__item {
+  flex: 1;
+  text-align: center;
+}
+
+.user-stats__num {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.user-stats__label {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+  margin-top: 4rpx;
+}
+
+.user-stats__divider {
+  width: 2rpx;
+  height: 56rpx;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* 通用区块 */
+.section {
+  background: #FFFFFF;
+  margin: 24rpx 24rpx 0;
+  border-radius: var(--radius-base);
+  padding: 32rpx;
+  box-shadow: var(--shadow-sm);
+}
+
+.section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.section__title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.section__more {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-placeholder);
+  min-height: 44rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 8rpx;
+}
+
+/* 我的团队 */
+.team-item {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 0;
+}
+
+.team-item + .team-item {
+  border-top: 1px solid var(--color-divider);
+}
+
+.team-item__avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.team-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.team-item__name {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.team-item__role {
+  font-size: 22rpx;
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  padding: 2rpx 16rpx;
+  border-radius: 9999rpx;
+}
+
+.team-item__meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+  margin-top: 8rpx;
+}
+
+.team-item__chef {
+  color: var(--color-text-secondary);
+}
+
+.team-item__chef--open {
+  color: var(--color-accent);
+}
+
+.team-item__arrow {
+  color: var(--color-text-placeholder);
+  font-size: 36rpx;
+}
+
+/* 功能宫格 */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24rpx 8rpx;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 0;
+}
+
+.feature-item:active {
+  transform: scale(0.92);
+}
+
+.feature-item__icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: var(--radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+}
+
+.feature-item__name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* 底部声明 */
+.disclaimer {
+  margin: 24rpx;
+  padding: 32rpx;
+  background: #FFF8E1;
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-xs);
+  color: #8D6E63;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.disclaimer__warn {
+  color: #E65100;
+  font-weight: 500;
+}

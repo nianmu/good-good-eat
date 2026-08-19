@@ -1,0 +1,56 @@
+{
+  "pages": [
+    "pages/menu/menu",
+    "pages/dish-detail/dish-detail",
+    "pages/cart/cart",
+    "pages/orders/orders",
+    "pages/order-detail/order-detail",
+    "pages/chef-board/chef-board",
+    "pages/messages/messages",
+    "pages/profile/profile",
+    "pages/team-list/team-list",
+    "pages/team-detail/team-detail"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#4CAF50",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "好大一颗菜",
+    "backgroundColor": "#F5F5F5",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#4CAF50",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/menu/menu",
+        "text": "菜谱",
+        "iconPath": "assets/tabbar/menu.png",
+        "selectedIconPath": "assets/tabbar/menu-active.png"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单",
+        "iconPath": "assets/tabbar/orders.png",
+        "selectedIconPath": "assets/tabbar/orders-active.png"
+      },
+      {
+        "pagePath": "pages/messages/messages",
+        "text": "消息",
+        "iconPath": "assets/tabbar/messages.png",
+        "selectedIconPath": "assets/tabbar/messages-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

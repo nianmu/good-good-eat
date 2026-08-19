@@ -1,0 +1,21 @@
+<view class="dish-card" bindtap="onTap">
+  <view class="dish-card__image" style="background-color:{{dish.color}}">{{dish.emoji}}</view>
+  <view class="dish-card__body">
+    <view class="dish-card__name">
+      {{dish.name}}
+      <text class="dish-card__joined" wx:if="{{joinedCount > 1}}">{{joinedCount}}人已点</text>
+    </view>
+    <view class="dish-card__desc">{{dish.description}}</view>
+    <view class="dish-card__meta">
+      <text class="dish-card__rating">★ {{dish.rating}}<text class="dish-card__rating-count">（{{dish.rating_count}}）</text></text>
+      <text class="dish-card__cook-time">⏱ {{dish.cook_time}}分钟</text>
+    </view>
+    <view class="dish-card__footer">
+      <text class="dish-card__price"><text class="dish-card__price-symbol">¥</text>{{priceText}}</text>
+      <view class="dish-card__action" catchtap="noop">
+        <qty-stepper wx:if="{{quantity > 0}}" value="{{quantity}}" bind:change="onQtyChange" />
+        <view wx:else class="qty-btn qty-btn--plus" catchtap="onPlus">+</view>
+      </view>
+    </view>
+  </view>
+</view>

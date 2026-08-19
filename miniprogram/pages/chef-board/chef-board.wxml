@@ -1,0 +1,56 @@
+<view class="page">
+  <scroll-view class="scroll-area" scroll-y refresher-enabled refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh" enhanced show-scrollbar="{{false}}">
+
+    <view class="loading-tip" wx:if="{{loading}}">加载中…</view>
+
+    <block wx:if="{{!loading}}">
+      <!-- 聚合卡 -->
+      <view class="agg-card">
+        <view class="agg-card__head">
+          <text class="agg-card__title">今日待做</text>
+          <text class="agg-card__count">{{ordersCount}} 单</text>
+        </view>
+
+        <!-- 按菜聚合 -->
+        <view class="agg-block" wx:if="{{dishes.length > 0}}">
+          <view class="agg-block__title">按菜合并</view>
+          <view class="agg-dish" wx:for="{{dishes}}" wx:key="dish_name">
+            <text class="agg-dish__emoji">{{item.emoji}}</text>
+            <text class="agg-dish__name">{{item.dish_name}}</text>
+            <text class="agg-dish__qty">×{{item.total_quantity}}</text>
+          </view>
+        </view>
+
+        <!-- 食材汇总 -->
+        <view class="agg-block" wx:if="{{ingredients.length > 0}}">
+          <view class="agg-block__title">食材汇总</view>
+          <view class="agg-ing">
+            <text class="agg-ing__chip" wx:for="{{ingredients}}" wx:key="name">{{item.name}} ×{{item.count}}</text>
+          </view>
+        </view>
+
+        <empty-state wx:if="{{dishes.length === 0 && ingredients.length === 0}}" icon="🍳" text="暂无待做订单" />
+      </view>
+
+      <!-- 订单列表 -->
+      <view class="list-title">收到的订单（{{orders.length}}）</view>
+      <view class="order-card" wx:for="{{orders}}" wx:key="id" data-id="{{item.id}}" bindtap="onOrderTap">
+        <view class="order-card__row">
+          <text class="order-card__code">{{item.pickup_code}}</text>
+          <status-chip status="{{item.status}}" />
+          <text class="order-card__time">{{item.time_text}}</text>
+        </view>
+        <view class="order-card__summary">
+          <text>{{item.summary}}</text>
+          <text class="order-card__user">{{item.user_nickname}} 点的</text>
+        </view>
+        <view class="order-card__row order-card__row--end">
+          <view class="order-card__action" wx:if="{{item.action_label}}" catchtap="onAction" data-id="{{item.id}}">{{item.action_label}}</view>
+          <text wx:else class="order-card__done">已完成</text>
+        </view>
+      </view>
+      <empty-state wx:if="{{orders.length === 0}}" icon="📦" text="你还没有收到订单" />
+    </block>
+  </scroll-view>
+</view>

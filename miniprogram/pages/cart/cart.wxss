@@ -1,0 +1,159 @@
+/* 团队选择 */
+.team-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24rpx;
+  padding: 24rpx 32rpx;
+  background: #FFFFFF;
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.team-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.team-card__picker {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-height: 44rpx;
+}
+
+.team-card__name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.team-card__arrow {
+  color: var(--color-text-placeholder);
+  font-size: 24rpx;
+}
+
+/* 购物车列表 */
+.cart-list {
+  background: #FFFFFF;
+  margin: 0 24rpx 24rpx;
+  border-radius: var(--radius-base);
+  padding: 0 32rpx;
+  box-shadow: var(--shadow-sm);
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item__image {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  flex-shrink: 0;
+}
+
+.cart-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item__name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.cart-item__price {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.cart-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+}
+
+.cart-item__remove {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+  padding: 4rpx 12rpx;
+}
+
+/* 底部结算栏 */
+.cart-bar {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: #FFFFFF;
+  border-top: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+
+.cart-bar__total {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.cart-bar__total-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.cart-bar__total-amount {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.cart-bar__count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.cart-bar__submit {
+  padding: 24rpx 56rpx;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  border-radius: 9999rpx;
+  box-shadow: var(--shadow-primary);
+}
+
+.cart-bar__submit:active {
+  background: var(--color-primary-dark);
+  transform: scale(0.97);
+}
+
+.cart-bar__submit--disabled {
+  opacity: 0.6;
+}
+/* 团队多人合计提示（三期） */
+.team-card__hint {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  border-radius: var(--radius-sm);
+  padding: 6rpx 12rpx;
+  display: inline-block;
+}

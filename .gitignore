@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.log
+
+# Node / 小程序
+node_modules/
+miniprogram/miniprogram_npm/
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 测试/临时
+.pytest_cache/
+pytest-cache-files*/
+.coverage
+htmlcov/
+dist/
+build/
+
+# uv 项目缓存（沙箱拒写 D 盘时落位于仓库内）
+.uv-cache/
+
+# 沙箱/临时密钥（勿提交）
+.git-ssh/
+

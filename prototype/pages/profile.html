@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>好大一颗菜 · 我的</title>
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/common.css">
+  <link rel="stylesheet" href="../styles/profile.css">
+</head>
+<body>
+  <div class="phone-frame">
+    <!-- 状态栏 -->
+    <div class="status-bar status-bar--light">
+      <span class="status-bar__time">11:30</span>
+      <div class="status-bar__icons">
+        <span style="font-size:10px">📶</span>
+        <span style="font-size:10px">🔋</span>
+      </div>
+    </div>
+
+    <!-- 顶部绿色主题区 -->
+    <header class="profile-header">
+      <div class="profile-header__slogan">一日三餐，用好大一颗菜</div>
+
+      <!-- 用户卡片 -->
+      <div class="user-card">
+        <div class="user-card__avatar">👨</div>
+        <div class="user-card__info">
+          <div class="user-card__name">用户16tQW</div>
+          <div class="user-card__code">标识码 38243244</div>
+        </div>
+        <div class="user-card__qr">
+          <span style="font-size:20px">⋮</span>
+        </div>
+      </div>
+
+      <!-- 数据统计 -->
+      <div class="user-stats">
+        <div class="user-stats__item">
+          <div class="user-stats__num">28</div>
+          <div class="user-stats__label">总订单</div>
+        </div>
+        <div class="user-stats__divider"></div>
+        <div class="user-stats__item">
+          <div class="user-stats__num">96</div>
+          <div class="user-stats__label">点过的菜</div>
+        </div>
+        <div class="user-stats__divider"></div>
+        <div class="user-stats__item">
+          <div class="user-stats__num">15</div>
+          <div class="user-stats__label">收藏</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 我的团队 -->
+    <section class="section">
+      <div class="section__header">
+        <span class="section__title">我的团队</span>
+        <span class="section__more">管理 ›</span>
+      </div>
+      <div class="team-list" id="teamList">
+        <!-- 由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- 功能宫格 -->
+    <section class="section">
+      <div class="section__header">
+        <span class="section__title">我的厨房</span>
+      </div>
+      <div class="feature-grid" id="featureGrid">
+        <!-- 由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- 底部声明 -->
+    <div class="disclaimer">
+      <p>本平台面向家庭、情侣等用户，是美食记录与烹饪工具，不涉及订单支付，也不是商家收款工具。</p>
+      <p class="disclaimer__warn">⚠ 如需转账，请自行核实对方身份，切勿轻信网络陌生人。</p>
+    </div>
+
+    <!-- TabBar -->
+    <nav class="tabbar">
+      <div class="tabbar__item" onclick="location.href='menu.html'">
+        <span class="tabbar__icon">📋</span>
+        <span class="tabbar__label">菜谱</span>
+      </div>
+      <div class="tabbar__item" onclick="location.href='order-detail.html'">
+        <span class="tabbar__icon">📦</span>
+        <span class="tabbar__label">订单</span>
+      </div>
+      <div class="tabbar__item">
+        <span class="tabbar__icon">💬</span>
+        <span class="tabbar__label">消息</span>
+      </div>
+      <div class="tabbar__item tabbar__item--active">
+        <span class="tabbar__icon">👤</span>
+        <span class="tabbar__label">我的</span>
+      </div>
+    </nav>
+  </div>
+
+  <script src="../scripts/data/categories.js"></script>
+  <script src="../scripts/data/dishes.js"></script>
+  <script src="../scripts/data/orders.js"></script>
+  <script src="../scripts/data/user.js"></script>
+  <script src="../scripts/profile.js"></script>
+</body>
+</html>
