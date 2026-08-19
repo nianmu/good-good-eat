@@ -1,0 +1,107 @@
+.list {
+  padding: 24rpx;
+}
+
+.list-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+.list-header__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.list-header__count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.plan-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-base);
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.plan-card:active {
+  opacity: 0.85;
+}
+
+.plan-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.plan-card__name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.plan-card__count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+.plan-card__note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: 12rpx;
+}
+
+.plan-card__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.plan-card__dish {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-page);
+  padding: 4rpx 16rpx;
+  border-radius: var(--radius-full);
+}
+
+.plan-card__arrow {
+  position: absolute;
+  right: 24rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-placeholder);
+  font-size: 36rpx;
+}
+
+/* 右下角新建悬浮按钮 */
+.fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: calc(48rpx + env(safe-area-inset-bottom));
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-primary);
+  z-index: 10;
+}
+
+.fab:active {
+  background: var(--color-primary-dark);
+  transform: scale(0.94);
+}
+
+.fab__icon {
+  font-size: 56rpx;
+  line-height: 1;
+}

@@ -1,0 +1,67 @@
+<view class="page plan-edit">
+  <scroll-view class="scroll-area" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- 基本信息 -->
+    <view class="section">
+      <view class="section__title">基本信息</view>
+      <view class="card form-card">
+        <view class="form-row">
+          <text class="form-row__label">名称</text>
+          <input class="form-row__input" placeholder="如：一周家庭菜谱" value="{{form.name}}"
+            data-field="name" bindinput="onInput" />
+        </view>
+        <view class="form-row">
+          <text class="form-row__label">备注</text>
+          <input class="form-row__input" placeholder="可选，如：荤素搭配" value="{{form.note}}"
+            data-field="note" bindinput="onInput" />
+        </view>
+        <view class="recommend-tip" wx:if="{{recommendReason}}">🤔 {{recommendReason}}</view>
+      </view>
+    </view>
+
+    <!-- 已选清单 -->
+    <view class="section" wx:if="{{items.length > 0}}">
+      <view class="section__title">已选菜品（{{items.length}}）</view>
+      <view class="card">
+        <view class="selected-item" wx:for="{{items}}" wx:key="dish.id" wx:for-index="idx">
+          <view class="selected-item__emoji" style="background-color:{{item.dish.color}}">{{item.dish.emoji}}</view>
+          <view class="selected-item__body">
+            <view class="selected-item__name">{{item.dish.name}}</view>
+            <view class="selected-item__price">¥{{item.dish.price}}</view>
+          </view>
+          <view class="qty-op">
+            <view class="qty-op__btn" data-index="{{idx}}" bindtap="onDecQty">−</view>
+            <text class="qty-op__num">{{item.quantity}}</text>
+            <view class="qty-op__btn" data-index="{{idx}}" bindtap="onIncQty">＋</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 手动选择 -->
+    <view class="section">
+      <view class="section__title">添加菜品</view>
+      <scroll-view class="cat-tabs" scroll-x enhanced show-scrollbar="{{false}}">
+        <view wx:for="{{groups}}" wx:key="id" data-id="{{item.id}}" bindtap="onCatTap"
+          class="cat-tab {{item.id === activeCatId ? 'cat-tab--active' : ''}}">{{item.name}}</view>
+      </scroll-view>
+
+      <view class="dish-pick" wx:for="{{groups}}" wx:key="id" wx:if="{{item.id === activeCatId}}">
+        <view class="dish-pick__item" wx:for="{{item.dishes}}" wx:for-item="dish" wx:key="id"
+          data-id="{{dish.id}}" bindtap="onPickDish">
+          <view class="dish-pick__emoji" style="background-color:{{dish.color}}">{{dish.emoji}}</view>
+          <view class="dish-pick__body">
+            <view class="dish-pick__name">{{dish.name}}</view>
+            <view class="dish-pick__price">¥{{dish.price}}</view>
+          </view>
+          <text class="dish-pick__add">＋</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部保存栏 -->
+  <view class="save-bar">
+    <text class="save-bar__count">{{items.length}} 道菜</text>
+    <view class="save-bar__btn btn btn--primary" bindtap="onSave">保存计划</view>
+  </view>
+</view>

@@ -10,6 +10,7 @@ from app.models.dish import Category, Dish
 from app.models.fridge import FridgeItem
 from app.models.message import Message
 from app.models.order import Order, OrderItem
+from app.models.plan import Plan, PlanItem
 from app.models.recipe import Recipe
 from app.models.user import User
 
@@ -129,6 +130,37 @@ def message_to_dict(msg: Message) -> dict:
         "is_read": msg.is_read,
         "created_at": msg.created_at.strftime("%Y-%m-%d %H:%M:%S") if msg.created_at else None,
     }
+
+
+def plan_item_to_dict(item: PlanItem) -> dict:
+    """计划内菜品项。菜品信息复用 dish_to_dict（dish 下架时保留 dish_id + name）。"""
+    dish = item.dish
+    data: dict[str, Any] = {
+        "dish_id": item.dish_id,
+        "quantity": item.quantity,
+    }
+    if dish is not None:
+        data["dish"] = dish_to_dict(dish)
+    else:
+        data["dish"] = None
+        data["name"] = None
+    return data
+
+
+def plan_to_dict(plan: Plan, include_items: bool = False) -> dict:
+    """计划 → dict；include_items 时附带菜品清单（含摘要）。"""
+    data: dict[str, Any] = {
+        "id": plan.id,
+        "user_id": plan.user_id,
+        "name": plan.name,
+        "note": plan.note,
+        "created_at": plan.created_at.strftime("%Y-%m-%d %H:%M:%S") if plan.created_at else None,
+    }
+    if include_items:
+        data["items"] = [plan_item_to_dict(i) for i in plan.items]
+        total = sum(i.quantity for i in plan.items)
+        data["total_count"] = total
+    return data
 
 
 def order_to_dict(order: Order, include_items: bool = True, with_user: bool = False) -> dict:

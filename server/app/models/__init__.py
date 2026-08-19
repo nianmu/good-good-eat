@@ -6,6 +6,7 @@ from app.models.favorite import Favorite
 from app.models.fridge import FridgeItem
 from app.models.message import Message
 from app.models.order import Order, OrderItem
+from app.models.plan import Plan, PlanItem
 from app.models.recipe import Recipe
 from app.models.user import Team, TeamMember, User
 
@@ -18,6 +19,8 @@ __all__ = [
     "Message",
     "Order",
     "OrderItem",
+    "Plan",
+    "PlanItem",
     "Recipe",
     "Team",
     "TeamMember",

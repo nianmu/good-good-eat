@@ -30,6 +30,12 @@ Page({
     favoritedMap: {}, // dish_id -> true（四期收藏）
     loading: true,
     refreshing: false,
+    // 五期：随机 / 推荐
+    randomLoading: false,
+    recommendVisible: false,
+    recommendLoading: false,
+    recommend: null, // { plan:[dish], reason }
+    peopleText: '3',
     // 多人实时（三期）
     roomStatus: 'closed',
     roomStatusLabel: '未连接',
@@ -296,32 +302,125 @@ Page({
     }
   },
 
-  onRandom: function () {
-    const pool = this.data.allDishes.slice();
-    if (!pool.length) {
-      wx.showToast({ title: '菜品数据加载中，请稍候', icon: 'none' });
-      return;
-    }
-    // 洗牌取前 3
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
-    }
-    const picks = pool.slice(0, 3);
-    const cart = Object.assign({}, store.get('cart'));
-    picks.forEach(function (d) {
-      cart[d.id] = (cart[d.id] || 0) + 1;
+  /** 加购一组菜品（随机/推荐共用）：更新 store + 广播团队房间 */
+  _addToCart: function (dishes, delta) {
+    const cart = Object.assign({}, store.get('cart') || {});
+    dishes.forEach(function (d) {
+      cart[d.id] = (cart[d.id] || 0) + (delta || 1);
     });
     store.set('cart', cart);
-    // 广播给团队房间（每人 plus 一次）
     const self = this;
-    picks.forEach(function (d) {
+    dishes.forEach(function (d) {
       ws.send({ event: 'cart.upsert', data: { dish_id: d.id, quantity: cart[d.id], action: 'plus' } });
     });
+    this.syncCart();
+  },
+
+  /** 五期：随机点菜（均衡）——调后端 GET /dishes/random?type=balanced */
+  onRandom: function () {
+    if (this.data.randomLoading) return;
+    this.setData({ randomLoading: true });
+    request({
+      url: '/dishes/random',
+      method: 'GET',
+      data: { n: 3, type: 'balanced' }
+    }).then(function (res) {
+      const picks = res || [];
+      if (!picks.length) {
+        wx.showToast({ title: '暂无可推荐的菜品', icon: 'none' });
+        this.setData({ randomLoading: false });
+        return;
+      }
+      this._addToCart(picks, 1);
+      wx.showToast({
+        title: '推荐：' + picks.map(function (d) { return d.name; }).join('、'),
+        icon: 'none'
+      });
+      this.setData({ randomLoading: false });
+    }.bind(this)).catch(function (err) {
+      toastError(err);
+      this.setData({ randomLoading: false });
+    }.bind(this));
+  },
+
+  /** 五期：惊喜推荐——调 GET /dishes/random?type=surprise */
+  onSurprise: function () {
+    if (this.data.randomLoading) return;
+    this.setData({ randomLoading: true });
+    request({
+      url: '/dishes/random',
+      method: 'GET',
+      data: { n: 3, type: 'surprise' }
+    }).then(function (res) {
+      const picks = res || [];
+      if (!picks.length) {
+        wx.showToast({ title: '暂无可推荐的菜品', icon: 'none' });
+        this.setData({ randomLoading: false });
+        return;
+      }
+      this._addToCart(picks, 1);
+      wx.showToast({
+        title: '惊喜：' + picks.map(function (d) { return d.name; }).join('、'),
+        icon: 'none'
+      });
+      this.setData({ randomLoading: false });
+    }.bind(this)).catch(function (err) {
+      toastError(err);
+      this.setData({ randomLoading: false });
+    }.bind(this));
+  },
+
+  // ===== 五期：今天吃什么（按人数推荐弹层）=====
+  onRecommendOpen: function () {
+    this.setData({ recommendVisible: true, peopleText: '3' });
+  },
+
+  onRecommendClose: function () {
+    if (this.data.recommendLoading) return;
+    this.setData({ recommendVisible: false, recommend: null });
+  },
+
+  onPeopleInput: function (e) {
+    this.setData({ peopleText: e.detail.value });
+  },
+
+  onRecommendLoad: function () {
+    const people = parseInt(this.data.peopleText, 10) || 3;
+    this.setData({ recommendLoading: true, recommend: null });
+    request({
+      url: '/dishes/recommend',
+      method: 'GET',
+      data: { people: Math.max(1, Math.min(20, people)) }
+    }).then(function (res) {
+      this.setData({ recommend: res });
+      this.setData({ recommendLoading: false });
+    }.bind(this)).catch(function (err) {
+      toastError(err);
+      this.setData({ recommendLoading: false });
+    }.bind(this));
+  },
+
+  /** 将推荐组合加入购物车 */
+  onRecommendAddAll: function () {
+    const plan = (this.data.recommend && this.data.recommend.plan) || [];
+    if (!plan.length) return;
+    this._addToCart(plan, 1);
+    this.setData({ recommendVisible: false, recommend: null });
     wx.showToast({
-      title: '🎲 随机选了 ' + picks.map(function (d) { return d.name; }).join('、'),
+      title: '已加入购物车：' + plan.map(function (d) { return d.name; }).join('、'),
       icon: 'none'
     });
+  },
+
+  /** 将推荐组合保存为饮食计划 */
+  onRecommendSavePlan: function () {
+    const plan = (this.data.recommend && this.data.recommend.plan) || [];
+    if (!plan.length) return;
+    wx.navigateTo({
+      url: '/pages/plan-edit/plan-edit?from=recommend&people=' +
+        encodeURIComponent(this.data.peopleText || '3')
+    });
+    this.setData({ recommendVisible: false, recommend: null });
   },
 
   onInvite: function () {
@@ -339,6 +438,8 @@ Page({
   onCartTap: function () {
     wx.navigateTo({ url: '/pages/cart/cart' });
   },
+
+  noop: function () {},
 
   onTeamTap: function () {
     wx.navigateTo({ url: '/pages/team-list/team-list' });

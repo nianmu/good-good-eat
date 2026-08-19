@@ -16,7 +16,7 @@ const FEATURES = [
   { id: 'fridge', name: '厨房冰箱', icon: '🧊', color: '#2196F3', url: '/pages/fridge/fridge' },
   { id: 'basket', name: '厨房菜篮', icon: '🛒', color: '#4CAF50', url: '/pages/basket/basket' },
   { id: 'favorite', name: '我的收藏', icon: '❤️', color: '#E91E63', url: '/pages/favorites/favorites' },
-  { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0' },
+  { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0', url: '/pages/plans/plans' },
   { id: 'tutorial', name: '新手教程', icon: '📖', color: '#607D8B' },
   { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722' },
   { id: 'feedback', name: '提点意见', icon: '💬', color: '#00BCD4' },

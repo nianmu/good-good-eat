@@ -35,6 +35,8 @@ _TABLES_IN_DELETE_ORDER = (
     "orders",
     "team_members",
     "favorites",
+    "plan_items",
+    "plans",
     "recipes",
     "fridge_items",
     "basket_items",

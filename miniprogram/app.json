@@ -15,7 +15,10 @@
     "pages/recipe-detail/recipe-detail",
     "pages/fridge/fridge",
     "pages/basket/basket",
-    "pages/favorites/favorites"
+    "pages/favorites/favorites",
+    "pages/plans/plans",
+    "pages/plan-edit/plan-edit",
+    "pages/plan-detail/plan-detail"
   ],
   "window": {
     "navigationBarBackgroundColor": "#4CAF50",

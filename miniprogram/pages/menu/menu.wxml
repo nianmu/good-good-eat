@@ -29,6 +29,18 @@
     </view>
   </view>
 
+  <!-- 五期：随机 / 今天吃什么 快捷区 -->
+  <view class="quick-row">
+    <view class="quick-row__item quick-row__item--today" bindtap="onRecommendOpen">
+      <text class="quick-row__icon">🤔</text>
+      <text class="quick-row__label">今天吃什么</text>
+    </view>
+    <view class="quick-row__item quick-row__item--surprise" bindtap="onSurprise">
+      <text class="quick-row__icon">✨</text>
+      <text class="quick-row__label">惊喜推荐</text>
+    </view>
+  </view>
+
   <!-- 主体：左侧分类 + 右侧菜品 -->
   <view class="menu-body">
     <scroll-view class="category-sidebar" scroll-y enhanced show-scrollbar="{{false}}">
@@ -60,7 +72,7 @@
   <view class="action-bar">
     <view class="action-bar__btn action-bar__btn--random" bindtap="onRandom">
       <text class="action-bar__btn-icon">🎲</text>
-      <text class="action-bar__btn-text">随机点菜</text>
+      <text class="action-bar__btn-text">{{randomLoading ? '推荐中…' : '随机点菜'}}</text>
     </view>
     <view class="action-bar__btn action-bar__btn--invite" bindtap="onInvite">
       <text class="action-bar__btn-icon">📨</text>
@@ -69,6 +81,42 @@
     <view class="action-bar__btn action-bar__btn--submit" bindtap="onSubmit">
       <text class="action-bar__btn-text">下单</text>
       <text class="action-bar__btn-count" wx:if="{{cartCount > 0}}">{{cartCount}}</text>
+    </view>
+  </view>
+
+  <!-- 五期：今天吃什么 推荐弹层 -->
+  <view class="mask" wx:if="{{recommendVisible}}" catchtouchmove="noop">
+    <view class="recommend-sheet">
+      <view class="recommend-sheet__header">
+        <text class="recommend-sheet__title">今天吃什么</text>
+        <text class="recommend-sheet__close" bindtap="onRecommendClose">✕</text>
+      </view>
+
+      <view class="recommend-sheet__people">
+        <text>几个人吃？</text>
+        <input class="recommend-sheet__input" type="number" value="{{peopleText}}"
+          bindinput="onPeopleInput" disabled="{{recommendLoading}}" />
+        <view class="recommend-sheet__go btn btn--primary" bindtap="onRecommendLoad">给我推荐</view>
+      </view>
+
+      <view class="loading-tip" wx:if="{{recommendLoading}}">推荐中…</view>
+
+      <block wx:if="{{!recommendLoading && recommend}}">
+        <view class="recommend-sheet__reason">{{recommend.reason}}</view>
+        <view class="recommend-sheet__list">
+          <view class="recommend-item" wx:for="{{recommend.plan}}" wx:key="id">
+            <view class="recommend-item__emoji" style="background-color:{{item.color}}">{{item.emoji}}</view>
+            <view class="recommend-item__body">
+              <view class="recommend-item__name">{{item.name}}</view>
+              <view class="recommend-item__price">¥{{item.price}}</view>
+            </view>
+          </view>
+        </view>
+        <view class="recommend-sheet__actions">
+          <view class="btn btn--outline" bindtap="onRecommendSavePlan">存为计划</view>
+          <view class="btn btn--primary" bindtap="onRecommendAddAll">一键加入购物车</view>
+        </view>
+      </block>
     </view>
   </view>
 </view>

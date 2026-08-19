@@ -307,6 +307,38 @@ function seedBasket() {
   ];
 }
 
+/** 五期：种子饮食计划（2 条，开箱可演示） */
+function seedPlans() {
+  return [
+    {
+      id: 'plan-1',
+      user_id: 'user-16tQW',
+      name: '本周家庭菜谱',
+      note: '荤素汤搭配的一周计划',
+      created_at: '2026-08-18 09:30:00',
+      items: [
+        { dish_id: 'dish-1', quantity: 1 },  // 红烧肉
+        { dish_id: 'dish-5', quantity: 1 },  // 蒜蓉西兰花
+        { dish_id: 'dish-11', quantity: 1 }, // 番茄蛋花汤
+        { dish_id: 'dish-13', quantity: 2 }  // 蛋炒饭
+      ]
+    },
+    {
+      id: 'plan-2',
+      user_id: 'user-16tQW',
+      name: '周末聚会安排',
+      note: '朋友聚餐三荤两素一汤',
+      created_at: '2026-08-17 20:00:00',
+      items: [
+        { dish_id: 'dish-3', quantity: 2 },  // 糖醋排骨
+        { dish_id: 'dish-2', quantity: 1 },  // 可乐鸡翅
+        { dish_id: 'dish-7', quantity: 1 },  // 红烧茄子
+        { dish_id: 'dish-12', quantity: 1 }  // 玉米排骨汤
+      ]
+    }
+  ];
+}
+
 function seedDB() {
   const users = seedUsers();
   const dishes = seedDishes();
@@ -324,6 +356,7 @@ function seedDB() {
     recipes: seedRecipes(),
     fridge: seedFridge(),
     basket: seedBasket(),
+    plans: seedPlans(),
     meta: { seeded: true }
   };
 }
@@ -870,6 +903,229 @@ function deleteBasket(db, id, user) {
   return { id: String(id) };
 }
 
+/* =====================================================
+ * 五期：随机点菜 / 今天吃什么推荐
+ * ===================================================== */
+
+/** 分类名 → 营养类型（与后端一致） */
+function dishRole(catId) {
+  const cats = {
+    'cat-1': 'meat', // 荤菜
+    'cat-2': 'veg',  // 蔬菜
+    'cat-3': 'energy', // 能量补给
+    'cat-4': 'soup',  // 汤
+    'cat-5': 'staple', // 主食
+    'cat-6': 'cold'   // 凉菜
+  };
+  return cats[catId] || 'other';
+}
+
+function activeDishes(db) {
+  return (db.dishes || []).slice();
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/** 均衡：从荤/素/汤等各类各抽 1 道，轮转凑到 n */
+function balancedRandom(db, n) {
+  const grouped = {};
+  activeDishes(db).forEach(function (d) {
+    const role = dishRole(d.category_id);
+    (grouped[role] = grouped[role] || []).push(d);
+  });
+  const priority = ['meat', 'veg', 'soup', 'energy', 'staple', 'cold'];
+  const picks = [];
+  const seen = {};
+  let idx = 0;
+  while (picks.length < n && priority.length) {
+    const role = priority[idx % priority.length];
+    const candidates = (grouped[role] || []).filter(function (d) { return !seen[d.id]; });
+    if (candidates.length) {
+      const d = candidates[Math.floor(Math.random() * candidates.length)];
+      seen[d.id] = true;
+      picks.push(d);
+    }
+    idx++;
+  }
+  return picks;
+}
+
+/** 惊喜：全库乱序抽 n */
+function surpriseRandom(db, n) {
+  return shuffle(activeDishes(db)).slice(0, n);
+}
+
+/** 营养：按类型打分（荤/素/能量优先），优先均衡组合 */
+function nutritionRandom(db, n) {
+  const base = { meat: 3, veg: 3, energy: 3, soup: 2, staple: 2, cold: 1 };
+  const active = activeDishes(db).slice().sort(function (a, b) {
+    const sa = (base[dishRole(a.category_id)] || 0) + Math.round(a.rating * 2);
+    const sb = (base[dishRole(b.category_id)] || 0) + Math.round(b.rating * 2);
+    return sb - sa;
+  });
+  const picks = [];
+  const seen = {};
+  const pickedRoles = {};
+  active.forEach(function (d) {
+    if (picks.length >= n) return;
+    const role = dishRole(d.category_id);
+    if ((role === 'meat' || role === 'veg' || role === 'energy') && !pickedRoles[role]) {
+      seen[d.id] = true;
+      pickedRoles[role] = true;
+      picks.push(d);
+    }
+  });
+  active.forEach(function (d) {
+    if (picks.length >= n) return;
+    if (seen[d.id]) return;
+    seen[d.id] = true;
+    picks.push(d);
+  });
+  return picks;
+}
+
+function randomDishesMock(db, params) {
+  const n = Math.max(1, parseInt(params.n, 10) || 3);
+  const type = params.type || 'balanced';
+  let picks;
+  if (type === 'surprise') picks = surpriseRandom(db, n);
+  else if (type === 'nutrition') picks = nutritionRandom(db, n);
+  else picks = balancedRandom(db, n);
+  return picks;
+}
+
+/** 按人数推荐一轮饭：荤 n/2、素 n/2、汤 1、主食 1 */
+function recommendDishesMock(db, params) {
+  const people = Math.max(1, parseInt(params.people, 10) || 3);
+  const meatN = Math.max(1, Math.ceil(people / 2));
+  const vegN = Math.max(1, Math.ceil(people / 2));
+  const grouped = {};
+  activeDishes(db).forEach(function (d) {
+    const role = dishRole(d.category_id);
+    (grouped[role] = grouped[role] || []).push(d);
+  });
+  const picks = [];
+  const seen = {};
+  [['meat', meatN], ['veg', vegN], ['soup', 1], ['staple', 1]].forEach(function (pair) {
+    const role = pair[0];
+    let need = pair[1];
+    shuffle(grouped[role] || []).forEach(function (d) {
+      if (need <= 0) return;
+      if (seen[d.id]) return;
+      seen[d.id] = true;
+      picks.push(d);
+      need--;
+    });
+  });
+  const reason = '按 ' + people + ' 人：' + meatN + ' 荤 ' + vegN + ' 素 1 汤 1 主食';
+  return { plan: picks, reason: reason };
+}
+
+/* =====================================================
+ * 五期：饮食计划 CRUD
+ * ===================================================== */
+
+function findPlan(db, id, user) {
+  const p = (db.plans || []).find(function (x) { return String(x.id) === String(id); });
+  if (!p) fail(40401, '计划不存在');
+  if (p.user_id !== user.id) fail(40301, '无权访问该计划');
+  return p;
+}
+
+function planToPayload(db, p) {
+  const items = (p.items || []).map(function (it) {
+    const dish = db.dishes.find(function (d) { return String(d.id) === String(it.dish_id); });
+    return {
+      dish_id: it.dish_id,
+      quantity: it.quantity,
+      dish: dish || null
+    };
+  });
+  const total = (p.items || []).reduce(function (sum, it) { return sum + it.quantity; }, 0);
+  return {
+    id: p.id,
+    user_id: p.user_id,
+    name: p.name,
+    note: p.note || '',
+    created_at: p.created_at,
+    items: items,
+    total_count: total
+  };
+}
+
+function listPlansMock(db, params, user) {
+  let list = (db.plans || []).filter(function (p) { return p.user_id === user.id; });
+  list = list.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+  const total = list.length;
+  const pageSize = Math.max(1, parseInt(params.page_size, 10) || 20);
+  const page = Math.max(1, parseInt(params.page, 10) || 1);
+  const start = (page - 1) * pageSize;
+  const items = list.slice(start, start + pageSize).map(function (p) {
+    const payload = planToPayload(db, p);
+    // 摘要：菜品名/emoji 列表
+    payload.summary = payload.items.map(function (it) {
+      return {
+        dish_id: it.dish_id,
+        quantity: it.quantity,
+        name: it.dish ? it.dish.name : null,
+        emoji: it.dish ? it.dish.emoji : null
+      };
+    });
+    return payload;
+  });
+  return {
+    items: items,
+    total: total,
+    page: page,
+    page_size: pageSize,
+    has_more: start + items.length < total
+  };
+}
+
+function getPlanMock(db, id, user) {
+  const p = findPlan(db, id, user);
+  return planToPayload(db, p);
+}
+
+function createPlanMock(db, data, user) {
+  const name = (data.name || '').trim();
+  if (!name) fail(40001, '计划名称不能为空');
+  const merged = {};
+  (data.items || []).forEach(function (it) {
+    const dish = db.dishes.find(function (d) { return String(d.id) === String(it.dish_id); });
+    if (!dish) fail(40401, '菜品不存在或已下架：' + it.dish_id);
+    const qty = parseInt(it.quantity, 10) || 1;
+    merged[String(it.dish_id)] = (merged[String(it.dish_id)] || 0) + Math.max(1, qty);
+  });
+  const plan = {
+    id: nextId(db.plans, 'plan'),
+    user_id: user.id,
+    name: name,
+    note: data.note || '',
+    created_at: util.nowText(),
+    items: Object.keys(merged).map(function (did) {
+      return { dish_id: did, quantity: merged[did] };
+    })
+  };
+  db.plans.push(plan);
+  saveDB(db);
+  return planToPayload(db, plan);
+}
+
+function deletePlanMock(db, id, user) {
+  const p = findPlan(db, id, user);
+  db.plans = db.plans.filter(function (x) { return String(x.id) !== String(id); });
+  saveDB(db);
+  return { id: String(id) };
+}
+
 function createTeam(db, data, user) {
   const name = (data.name || '').trim();
   if (!name) fail(40001, '团队名称不能为空');
@@ -1288,8 +1544,20 @@ function dispatch(options) {
   if (m && method === 'PUT') return ok(checkBasket(db, m[1], data, user));
   if (m && method === 'DELETE') return ok(deleteBasket(db, m[1], user));
 
+  // —— 五期：随机点菜 / 今天吃什么（必须先于 /dishes/{id} 匹配）——
+  if (method === 'GET' && path === '/dishes/random') return ok(randomDishesMock(db, params));
+  if (method === 'GET' && path === '/dishes/recommend') return ok(recommendDishesMock(db, params));
+
   m = /^\/dishes\/([^/]+)$/.exec(path);
   if (m && method === 'GET') return ok(dishDetail(db, m[1]));
+
+  // —— 五期：饮食计划 ——
+  if (method === 'GET' && path === '/plans') return ok(listPlansMock(db, params, user));
+  if (method === 'POST' && path === '/plans') return ok(createPlanMock(db, data, user));
+
+  m = /^\/plans\/([^/]+)$/.exec(path);
+  if (m && method === 'GET') return ok(getPlanMock(db, m[1], user));
+  if (m && method === 'DELETE') return ok(deletePlanMock(db, m[1], user));
 
   if (method === 'POST' && path === '/teams') return ok(createTeam(db, data, user));
   if (method === 'POST' && path === '/teams/join') return ok(joinTeam(db, data, user));

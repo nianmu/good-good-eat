@@ -1,0 +1,33 @@
+<view class="page">
+  <scroll-view class="scroll-area" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="loading-tip" wx:if="{{loading}}">加载中…</view>
+
+    <block wx:if="{{!loading && plan}}">
+      <view class="detail-header">
+        <view class="detail-header__name">{{plan.name}}</view>
+        <view class="detail-header__meta" wx:if="{{plan.total_count}}">共 {{plan.total_count}} 份菜品</view>
+        <view class="detail-header__note" wx:if="{{plan.note}}">{{plan.note}}</view>
+      </view>
+
+      <view class="list">
+        <view class="list-title">菜品清单</view>
+        <view class="dish-item" wx:for="{{plan.items}}" wx:key="dish_id">
+          <view class="dish-item__emoji" wx:if="{{item.dish}}"
+            style="background-color:{{item.dish.color}}">{{item.dish.emoji}}</view>
+          <view class="dish-item__emoji dish-item__emoji--empty" wx:else>🍽</view>
+          <view class="dish-item__body">
+            <view class="dish-item__name">{{item.dish ? item.dish.name : '菜品已下架'}}</view>
+            <view class="dish-item__price" wx:if="{{item.dish}}">¥{{item.dish.price}}</view>
+          </view>
+          <text class="dish-item__qty">×{{item.quantity}}</text>
+        </view>
+      </view>
+    </block>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar" wx:if="{{!loading && plan}}">
+    <view class="btn btn--outline action-bar__delete" bindtap="onDelete">删除</view>
+    <view class="btn btn--primary action-bar__add" bindtap="onAddAll">一键加入购物车</view>
+  </view>
+</view>
