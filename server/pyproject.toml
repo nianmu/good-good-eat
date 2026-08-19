@@ -1,7 +1,7 @@
 [project]
 name = "good-good-eat-server"
 version = "0.1.0"
-description = "好大一颗菜 · 电子菜单小程序 后端服务"
+description = "好好吃饭 · 电子菜单小程序 后端服务"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

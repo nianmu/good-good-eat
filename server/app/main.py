@@ -1,4 +1,4 @@
-"""好大一颗菜 · 后端服务入口。
+"""好好吃饭 · 后端服务入口。
 
 - /healthz 健康检查（含 DB 连通）
 - M2.2–M2.4 模块路由挂载于 {settings.api_prefix}（见 api/v1/router.py）

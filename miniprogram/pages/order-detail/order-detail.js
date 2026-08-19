@@ -164,7 +164,7 @@ Page({
     const order = this.data.order;
     if (!order) return '';
     const lines = [];
-    lines.push('【好大一颗菜·取餐码】' + order.pickup_code);
+    lines.push('【好好吃饭·取餐码】' + order.pickup_code);
     lines.push('团队：' + (order.team_name || '—'));
     lines.push('点餐人：' + (order.user_nickname || '—'));
     lines.push('下单时间：' + (order.created_at || '—'));

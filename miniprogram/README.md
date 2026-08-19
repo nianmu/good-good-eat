@@ -1,4 +1,4 @@
-# 好大一颗菜 · 微信小程序（miniprogram/）
+# 好好吃饭 · 微信小程序（miniprogram/）
 
 原生四件套（WXML / WXSS / JS / JSON），**零 npm 依赖、无构建链**，微信开发者工具直接打开即可运行。
 

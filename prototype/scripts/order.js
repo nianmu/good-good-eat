@@ -148,7 +148,7 @@
   // 生成订单纯文本（发微信群用）
   function buildOrderText(order) {
     var lines = [];
-    lines.push('【好大一颗菜·取餐码】' + order.pickupCode);
+    lines.push('【好好吃饭·取餐码】' + order.pickupCode);
     lines.push('团队：' + (order.teamName || '—'));
     lines.push('点餐人：' + (order.userNickname || '—'));
     lines.push('下单时间：' + (order.createdAt || '—'));

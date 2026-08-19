@@ -15,7 +15,7 @@ const ws = require('../../utils/ws');
 
 Page({
   data: {
-    user: { avatar: '👤', nickname: '好大一颗菜' },
+    user: { avatar: '👤', nickname: '好好吃饭' },
     teams: [],
     currentTeamId: '',
     currentTeamName: '',

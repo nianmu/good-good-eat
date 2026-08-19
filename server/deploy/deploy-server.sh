@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 好大一颗菜 · 阿里云轻量服务器一键部署（Alibaba Cloud Linux / CentOS 系，dnf/yum）
+# 好好吃饭 · 阿里云轻量服务器一键部署（Alibaba Cloud Linux / CentOS 系，dnf/yum）
 # 用法：在服务器上以 root 运行
 #   curl 或 scp 到服务器后：bash deploy-server.sh <你的公网IP或前端直连域名>
 # 说明：按 IP 联调阶段直接 http://IP:8000；备案/HTTPS 通过后走 docs/03 的 nginx 模板加域名。

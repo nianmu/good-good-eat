@@ -1,4 +1,4 @@
-# 好大一颗菜 · systemd 服务（服务器端）
+# 好好吃饭 · systemd 服务（服务器端）
 # 放到 /etc/systemd/system/goodgoodeat.service 后：
 #   systemctl daemon-reload && systemctl enable --now goodgoodeat
 # 说明：uv 在服务器上需要用系统 PATH（非沙箱），正常安装 uv 即可。

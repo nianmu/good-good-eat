@@ -3,7 +3,7 @@
     bindrefresherrefresh="onRefresh" enhanced show-scrollbar="{{false}}">
     <!-- 顶部绿色主题区 -->
     <view class="profile-header">
-      <view class="profile-header__slogan">一日三餐，用好大一颗菜</view>
+      <view class="profile-header__slogan">只为好好吃饭</view>
       <view class="user-card">
         <view class="user-card__avatar">{{user.avatar}}</view>
         <view class="user-card__info">

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 好大一颗菜 · 小程序入口
+ * 好好吃饭 · 小程序入口
  * - globalData 与 utils/store 保持一致（store 为数据源，globalData 供快速读取）
  * - onLaunch：从本地存储恢复登录态；无 token 且非 mock 模式时自动走游客登录 POST /auth/guest
  *   （mock 模式下由 utils/mock.js 的数据层在首次鉴权请求时惰性完成游客登录）

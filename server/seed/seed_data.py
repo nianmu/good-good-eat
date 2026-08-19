@@ -1,4 +1,4 @@
-"""好大一颗菜 · 种子数据（M2.3）：6 分类 + 16 道菜。
+"""好好吃饭 · 种子数据（M2.3）：6 分类 + 16 道菜。
 
 数据源：prototype/scripts/data/categories.js 与 dishes.js（字段一一对应）。
 

@@ -9,7 +9,7 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# 好大一颗菜：使用 app 配置中的数据库 URL（.env 为准）
+# 好好吃饭：使用 app 配置中的数据库 URL（.env 为准）
 from app.core.config import get_settings  # noqa: E402
 from app.core.db import Base  # noqa: E402
 import app.models  # noqa: E402,F401  确保所有模型注册到 Base.metadata

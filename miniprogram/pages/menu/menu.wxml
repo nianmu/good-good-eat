@@ -4,8 +4,8 @@
     <view class="menu-header__user">
       <view class="menu-header__avatar">{{user.avatar}}</view>
       <view class="menu-header__info">
-        <view class="menu-header__name">{{user.nickname || '好大一颗菜'}}</view>
-        <view class="menu-header__slogan">一粥一饭皆是生活，一蔬一菜皆有温度。</view>
+        <view class="menu-header__name">{{user.nickname || '好好吃饭'}}</view>
+        <view class="menu-header__slogan">只为好好吃饭</view>
       </view>
     </view>
     <view class="menu-header__team" bindtap="onTeamTap">

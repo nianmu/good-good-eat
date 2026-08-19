@@ -1,4 +1,4 @@
-"""好大一颗菜 · 后端服务配置。
+"""好好吃饭 · 后端服务配置。
 
 环境变量以 .env 为准（不入库），详见 .env.example。
 """
@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    app_name: str = "好大一颗菜 · 后端服务"
+    app_name: str = "好好吃饭 · 后端服务"
     debug: bool = True
     api_prefix: str = "/api/v1"
 

@@ -28,7 +28,7 @@ const ROLE_LABELS = { organizer: '组织者', member: '成员' };
 
 Page({
   data: {
-    user: { avatar: '👤', nickname: '好大一颗菜', code: '' },
+    user: { avatar: '👤', nickname: '好好吃饭', code: '' },
     stats: { totalOrders: 0, totalDishes: 0, favoriteDishes: 0 },
     teams: [],
     features: [],
@@ -87,7 +87,7 @@ Page({
     this.setData({
       user: {
         avatar: user.avatar || '👤',
-        nickname: user.nickname || '好大一颗菜',
+        nickname: user.nickname || '好好吃饭',
         code: user.code || ''
       },
       stats: stats,
