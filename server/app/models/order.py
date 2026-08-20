@@ -48,7 +48,9 @@ class Order(Base):
 
 
 class OrderItem(Base):
-    """订单项：菜品快照（name/emoji/color/price），dish_id 可空。"""
+    """订单项：菜品快照（name/emoji/color/price），dish_id 可空。
+    user_id 记录该菜品的点餐人（团队多人点餐场景）。
+    """
 
     __tablename__ = "order_items"
     __table_args__ = {"mysql_charset": "utf8mb4"}
@@ -56,6 +58,7 @@ class OrderItem(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
     dish_id: Mapped[int | None] = mapped_column(ForeignKey("dishes.id"), nullable=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     emoji: Mapped[str] = mapped_column(String(16), nullable=False)
     color: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -64,3 +67,4 @@ class OrderItem(Base):
 
     order: Mapped[Order] = relationship(back_populates="items")
     dish: Mapped[Dish | None] = relationship()
+    item_user: Mapped[User | None] = relationship(foreign_keys=[user_id])

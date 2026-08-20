@@ -27,8 +27,9 @@ export function loadToken(): string {
   return token
 }
 
-/** 游客登录（联调走真实后端 /auth/guest） */
+/** 游客登录（联调走真实后端 /auth/guest）。已有有效 token 时跳过。 */
 export async function guestLogin(nickname?: string): Promise<any> {
+  if (token) return { token }  // 已有 token（含登录后），不覆盖
   const res = await request({ url: '/auth/guest', method: 'POST', data: { nickname }, auth: false })
   return saveAuth(res)
 }
@@ -44,13 +45,13 @@ function saveAuth(res: any): any {
 
 /** H5 用户名+密码 登录（后端 /auth/login） */
 export async function webLogin(username: string, password: string): Promise<any> {
-  const res = await request({ url: '/auth/login', method: 'POST', data: { username, password } })
+  const res = await request({ url: '/auth/login', method: 'POST', data: { username, password }, auth: false })
   return saveAuth(res)
 }
 
 /** H5 独立账号注册（后端 /auth/register；携带游客会话时自动绑定并升级） */
 export async function webRegister(username: string, password: string, nickname?: string): Promise<any> {
-  const res = await request({ url: '/auth/register', method: 'POST', data: { username, password, nickname } })
+  const res = await request({ url: '/auth/register', method: 'POST', data: { username, password, nickname }, auth: false })
   return saveAuth(res)
 }
 
@@ -82,7 +83,9 @@ export async function request<T = any>(opts: RequestOpts): Promise<T> {
       return body.data as T
     }
     if (res.statusCode === 401 && opts.auth !== false && !opts._retried) {
-      // token 失效 → 重新游客登录后重试一次
+      // token 失效 → 清除旧 token，重新游客登录后重试一次
+      token = ''
+      Taro.setStorageSync('ggc_token', '')
       await guestLogin()
       return request<T>({ ...opts, _retried: true })
     }

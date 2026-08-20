@@ -6,6 +6,7 @@ import { InputNumber, Button, Empty } from '@nutui/nutui-react-taro'
 import { auth, dishes as dishApi, teams as teamApi, orders as orderApi } from '../../api'
 import { store } from '../../store'
 import { TeamCartSocket } from '../../utils/team_ws'
+import { requireLogin } from '../../utils/auth'
 
 // 购物车/下单页——好好吃饭
 // 列表（qty 调整/删除）+ 团队选择 + 团队多人合计 + 提交下单 → order-detail
@@ -125,7 +126,6 @@ export default function CartPage() {
       }
     })
     ws.connect()
-    ws.send('join', {})
     wsRef.current = ws
     return () => ws.close()
   }, [teamId])
@@ -148,8 +148,12 @@ export default function CartPage() {
   }
 
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })
+  const goTeamList = () => Taro.navigateTo({ url: '/pages/team-list/index' })
+
+  const [teamDropdownVisible, setTeamDropdownVisible] = useState(false)
 
   const onSubmit = () => {
+    if (!requireLogin('下单需要登录')) return
     if (submitting) return
     if (!totalCount) {
       Taro.showToast({ title: '购物车是空的', icon: 'none' })
@@ -182,30 +186,83 @@ export default function CartPage() {
           <>
             <View style={{ margin: '12px', padding: '14px', background: '#fff', borderRadius: '10px' }}>
               <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Text style={{ fontSize: '14px', color: '#666' }}>下单团队</Text>
-                  {teams.length > 0 && (
-                    <Text onClick={() => Taro.navigateTo({ url: '/pages/team-list/index' })}
-                      style={{ fontSize: '12px', color: '#4CAF50', cursor: 'pointer', textDecoration: 'underline' }}>＋ 管理团队</Text>
-                  )}
-                </View>
-                <View style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {teams.length === 0 && (
-                    <View onClick={() => Taro.navigateTo({ url: '/pages/team-list/index' })}
-                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: '#E8F5E9', color: '#4CAF50', fontWeight: 500 }}>
-                      去创建/加入团队 ›
+                <Text style={{ fontSize: '14px', color: '#666' }}>下单团队</Text>
+
+                {/* 无团队 → 右上角新增按钮 */}
+                {teams.length === 0 && (
+                  <View onClick={goTeamList}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: '#E8F5E9', color: '#4CAF50', fontWeight: 600 }}>
+                    ＋ 新增团队
+                  </View>
+                )}
+
+                {/* 有团队 → 下拉选择器 */}
+                {teams.length > 0 && (
+                  <View style={{ position: 'relative' }}>
+                    <View
+                      onClick={() => setTeamDropdownVisible(!teamDropdownVisible)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '6px 14px', borderRadius: '10px', fontSize: '13px',
+                        cursor: 'pointer', background: '#F5F5F5', border: '1px solid #E0E0E0',
+                        minWidth: '120px', justifyContent: 'space-between',
+                      }}
+                    >
+                      <Text style={{ fontWeight: 600, color: '#333' }}>
+                        {teams.find((t: any) => String(t.id) === String(teamId))?.name || '选择团队'}
+                      </Text>
+                      <Text style={{ fontSize: '10px', color: '#999', transform: teamDropdownVisible ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</Text>
                     </View>
-                  )}
-                  {teams.map((t: any) => {
-                    const active = String(t.id) === String(teamId)
-                    return (
-                      <View key={t.id} onClick={() => onTeamSelect(String(t.id))}
-                        style={{ padding: '6px 12px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: active ? '#4CAF50' : '#eee', color: active ? '#fff' : '#333' }}>
-                        {t.name}
-                      </View>
-                    )
-                  })}
-                </View>
+
+                    {/* 下拉面板 */}
+                    {teamDropdownVisible && (
+                      <>
+                        {/* 遮罩 */}
+                        <View onClick={() => setTeamDropdownVisible(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} />
+                        <View style={{
+                          position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                          background: '#fff', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                          minWidth: '180px', zIndex: 100, overflow: 'hidden',
+                          border: '1px solid #E8E8E8',
+                        }}>
+                          {/* 团队列表 */}
+                          <View style={{ maxHeight: '200px', overflow: 'auto' }}>
+                            {teams.map((t: any) => {
+                              const active = String(t.id) === String(teamId)
+                              return (
+                                <View key={t.id}
+                                  onClick={() => { onTeamSelect(String(t.id)); setTeamDropdownVisible(false) }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '10px 14px', cursor: 'pointer',
+                                    background: active ? '#E8F5E9' : '#fff',
+                                    borderBottom: '1px solid #F5F5F5',
+                                  }}
+                                >
+                                  <Text style={{ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#4CAF50' : '#333' }}>
+                                    {t.name}
+                                  </Text>
+                                  {active && <Text style={{ color: '#4CAF50', fontSize: '14px' }}>✓</Text>}
+                                </View>
+                              )
+                            })}
+                          </View>
+                          {/* 底部固定新增团队按钮 */}
+                          <View
+                            onClick={() => { setTeamDropdownVisible(false); goTeamList() }}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                              padding: '10px 14px', cursor: 'pointer',
+                              borderTop: '1px solid #E8E8E8', background: '#FAFAFA',
+                            }}
+                          >
+                            <Text style={{ fontSize: '13px', color: '#4CAF50', fontWeight: 600 }}>＋ 新增团队</Text>
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                )}
               </View>
               {teamCart ? <View style={{ color: '#FF9800', fontSize: '12px', marginTop: '8px' }}>{teamCart}</View> : null}
             </View>

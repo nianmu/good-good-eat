@@ -6,10 +6,11 @@ from pydantic import BaseModel, Field
 
 
 class OrderItemIn(BaseModel):
-    """下单菜品项。"""
+    """下单菜品项。user_id 可选，团队多人点餐时标识每道菜的点餐人。"""
 
     dish_id: int
     quantity: int = Field(ge=1, le=999)
+    user_id: int | None = None
 
 
 class OrderCreateIn(BaseModel):

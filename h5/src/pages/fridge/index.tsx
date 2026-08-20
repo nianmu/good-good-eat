@@ -1,7 +1,7 @@
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
-import { Button, Empty, Skeleton, Tag } from '@nutui/nutui-react-taro'
+import { Button, Empty, Skeleton, Tag, Input } from '@nutui/nutui-react-taro'
 import { fridge } from '../../api'
 
 //
@@ -50,8 +50,8 @@ export default function FridgePage() {
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', padding: '12px' }}>
       {/* 添加食材 */}
       <View style={{ display: 'flex', gap: '8px', background: '#fff', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
-        <Input value={addName} onInput={(e) => setAddName(e.detail.value)} placeholder="食材名称（如：五花肉）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
-        <Input value={addQuantity} onInput={(e) => setAddQuantity(e.detail.value)} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="食材名称（如：五花肉）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
         <Button size="small" type="primary" onClick={onAdd} style={{ height: '40px', flexShrink: 0 }}>＋</Button>
       </View>
 

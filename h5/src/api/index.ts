@@ -3,13 +3,15 @@
  * 与原生小程序共用同一套 /api/v1 REST 契约。
  * 用法：api.categories() / api.dishes() ...
  */
-import { request, guestLogin, webLogin, webRegister, setToken, loadToken } from './request'
+import { request, guestLogin, webLogin, webRegister, setToken, loadToken, logout } from './request'
 
 export const auth = {
   guest: (nickname?: string) => guestLogin(nickname),
   me: () => request({ url: '/me' }),
   login: (username: string, password: string) => webLogin(username, password),
   register: (username: string, password: string, nickname?: string) => webRegister(username, password, nickname),
+  wxLogin: (code: string) => request({ url: '/auth/wx-login', method: 'POST', data: { code }, auth: false }),
+  updateProfile: (data: { nickname: string }) => request({ url: '/me', method: 'PUT', data }),
   logout,
   token: loadToken
 }

@@ -11,6 +11,7 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { Button, Empty, Input, Skeleton } from '@nutui/nutui-react-taro'
 import { teams, guestLogin } from '../../api'
+import { requireLogin } from '../../utils/auth'
 
 const TEAM_ICONS = ['🏠', '🍽', '🎓']
 const ROLE_LABELS: Record<string, string> = { organizer: '组织者', member: '成员' }
@@ -62,6 +63,7 @@ export default function TeamListPage() {
   })
 
   async function onCreate() {
+    if (!requireLogin('创建团队需要登录')) return
     if (submitting) return
     const name = (createName || '').trim()
     if (!name) {
@@ -82,6 +84,7 @@ export default function TeamListPage() {
   }
 
   async function onJoin() {
+    if (!requireLogin('加入团队需要登录')) return
     if (submitting) return
     const code = (joinCode || '').trim()
     if (!code) {

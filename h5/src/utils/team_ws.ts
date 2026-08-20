@@ -23,27 +23,39 @@ export class TeamCartSocket {
 
   constructor(private teamId: string | number, private token: string) {}
 
-  connect() {
+  /** 连接并在 onOpen 后自动发送 join；返回 Promise 供外部 await */
+  connect(): Promise<void> {
     const url = `${wsBase()}/ws/team/${this.teamId}?token=${encodeURIComponent(this.token)}`
-    this.task = Taro.connectSocket({ url })
-    this.task.onOpen(() => {
-      this.connected = true
-      this.listeners.forEach((l) => l({ event: 'open' }))
-      this.task.onMessage((res: any) => {
-        const raw = typeof res === 'string' ? res : res?.data
-        try {
-          const msg: TeamCartEvent = JSON.parse(raw)
-          this.listeners.forEach((l) => l(msg))
-        } catch {
-          /* 忽略非 JSON（心跳等） */
-        }
-      })
-      this.task.onClose(() => {
+    return new Promise((resolve) => {
+      Taro.connectSocket({ url }).then((task) => {
+        this.task = task
+        task.onOpen(() => {
+          this.connected = true
+          // 自动 join
+          this.send('join', {})
+          this.listeners.forEach((l) => l({ event: 'open' }))
+          resolve()
+        })
+        task.onMessage((res: any) => {
+          const raw = typeof res === 'string' ? res : res?.data
+          try {
+            const msg: TeamCartEvent = JSON.parse(raw)
+            this.listeners.forEach((l) => l(msg))
+          } catch {
+            /* 忽略非 JSON（心跳等） */
+          }
+        })
+        task.onClose(() => {
+          this.connected = false
+          this.listeners.forEach((l) => l({ event: 'close' }))
+        })
+        task.onError(() => {
+          this.connected = false
+          resolve()
+        })
+      }).catch(() => {
         this.connected = false
-        this.listeners.forEach((l) => l({ event: 'close' }))
-      })
-      this.task.onError(() => {
-        this.connected = false
+        resolve()
       })
     })
   }

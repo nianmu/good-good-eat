@@ -1,7 +1,7 @@
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
-import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
+import { Button, Empty, Skeleton, Input } from '@nutui/nutui-react-taro'
 import { basket } from '../../api'
 
 //
@@ -46,8 +46,8 @@ export default function BasketPage() {
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', padding: '12px' }}>
       {/* 添加待购 */}
       <View style={{ display: 'flex', gap: '8px', background: '#fff', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
-        <Input value={addName} onInput={(e) => setAddName(e.detail.value)} placeholder="待购物品（如：鸡蛋）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
-        <Input value={addQuantity} onInput={(e) => setAddQuantity(e.detail.value)} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="待购物品（如：鸡蛋）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
         <Button size="small" type="primary" onClick={onAdd} style={{ height: '40px', flexShrink: 0 }}>＋</Button>
       </View>
 

@@ -19,7 +19,7 @@ from app.core.exceptions import ApiError
 from app.core.responses import ok
 from app.core.security import create_access_token, get_current_user, get_optional_user
 from app.models.user import Team, TeamMember, User
-from app.schemas.auth import GuestLoginIn, WebLoginIn, WebRegisterIn, WxLoginIn
+from app.schemas.auth import GuestLoginIn, ProfileUpdateIn, WebLoginIn, WebRegisterIn, WxLoginIn
 from app.schemas.serializers import user_to_dict
 from app.services import auth_service
 
@@ -98,6 +98,29 @@ def web_login(body: WebLoginIn, db: Session = Depends(get_db)) -> dict:
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     """当前用户信息 + 团队列表（含角色/成员数/厨师昵称）。"""
+    return _build_me_response(db, current_user)
+
+
+@router.put("/me")
+def update_me(
+    body: ProfileUpdateIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """修改个人信息（当前仅支持昵称）。"""
+    nickname = (body.nickname or "").strip()
+    if not nickname:
+        raise ApiError(400, 40000, "昵称不能为空")
+    if len(nickname) > 64:
+        raise ApiError(400, 40000, "昵称最长 64 个字符")
+    current_user.nickname = nickname
+    db.commit()
+    db.refresh(current_user)
+    return _build_me_response(db, current_user)
+
+
+def _build_me_response(db: Session, current_user: User) -> dict:
+    """构建 /me 响应（GET 和 PUT 共用）。"""
     memberships = db.scalars(
         select(TeamMember)
         .where(TeamMember.user_id == current_user.id)

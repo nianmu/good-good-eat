@@ -5,6 +5,7 @@ import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
 
 import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi } from '../../api'
 import { store } from '../../store'
+import { requireLogin } from '../../utils/auth'
 
 // 菜谱主页——好好吃饭（跨端 H5）
 // 分类 + 搜索 + 菜品（emoji 色块/评分/价格/加购）+ 收藏 + 随机点菜 + 惊喜推荐 + 今天吃什么弹层
@@ -232,6 +233,7 @@ export default function MenuPage() {
       Taro.showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
       return
     }
+    if (!requireLogin('下单需要登录')) return
     Taro.navigateTo({ url: '/pages/cart/index' })
   }
 

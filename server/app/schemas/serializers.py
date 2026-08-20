@@ -113,6 +113,9 @@ def basket_item_to_dict(item: BasketItem) -> dict:
 def order_item_to_dict(item: OrderItem) -> dict:
     return {
         "dish_id": item.dish_id,
+        "user_id": item.user_id,
+        "user_nickname": item.item_user.nickname if item.item_user else None,
+        "user_avatar": item.item_user.avatar if item.item_user else None,
         "name": item.name,
         "emoji": item.emoji,
         "color": item.color,
@@ -164,14 +167,34 @@ def plan_to_dict(plan: Plan, include_items: bool = False) -> dict:
 
 
 def order_to_dict(order: Order, include_items: bool = True, with_user: bool = False) -> dict:
+    team = order.team
+    team_chef_id = team.chef_id if team else None
+    team_chef_nickname = team.chef.nickname if team and team.chef else None
+
+    # 有效厨师：优先 order.chef_id（认领人），其次 team.chef_id（固定厨师）
+    effective_chef_id = order.chef_id if order.chef_id is not None else team_chef_id
+    effective_chef_name: str | None = None
+    if order.chef_id is not None and order.chef is not None:
+        effective_chef_name = order.chef.nickname
+    elif team_chef_nickname:
+        effective_chef_name = team_chef_nickname
+
     data: dict[str, Any] = {
         "id": order.id,
         "order_no": order.order_no,
         "pickup_code": order.pickup_code,
         "status": order.status,
         "team_id": order.team_id,
-        "team_name": order.team.name if order.team else None,
+        "team_name": team.name if team else None,
+        "user_id": order.user_id,
+        "user_nickname": order.user.nickname if order.user else None,
+        "user_avatar": order.user.avatar if order.user else None,
         "chef_id": order.chef_id,
+        "chef_nickname": order.chef.nickname if order.chef else None,
+        "team_chef_id": team_chef_id,
+        "team_chef_nickname": team_chef_nickname,
+        "effective_chef_id": effective_chef_id,
+        "effective_chef_name": effective_chef_name,
         "total_amount": float(order.total_amount),
         "total_count": order.total_count,
         "pickup_date": order.pickup_date.isoformat() if order.pickup_date else None,

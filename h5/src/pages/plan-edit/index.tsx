@@ -1,7 +1,7 @@
-import { View, Text, ScrollView, Input } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { useState } from 'react'
-import { Button } from '@nutui/nutui-react-taro'
+import { Button, Input } from '@nutui/nutui-react-taro'
 import { categories, dishes, plans } from '../../api'
 
 //
@@ -88,11 +88,11 @@ export default function PlanEditPage() {
       <View style={{ background: '#fff', padding: '4px 16px 12px', marginBottom: '12px' }}>
         <Text style={label}>名称</Text>
         <View style={{ width: '100%' }}>
-          <Input value={name} placeholder="如：一周家庭菜谱" onInput={(e: any) => setName(e.detail.value)} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
+          <Input value={name} placeholder="如：一周家庭菜谱" onChange={(v) => setName(String(v || ''))} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
         </View>
         <Text style={label}>备注</Text>
         <View style={{ width: '100%' }}>
-          <Input value={note} placeholder="可选，如：荤素搭配" onInput={(e: any) => setNote(e.detail.value)} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
+          <Input value={note} placeholder="可选，如：荤素搭配" onChange={(v) => setNote(String(v || ''))} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
         </View>
         {recommendReason && <View style={{ fontSize: '13px', color: '#FF9800', marginTop: '10px' }}>🤔 {recommendReason}</View>}
       </View>

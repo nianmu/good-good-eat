@@ -30,3 +30,9 @@ class WebLoginIn(BaseModel):
 
     username: str = Field(min_length=1, max_length=32)
     password: str = Field(min_length=1, max_length=64)
+
+
+class ProfileUpdateIn(BaseModel):
+    """个人信息修改（当前仅支持昵称）。"""
+
+    nickname: str = Field(min_length=1, max_length=64)

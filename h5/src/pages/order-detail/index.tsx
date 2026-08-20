@@ -6,17 +6,23 @@ import { Button } from '@nutui/nutui-react-taro'
 import { orders as orderApi } from '../../api'
 
 // 订单详情页——好好吃饭
-// 绿色取餐码大字 + 五步状态 + 信息行 + 菜品清单 + 合计 + 主按钮推进 + 复制
+// 取餐码 + 步骤条 + 信息行 + 菜品清单 + 角色感知按钮
+//
+// 权限矩阵：
+//   pending  → 下单人「发送给厨师」/ 厨师「接单」/ 成员「认领做菜」
+//   accepted → 厨师「开始制作」
+//   cooking  → 厨师「完成制作」
+//   ready    → 厨师「上菜」/ 下单人「确认取餐」
+//   completed → 「再次点菜」
+//
+// 「发送给厨师」3 种情况：
+//   ① 无固定厨师 & 无人认领 → 提示先固定厨师或认领
+//   ② 有固定厨师（无人认领）→ 确认发送给固定厨师
+//   ③ 有固定厨师 & 有人认领 → 显示两人都可操作
+
 const FLOW = ['pending', 'accepted', 'cooking', 'ready', 'completed']
 const LABELS: Record<string, string> = {
   pending: '待接单', accepted: '已接单', cooking: '制作中', ready: '待取餐', completed: '已完成'
-}
-const ACTIONS: Record<string, { label: string; toast: string }> = {
-  pending: { label: '发送给厨师', toast: '已发送给厨师，等待接单' },
-  accepted: { label: '开始制作', toast: '已开始制作' },
-  cooking: { label: '完成制作', toast: '已完成制作，可凭码取餐' },
-  ready: { label: '确认取餐', toast: '取餐成功，祝用餐愉快！' },
-  completed: { label: '再次点菜', toast: '' }
 }
 const STATUS_TEXT: Record<string, string> = {
   pending: '待接单', accepted: '已接单', cooking: '制作中', ready: '待取餐', completed: '已完成'
@@ -27,8 +33,7 @@ export default function OrderDetailPage() {
   const orderId = (router.params as any)?.id
   const [order, setOrder] = useState<any>(null)
   const [steps, setSteps] = useState<any[]>([])
-  const [actionLabel, setActionLabel] = useState('再次点菜')
-  const [canClaim, setCanClaim] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -55,8 +60,9 @@ export default function OrderDetailPage() {
       .then((o: any) => {
         setOrder(o)
         setSteps(buildSteps(o.status))
-        setActionLabel((ACTIONS[o.status] || {}).label || '再次点菜')
-        setCanClaim(o.status === 'pending' && !o.chef_id)
+        // 从本地存储获取当前用户 id
+        const user = Taro.getStorageSync('ggc_user')
+        setCurrentUserId(user?.id || 0)
       })
       .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
@@ -64,32 +70,77 @@ export default function OrderDetailPage() {
 
   useLoad(() => loadOrder())
 
-  const onPrimary = () => {
+  // 判断当前用户角色
+  const isOwner = order && currentUserId === order.user_id  // 下单人
+  const isOrderChef = order && order.chef_id && currentUserId === order.chef_id  // 认领/接单的厨师
+  const isTeamChef = order && order.team_chef_id && currentUserId === order.team_chef_id  // 团队固定厨师
+  const isChef = isOrderChef || isTeamChef  // 有效厨师
+  const effectiveChefId = order?.effective_chef_id  // 有效厨师 id（认领人优先，其次固定厨师）
+
+  // ===== 「发送给厨师」逻辑（pending 状态，下单人视角）=====
+  const onSendToChef = () => {
     if (submitting || !order) return
-    const id = order.id
-    const status: string = order.status
-    if (status === 'completed') {
-      Taro.switchTab({ url: '/pages/menu/index' })
+
+    const teamChefId = order.team_chef_id
+    const orderChefId = order.chef_id
+    const teamChefName = order.team_chef_nickname
+    const orderChefName = order.chef_nickname
+
+    // 情况①：无固定厨师 & 无人认领
+    if (!teamChefId && !orderChefId) {
+      Taro.showModal({
+        title: '暂无厨师',
+        content: '当前团队没有固定厨师，且无人认领做菜。\n\n请先在团队中指定厨师，或让成员认领做菜后再发送。',
+        confirmText: '去团队',
+        cancelText: '知道了',
+        success(res) {
+          if (res.confirm) {
+            Taro.navigateTo({ url: `/pages/team-detail/index?id=${order.team_id}` })
+          }
+        }
+      })
       return
     }
-    const action = ACTIONS[status] || {}
-    let p: Promise<any> | null = null
-    if (status === 'pending') p = orderApi.accept(id)
-    else if (status === 'accepted') p = orderApi.status(id, 'cooking')
-    else if (status === 'cooking') p = orderApi.status(id, 'ready')
-    else if (status === 'ready') p = orderApi.status(id, 'completed')
-    if (!p) return
-    setSubmitting(true)
-    p.then(() => {
-      Taro.showToast({ title: action.toast || '已更新', icon: 'none' })
-      setSubmitting(false)
-      loadOrder()
-    }).catch((e: any) => {
-      Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
-      setSubmitting(false)
+
+    // 情况③：有固定厨师 & 有人认领（且不是同一人）
+    if (teamChefId && orderChefId && teamChefId !== orderChefId) {
+      Taro.showModal({
+        title: '确认发送',
+        content: `当前厨师：\n🏠 固定厨师：${teamChefName || '未知'}\n👨‍🍳 认领人：${orderChefName || '未知'}\n\n确定发送订单？`,
+        success(res) {
+          if (res.confirm) doSendToChef()
+        }
+      })
+      return
+    }
+
+    // 情况②：有固定厨师（无人认领，或认领人=固定厨师）
+    const chefName = orderChefName || teamChefName || '未知'
+    Taro.showModal({
+      title: '确认发送',
+      content: `当前厨师为「${chefName}」，确定发送订单？`,
+      success(res) {
+        if (res.confirm) doSendToChef()
+      }
     })
   }
 
+  const doSendToChef = () => {
+    if (!order) return
+    setSubmitting(true)
+    orderApi.accept(order.id)
+      .then(() => {
+        Taro.showToast({ title: '已发送，等待厨师接单', icon: 'none' })
+        setSubmitting(false)
+        loadOrder()
+      })
+      .catch((e: any) => {
+        Taro.showToast({ title: (e as any)?.message || '发送失败', icon: 'none' })
+        setSubmitting(false)
+      })
+  }
+
+  // ===== 认领做菜 =====
   const onClaim = () => {
     if (submitting || !order) return
     setSubmitting(true)
@@ -103,6 +154,177 @@ export default function OrderDetailPage() {
         Taro.showToast({ title: (e as any)?.message || '认领失败', icon: 'none' })
         setSubmitting(false)
       })
+  }
+
+  // ===== 厨师推进状态（accepted→cooking→ready→completed）=====
+  const onChefProgress = (target: string, toast: string) => {
+    if (submitting || !order) return
+    setSubmitting(true)
+    orderApi.status(order.id, target)
+      .then(() => {
+        Taro.showToast({ title: toast, icon: 'none' })
+        setSubmitting(false)
+        loadOrder()
+      })
+      .catch((e: any) => {
+        Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
+        setSubmitting(false)
+      })
+  }
+
+  // ===== 下单人确认取餐（ready→completed）=====
+  const onConfirmPickup = () => {
+    if (submitting || !order) return
+    setSubmitting(true)
+    orderApi.status(order.id, 'completed')
+      .then(() => {
+        Taro.showToast({ title: '取餐成功，祝用餐愉快！', icon: 'none' })
+        setSubmitting(false)
+        loadOrder()
+      })
+      .catch((e: any) => {
+        Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
+        setSubmitting(false)
+      })
+  }
+
+  // ===== 构建底部按钮 =====
+  const renderActions = () => {
+    if (!order) return null
+    const status: string = order.status
+
+    // 已完成：再次点菜
+    if (status === 'completed') {
+      return (
+        <Button type="primary" size="small" style={{ flex: 1, fontSize: '13px' }}
+          onClick={() => Taro.switchTab({ url: '/pages/menu/index' })}>
+          🍽 再次点菜
+        </Button>
+      )
+    }
+
+    const buttons: JSX.Element[] = []
+
+    // 认领按钮：pending 状态 & 无固定厨师 & 当前用户不是下单人 & 当前用户未认领
+    if (status === 'pending' && !order.team_chef_id && !isOwner && !isOrderChef) {
+      buttons.push(
+        <Button key="claim" fill="outline" size="small"
+          style={{ fontSize: '13px', color: '#FF9800' }}
+          disabled={submitting} onClick={onClaim}>
+          👨‍🍳 认领做菜
+        </Button>
+      )
+    }
+
+    // pending 状态：下单人看「发送给厨师」，厨师看「接单」
+    if (status === 'pending') {
+      if (isOwner && !isChef) {
+        // 下单人（非厨师）：发送给厨师
+        buttons.push(
+          <Button key="send" type="primary" size="small"
+            style={{ flex: 1.5, fontSize: '13px' }}
+            loading={submitting} onClick={onSendToChef}>
+            📤 发送给厨师
+          </Button>
+        )
+      } else if (isChef) {
+        // 厨师：接单
+        buttons.push(
+          <Button key="accept" type="primary" size="small"
+            style={{ flex: 1.5, fontSize: '13px' }}
+            loading={submitting} onClick={doSendToChef}>
+            ✅ 接单
+          </Button>
+        )
+      } else {
+        // 非下单人非厨师：等待中
+        buttons.push(
+          <Button key="wait" size="small" disabled
+            style={{ flex: 1.5, fontSize: '13px' }}>
+            ⏳ 等待厨师接单
+          </Button>
+        )
+      }
+    }
+
+    // accepted / cooking：只有厨师能推进
+    if (status === 'accepted' && isChef) {
+      buttons.push(
+        <Button key="cook" type="primary" size="small"
+          style={{ flex: 1.5, fontSize: '13px' }}
+          loading={submitting}
+          onClick={() => onChefProgress('cooking', '已开始制作')}>
+          🔥 开始制作
+        </Button>
+      )
+    }
+    if (status === 'accepted' && !isChef) {
+      buttons.push(
+        <Button key="wait" size="small" disabled
+          style={{ flex: 1.5, fontSize: '13px' }}>
+          ⏳ 厨师准备中
+        </Button>
+      )
+    }
+
+    if (status === 'cooking' && isChef) {
+      buttons.push(
+        <Button key="done" type="primary" size="small"
+          style={{ flex: 1.5, fontSize: '13px' }}
+          loading={submitting}
+          onClick={() => onChefProgress('ready', '已完成制作，可以上菜了')}>
+          ✅ 完成制作
+        </Button>
+      )
+    }
+    if (status === 'cooking' && !isChef) {
+      buttons.push(
+        <Button key="wait" size="small" disabled
+          style={{ flex: 1.5, fontSize: '13px' }}>
+          🔥 制作中…
+        </Button>
+      )
+    }
+
+    // ready：厨师「上菜」，下单人「确认取餐」
+    if (status === 'ready' && isChef) {
+      buttons.push(
+        <Button key="serve" type="primary" size="small"
+          style={{ flex: 1.5, fontSize: '13px' }}
+          loading={submitting}
+          onClick={() => onChefProgress('completed', '上菜成功！')}>
+          🍽 上菜
+        </Button>
+      )
+    }
+    if (status === 'ready' && isOwner && !isChef) {
+      buttons.push(
+        <Button key="pickup" type="primary" size="small"
+          style={{ flex: 1.5, fontSize: '13px' }}
+          loading={submitting} onClick={onConfirmPickup}>
+          ✅ 确认取餐
+        </Button>
+      )
+    }
+    if (status === 'ready' && !isChef && !isOwner) {
+      buttons.push(
+        <Button key="wait" size="small" disabled
+          style={{ flex: 1.5, fontSize: '13px' }}>
+          🍽 待取餐
+        </Button>
+      )
+    }
+
+    // 复制按钮始终显示
+    buttons.push(
+      <Button key="copy" fill="none" size="small"
+        style={{ flex: 1, fontSize: '13px', background: '#F5F5F5' }}
+        disabled={submitting} onClick={onCopy}>
+        📋 复制
+      </Button>
+    )
+
+    return buttons
   }
 
   const buildOrderText = () => {
@@ -146,6 +368,16 @@ export default function OrderDetailPage() {
 
   const items = order.items || []
 
+  // 厨师信息展示
+  const chefDisplay = (() => {
+    const names: string[] = []
+    if (order.team_chef_nickname) names.push(`🏠 ${order.team_chef_nickname}`)
+    if (order.chef_nickname && order.chef_id !== order.team_chef_id) {
+      names.push(`👨‍🍳 ${order.chef_nickname}`)
+    }
+    return names.length > 0 ? names.join('、') : '待认领'
+  })()
+
   return (
     <View className="ggc-page" style={{ position: 'relative' }}>
       <View style={{ flex: 1, overflow: 'auto', paddingBottom: '12px' }}>
@@ -186,9 +418,10 @@ export default function OrderDetailPage() {
           {[
             ['点餐团队', order.team_name || '—'],
             ['点餐人', (order.user_avatar || '👤') + ' ' + (order.user_nickname || '—')],
+            ['厨师', chefDisplay],
             ['下单时间', order.created_at || '—']
-          ].map(([k, v], i) => (
-            <View key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < 2 ? '1px solid #f0f0f0' : 'none' }}>
+          ].map(([k, v], i, arr) => (
+            <View key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
               <Text style={{ color: '#666', fontSize: '14px' }}>{k}</Text>
               <Text style={{ fontSize: '14px', color: '#333' }}>{v}</Text>
             </View>
@@ -208,7 +441,14 @@ export default function OrderDetailPage() {
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontSize: '15px', fontWeight: 500, display: 'block' }}>{it.name}</Text>
-                <Text style={{ color: '#999', fontSize: '12px' }}>单价 ¥{fmt(it.price)}</Text>
+                <View style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                  <Text style={{ color: '#999', fontSize: '12px' }}>单价 ¥{fmt(it.price)}</Text>
+                  {it.user_nickname && (
+                    <Text style={{ color: '#4CAF50', fontSize: '11px', background: '#E8F5E9', padding: '1px 6px', borderRadius: '999px' }}>
+                      {(it.user_avatar || '👤') + ' ' + it.user_nickname}
+                    </Text>
+                  )}
+                </View>
               </View>
               <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                 <Text style={{ fontSize: '13px', color: '#666' }}>×{it.quantity}</Text>
@@ -225,17 +465,7 @@ export default function OrderDetailPage() {
 
       {/* 底部操作栏 */}
       <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
-        {canClaim && (
-          <Button fill="outline" size="small" style={{ flex: 1, fontSize: '13px', color: '#FF9800' }} disabled={submitting} onClick={onClaim}>
-            👨‍🍳 认领做菜
-          </Button>
-        )}
-        <Button fill="none" size="small" style={{ flex: 1, fontSize: '13px', background: '#F5F5F5' }} disabled={submitting} onClick={onCopy}>
-          📋 复制订单信息
-        </Button>
-        <Button type="primary" size="small" style={{ flex: 1.5, fontSize: '13px' }} loading={submitting} onClick={onPrimary}>
-          {submitting ? '处理中…' : actionLabel}
-        </Button>
+        {renderActions()}
       </View>
     </View>
   )

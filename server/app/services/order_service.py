@@ -69,9 +69,11 @@ def create_order(db: Session, user: User, team_id: int, items: list[OrderItemIn]
     total_count = 0
     for it in items:
         dish = dish_map[it.dish_id]
+        item_user_id = getattr(it, 'user_id', None) or user.id
         order.items.append(
             OrderItem(
                 dish_id=dish.id,
+                user_id=item_user_id,
                 name=dish.name,
                 emoji=dish.emoji,
                 color=dish.color,
@@ -103,8 +105,24 @@ ORDER_STATUS_FLOW: dict[str, set[str]] = {
 }
 
 
+def _resolve_chef_id(order: Order) -> int | None:
+    """订单当前厨师：优先 order.chef_id（认领人），其次 team.chef_id（固定厨师）。"""
+    if order.chef_id is not None:
+        return order.chef_id
+    team = order.team
+    if team is not None and team.chef_id is not None:
+        return team.chef_id
+    return None
+
+
 def transition_order_status(db: Session, order: Order, target: str, actor: User) -> Order:
-    """单向状态流转；非法转移抛 40003。流转到 completed 且无厨师时记录 actor。"""
+    """单向状态流转；非法转移抛 40003。
+
+    权限规则：
+    - accepted / cooking / ready：只有当前订单厨师（order.chef_id 或 team.chef_id）能操作。
+    - completed：厨师或下单人都能操作（下单人"确认取餐"）。
+    - 无厨师时拒绝流转（40305）。
+    """
     all_statuses = set(ORDER_STATUS_FLOW) | {s for vals in ORDER_STATUS_FLOW.values() for s in vals}
     if target not in all_statuses:
         raise ApiError(400, 40003, f"未知订单状态：{target}")
@@ -112,6 +130,19 @@ def transition_order_status(db: Session, order: Order, target: str, actor: User)
         raise ApiError(400, 40003, f"订单已处于 {target} 状态")
     if target not in ORDER_STATUS_FLOW.get(order.status, set()):
         raise ApiError(400, 40003, f"订单状态不能从 {order.status} 流转到 {target}")
+
+    chef_id = _resolve_chef_id(order)
+
+    if target == "completed":
+        # completed：厨师或下单人都能操作
+        if chef_id is not None and actor.id != chef_id and actor.id != order.user_id:
+            raise ApiError(403, 40305, "只有订单厨师或下单人可以确认取餐")
+    else:
+        # accepted / cooking / ready：只有厨师能操作
+        if chef_id is None:
+            raise ApiError(403, 40305, "当前订单没有厨师，请先指定厨师或认领做菜")
+        if actor.id != chef_id:
+            raise ApiError(403, 40305, "只有订单厨师可以操作状态流转")
 
     order.status = target
     if target == "completed" and order.chef_id is None:

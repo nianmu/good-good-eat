@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useLaunch } from '@tarojs/taro'
+import Taro from '@tarojs/taro'
 
 import '@nutui/nutui-react-taro/dist/style.css'
 import './app.scss'
@@ -8,17 +9,17 @@ import { auth } from './api'
 function App({ children }: PropsWithChildren<any>) {
   useLaunch(() => {
     console.log('App launched.')
-    // 游客模式：启动时自动获取一个匿名身份，保证「无登录浏览与下单」。
-    // 失败不阻塞应用（后端未就绪时静默降级）。
-    if (!auth.token()) {
-      auth.guest().catch(() => {})
+    // 已有 token 且非 welcome 页 → 刷新用户信息（静默，失败不阻塞）
+    // 无 token → 保持在 welcome 页，由用户主动选择登录方式
+    if (auth.token()) {
+      auth.me().then((res: any) => {
+        if (res?.user) Taro.setStorageSync('ggc_user', res.user)
+      }).catch(() => {})
     }
   })
 
   // children 是将要会渲染的页面
   return children
 }
-  
-
 
 export default App

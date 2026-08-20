@@ -1,7 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { useState } from 'react'
-import { Button, Empty, Tag } from '@nutui/nutui-react-taro'
+import { Button, Empty, Tag, Dialog, Input } from '@nutui/nutui-react-taro'
 import { auth } from '../../api'
 
 //
@@ -28,6 +28,9 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<any>({ totalOrders: 0, totalDishes: 0, favoriteDishes: 0 })
   const [teams, setTeams] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [editNicknameVisible, setEditNicknameVisible] = useState(false)
+  const [editNicknameValue, setEditNicknameValue] = useState('')
+  const [editNicknameLoading, setEditNicknameLoading] = useState(false)
 
   const applyUser = (u: any) => {
     const teamList = (u.teams || []).map((t: any, idx: number) => ({
@@ -69,6 +72,34 @@ export default function ProfilePage() {
   const goTeam = (id: any) => Taro.navigateTo({ url: `/pages/team-detail/index?id=${id}` })
   const goManageTeams = () => Taro.navigateTo({ url: '/pages/team-list/index' })
 
+  // 昵称编辑
+  const openEditNickname = () => {
+    setEditNicknameValue(user.nickname || '')
+    setEditNicknameVisible(true)
+  }
+  const onSaveNickname = async () => {
+    const name = editNicknameValue.trim()
+    if (!name) {
+      Taro.showToast({ title: '昵称不能为空', icon: 'none' })
+      return
+    }
+    if (editNicknameLoading) return
+    setEditNicknameLoading(true)
+    try {
+      const res: any = await auth.updateProfile({ nickname: name })
+      if (res?.user) {
+        Taro.setStorageSync('ggc_user', res.user)
+        applyUser(res.user)
+      }
+      setEditNicknameVisible(false)
+      Taro.showToast({ title: '修改成功', icon: 'success' })
+    } catch (e: any) {
+      Taro.showToast({ title: e?.message || '修改失败', icon: 'none' })
+    } finally {
+      setEditNicknameLoading(false)
+    }
+  }
+
   const onFeature = (f: any) => {
     if (f.url) Taro.navigateTo({ url: f.url })
     else Taro.showToast({ title: `「${f.name}」开发中，敬请期待`, icon: 'none' })
@@ -85,7 +116,15 @@ export default function ProfilePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px'
           }}>{user.avatar}</View>
           <View style={{ marginLeft: '14px', flex: 1 }}>
-            <View style={{ fontSize: '20px', fontWeight: 'bold' }}>{user.nickname}</View>
+            <View style={{ fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {user.nickname}
+              {!user.isGuest && (
+                <Text
+                  style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
+                  onClick={openEditNickname}
+                >✏️</Text>
+              )}
+            </View>
             <View style={{ fontSize: '13px', opacity: 0.85, marginTop: '4px' }}>
               标识码 {user.code || '—'} · {user.isGuest ? <Text style={{ color: '#FFEB3B' }}>游客</Text> : '已登录'}
             </View>
@@ -166,6 +205,27 @@ export default function ProfilePage() {
           ))}
         </View>
       </View>
+
+      {/* 昵称编辑弹窗 */}
+      <Dialog
+        title="修改昵称"
+        visible={editNicknameVisible}
+        onConfirm={onSaveNickname}
+        onCancel={() => setEditNicknameVisible(false)}
+        confirmText={editNicknameLoading ? '保存中…' : '保存'}
+        cancelText="取消"
+      >
+        <View style={{ padding: '8px 0' }}>
+          <Input
+            type="text"
+            placeholder="输入新昵称"
+            value={editNicknameValue}
+            onChange={(v) => setEditNicknameValue(String(v || ''))}
+            maxLength={64}
+            style={{ background: '#F8F9FA', borderRadius: '8px', padding: '0 12px' }}
+          />
+        </View>
+      </Dialog>
 
       {/* 底部声明 */}
       <View style={{ padding: '20px 20px 40px', textAlign: 'center' }}>

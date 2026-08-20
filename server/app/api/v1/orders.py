@@ -95,10 +95,19 @@ def get_order(order_id: int, user: User = Depends(get_current_user), db: Session
 
 @router.post("/orders/{order_id}/accept")
 def accept_order(order_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
-    """厨师接单：pending → accepted；仅团队成员；接单者记为 chef。"""
+    """厨师接单：pending → accepted。
+
+    权限：团队有固定厨师时，只有固定厨师能接单（40305）；
+    无固定厨师时，团队成员均可接单（接单者记为 chef）。
+    """
     order = _get_order_for_user(db, order_id, user)
     if order.status != "pending":
         raise ApiError(400, 40003, "当前状态不可接单")
+    team = order.team
+    if team is not None and team.chef_id is not None:
+        # 团队有固定厨师：只有固定厨师能接单
+        if user.id != team.chef_id:
+            raise ApiError(403, 40305, "团队已设固定厨师，只有厨师可以接单")
     order.status = "accepted"
     order.chef_id = user.id
     db.commit()
