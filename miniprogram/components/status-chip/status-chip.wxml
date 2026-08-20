@@ -1,1 +1,0 @@
-<view class="status-chip" style="color:{{color}}; background-color:{{bgColor}}">{{label}}</view>

@@ -56,3 +56,24 @@ def get_current_user(
     if user is None:
         raise ApiError(401, 40101, "用户不存在或登录已过期")
     return user
+
+
+def get_optional_user(
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """FastAPI 依赖：有 Bearer Token 且有效则返回用户，否则返回 None。
+
+    登录/绑定端点使用：用于识别"当前游客会话"或"已登录账号"，
+    从而在微信/注册登录时自动绑定并（游客）升级。
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization[len("Bearer ") :].strip()
+    if not token:
+        return None
+    try:
+        user_id = decode_token(token)
+    except ApiError:
+        return None
+    return db.get(User, user_id)

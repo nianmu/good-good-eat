@@ -40,6 +40,7 @@ _TABLES_IN_DELETE_ORDER = (
     "recipes",
     "fridge_items",
     "basket_items",
+    "user_identities",
     "dishes",
     "teams",
     "categories",

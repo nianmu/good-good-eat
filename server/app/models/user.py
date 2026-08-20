@@ -4,20 +4,24 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, String, UniqueConstraint, func, text
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 
 
 class User(Base):
-    """用户（含游客）。is_guest=True 表示游客兜底身份。"""
+    """统一用户账号（跨端）。
+
+    is_guest=True 表示"尚未绑定任何正式渠道身份"的纯游客账号。
+    登录身份（微信 openid / 用户名密码 / 游客昵称）由 UserIdentity 表承载，
+    一个用户可绑定多个渠道，实现"统一账号 + 多端身份"。
+    """
 
     __tablename__ = "users"
     __table_args__ = {"mysql_charset": "utf8mb4"}
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    openid: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
     nickname: Mapped[str] = mapped_column(String(64), nullable=False)
     avatar: Mapped[str] = mapped_column(String(255), nullable=False, default="👤", server_default="👤")
     user_code: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
@@ -30,6 +34,43 @@ class User(Base):
     memberships: Mapped[list[TeamMember]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    identities: Mapped[list[UserIdentity]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class UserIdentity(Base):
+    """用户登录身份绑定：provider（渠道）+ provider_uid（渠道内唯一标识）。
+
+    常见 provider：
+     - password  : 用户名+密码（H5/Web 独立账号），provider_uid=username，credential=密码哈希
+     - wechat    : 微信 openid，provider_uid = openid
+     - guest     : 纯游客昵称（provider_uid=nickname，便于同名会话复用）
+
+    一个用户可有多个身份（统一账号多端绑定）；一个 provider_uid 只能绑一个账号。
+    用户登录时会自动注册并绑定；游客账号绑上任一正式渠道即自动升级（is_guest=0）。
+    """
+
+    __tablename__ = "user_identities"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_uid", name="uq_user_identity_provider_uid"),
+        {"mysql_charset": "utf8mb4"},
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(16), nullable=False)
+    provider_uid: Mapped[str] = mapped_column(String(128), nullable=False)
+    # 加密凭据（password 渠道存密码哈希；oauth 可存 refresh token；guest 通常为空）
+    credential: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # 渠道返回的额外信息（JSON 字符串，如 unionid / 渠道昵称头像）
+    extra_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="identities")
 
 
 class Team(Base):

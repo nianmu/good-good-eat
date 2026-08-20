@@ -1,7 +1,0 @@
-{
-  "navigationBarTitleText": "订单",
-  "usingComponents": {
-    "status-chip": "/components/status-chip/status-chip",
-    "empty-state": "/components/empty-state/empty-state"
-  }
-}

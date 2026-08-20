@@ -6,9 +6,8 @@ venv/
 .env
 *.log
 
-# Node / 小程序
+# Node
 node_modules/
-miniprogram/miniprogram_npm/
 .DS_Store
 
 # IDE
@@ -23,6 +22,14 @@ pytest-cache-files*/
 htmlcov/
 dist/
 build/
+# server/ 运行日志与一次性脚本（沙箱下经常落到工作区）
+/pytest_*.log
+/_pytest_*.log
+/uvicorn.log
+/uvicorn.err.log
+/_smoke_*.py
+/_build_*.log
+/nyc-check.log
 
 # uv 项目缓存（沙箱拒写 D 盘时落位于仓库内）
 .uv-cache/
@@ -30,3 +37,5 @@ build/
 # 沙箱/临时密钥（勿提交）
 .git-ssh/
 
+# H5/Taro 独立子工程（有自己的 git）
+/h5/

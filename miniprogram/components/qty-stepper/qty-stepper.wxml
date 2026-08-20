@@ -1,5 +1,0 @@
-<view class="qty-stepper">
-  <view class="qty-stepper__btn qty-stepper__btn--minus {{value <= min ? 'qty-stepper__btn--disabled' : ''}}" catchtap="onMinus">−</view>
-  <text class="qty-stepper__value">{{value}}</text>
-  <view class="qty-stepper__btn qty-stepper__btn--plus {{value >= max ? 'qty-stepper__btn--disabled' : ''}}" catchtap="onPlus">+</view>
-</view>
