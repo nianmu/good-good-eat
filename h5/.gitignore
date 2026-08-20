@@ -1,0 +1,16 @@
+dist/
+deploy_versions/
+.temp/
+.rn_temp/
+node_modules/
+.DS_Store
+.swc
+*.local
+# 本地构建/检查日志与一次性脚本
+tsc-check.log
+_run_build.log
+nyc-check.log
+build_out.txt
+_check.bat
+*.log
+

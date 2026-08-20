@@ -1,0 +1,177 @@
+import { View, Text } from '@tarojs/components'
+import Taro, { useDidShow, useLoad } from '@tarojs/taro'
+import { useState } from 'react'
+import { Button, Empty, Tag } from '@nutui/nutui-react-taro'
+import { auth } from '../../api'
+
+//
+// 我的页面（TabBar·我的）——对齐原生 miniprogram/pages/profile
+// 绿色头部 / 统计三格 / 我的团队卡片 / 功能宫格
+//
+
+const TEAM_ICONS = ['🏠', '🍽', '🎓']
+const ROLE_LABELS: Record<string, string> = { organizer: '组织者', member: '成员' }
+
+const FEATURES = [
+  { id: 'kitchen', name: '厨房管理', icon: '🍳', color: '#FF9800', url: '/pages/recipe-list/index' },
+  { id: 'fridge', name: '厨房冰箱', icon: '🧊', color: '#2196F3', url: '/pages/fridge/index' },
+  { id: 'basket', name: '厨房菜篮', icon: '🛒', color: '#4CAF50', url: '/pages/basket/index' },
+  { id: 'favorite', name: '我的收藏', icon: '❤️', color: '#E91E63', url: '/pages/favorites/index' },
+  { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0', url: '/pages/plans/index' },
+  { id: 'tutorial', name: '新手教程', icon: '📖', color: '#607D8B', url: '' },
+  { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722', url: '' },
+  { id: 'feedback', name: '提点意见', icon: '💬', color: '#00BCD4', url: '' }
+]
+
+export default function ProfilePage() {
+    const [user, setUser] = useState<any>({ avatar: '👤', nickname: '好好吃饭', code: '', isGuest: true })
+  const [stats, setStats] = useState<any>({ totalOrders: 0, totalDishes: 0, favoriteDishes: 0 })
+  const [teams, setTeams] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const applyUser = (u: any) => {
+    const teamList = (u.teams || []).map((t: any, idx: number) => ({
+      id: t.id,
+      name: t.name,
+      icon: t.icon || TEAM_ICONS[idx % TEAM_ICONS.length],
+      role_label: ROLE_LABELS[t.role] || '成员',
+      member_count: t.member_count || 0,
+      chef: t.chef || null
+    }))
+    const raw = u.stats || {}
+    const s = {
+      totalOrders: raw.total_orders != null ? raw.total_orders : (raw.totalOrders || 0),
+      totalDishes: raw.total_dishes != null ? raw.total_dishes : (raw.totalDishes || 0),
+      favoriteDishes: raw.favorite_dishes != null ? raw.favorite_dishes : (raw.favoriteDishes || 0)
+    }
+                  setUser({
+      avatar: u.avatar || '👤',
+      nickname: u.nickname || '好好吃饭',
+      code: u.code || u.user_code || '',
+      isGuest: u.is_guest === 1 || u.is_guest === true
+    })
+    setStats(s)
+    setTeams(teamList)
+  }
+
+  const loadMe = () => {
+    auth.me()
+      .then((res: any) => applyUser(res.user || res))
+      .catch(() => {
+        Taro.showToast({ title: '加载失败', icon: 'none' })
+      })
+      .finally(() => setLoading(false))
+  }
+
+  useLoad(() => loadMe())
+  useDidShow(() => loadMe())
+
+  const goTeam = (id: any) => Taro.navigateTo({ url: `/pages/team-detail/index?id=${id}` })
+  const goManageTeams = () => Taro.navigateTo({ url: '/pages/team-list/index' })
+
+  const onFeature = (f: any) => {
+    if (f.url) Taro.navigateTo({ url: f.url })
+    else Taro.showToast({ title: `「${f.name}」开发中，敬请期待`, icon: 'none' })
+  }
+
+  return (
+    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
+      {/* 顶部绿色主题区 */}
+      <View style={{ background: 'linear-gradient(160deg,#4CAF50,#388E3C)', padding: '32px 20px 20px', color: '#fff' }}>
+        <View style={{ fontSize: '13px', opacity: 0.85 }}>只为好好吃饭</View>
+        <View style={{ display: 'flex', alignItems: 'center', marginTop: '14px' }}>
+          <View style={{
+            width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px'
+          }}>{user.avatar}</View>
+          <View style={{ marginLeft: '14px', flex: 1 }}>
+            <View style={{ fontSize: '20px', fontWeight: 'bold' }}>{user.nickname}</View>
+            <View style={{ fontSize: '13px', opacity: 0.85, marginTop: '4px' }}>
+              标识码 {user.code || '—'} · {user.isGuest ? <Text style={{ color: '#FFEB3B' }}>游客</Text> : '已登录'}
+            </View>
+          </View>
+          <View style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {!user.isGuest && (
+              <Button size="small" fill="outline"
+                onClick={() => { auth.logout(); Taro.navigateTo({ url: '/pages/auth/index' }) }}
+                style={{ color: '#fff', height: '28px' }}>退出</Button>
+            )}
+            {user.isGuest && (
+              <Button size="small" type="primary" plain fill="solid"
+                onClick={() => Taro.navigateTo({ url: '/pages/auth/index' })}
+                style={{ color: '#fff', height: '28px' }}>登录/升级</Button>
+            )}
+            <Text style={{ fontSize: '22px' }}>⋮</Text>
+          </View>
+        </View>
+        {/* 统计三格 */}
+        <View style={{ display: 'flex', alignItems: 'center', marginTop: '22px', background: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '14px 0' }}>
+          {[
+            { num: stats.totalOrders, label: '总订单' },
+            { num: stats.totalDishes, label: '点过的菜' },
+            { num: stats.favoriteDishes, label: '收藏', onClick: () => Taro.navigateTo({ url: '/pages/favorites/index' }) }
+          ].map((item, i) => (
+            <View key={i} style={{ flex: 1, textAlign: 'center', ...(item.onClick ? { cursor: 'pointer' } : {}) }} onClick={item.onClick}>
+              <View style={{ fontSize: '22px', fontWeight: 'bold' }}>{item.num}</View>
+              <View style={{ fontSize: '12px', opacity: 0.9, marginTop: '4px' }}>{item.label}</View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* 我的团队 */}
+      <View style={{ background: '#fff', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
+        <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>我的团队</Text>
+          <Text style={{ fontSize: '13px', color: '#999', cursor: 'pointer' }} onClick={goManageTeams}>管理 ›</Text>
+        </View>
+        {loading ? null : teams.length > 0 ? (
+          teams.map((t) => (
+            <View key={t.id} onClick={() => goTeam(t.id)}
+              style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--color-divider)', cursor: 'pointer' }}>
+              <View style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{t.icon}</View>
+              <View style={{ flex: 1, marginLeft: '12px' }}>
+                <View style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Text style={{ fontSize: '15px', fontWeight: '600' }}>{t.name}</Text>
+                  <Tag type="primary" plain>{t.role_label}</Tag>
+                </View>
+                <View style={{ fontSize: '12px', color: '#999', marginTop: '3px' }}>
+                  {t.member_count} 位成员 · {t.chef ? `厨师：${t.chef}` : <Text style={{ color: '#FF9800' }}>厨师待认领</Text>}
+                </View>
+              </View>
+              <Text style={{ color: '#ccc' }}>›</Text>
+            </View>
+          ))
+        ) : (
+          <View style={{ paddingTop: '4px' }}>
+            <Empty description="还没有加入团队，去创建一个吧" imageSize={90} />
+            <Button block plain type="primary" onClick={goManageTeams} style={{ marginTop: '8px' }}>去创建/加入</Button>
+          </View>
+        )}
+      </View>
+
+      {/* 功能宫格 */}
+      <View style={{ background: '#fff', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
+        <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>我的厨房</Text>
+        <View style={{ display: 'flex', flexWrap: 'wrap', marginTop: '14px' }}>
+          {FEATURES.map((f) => (
+            <View key={f.id} onClick={() => onFeature(f)}
+              style={{ width: '25%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '18px', cursor: 'pointer' }}>
+              <View style={{
+                width: '46px', height: '46px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px',
+                background: f.color + '1F', color: f.color
+              }}>{f.icon}</View>
+              <Text style={{ fontSize: '12px', color: '#555', marginTop: '6px' }}>{f.name}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* 底部声明 */}
+      <View style={{ padding: '20px 20px 40px', textAlign: 'center' }}>
+        <Text style={{ fontSize: '11px', color: '#bbb' }}>本平台面向家庭、情侣等用户，是美食记录与烹饪工具，不涉及订单支付，也不是商家收款工具。</Text>
+        <Text style={{ display: 'block', fontSize: '11px', color: '#d7a626', marginTop: '6px' }}>⚠ 如需转账，请自行核实对方身份，切勿轻信网络陌生人。</Text>
+      </View>
+    </View>
+  )
+}

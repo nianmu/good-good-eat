@@ -1,0 +1,75 @@
+// 全局样式——好好吃饭（跨端 Taro H5/微信）
+// 设计 token 与原生小程序/原型保持一致：主绿 #4CAF50
+// 微信端以 page{} 注入变量；H5 端 body 继承。
+
+page {
+  --color-primary: #4CAF50;
+  --color-primary-dark: #388E3C;
+  --color-primary-light: #81C784;
+  --color-primary-bg: #E8F5E9;
+  --color-accent: #FF9800;
+  --color-danger: #F44336;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #666666;
+  --color-text-placeholder: #999999;
+  --color-bg-page: #F5F5F5;
+  --color-bg-card: #ffffff;
+  --color-border: #E0E0E0;
+  --color-divider: #EEEEEE;
+
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-size: 28px;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+// ===== NutUI 组件库主题对齐（主绿 #4CAF50）=====
+// NutUI 默认主题色为红色 #ff0f23，这里覆盖为「好好吃饭」主绿。
+:root,
+page {
+  --nutui-color-primary: #4CAF50;
+  --nutui-color-primary-stop: #4CAF50;
+  --nutui-color-primary-light: #81C784;
+  --nutui-color-primary-light-pressed: #E8F5E9;
+  --nutui-color-primary-pressed: #388E3C;
+  --nutui-color-primary-text: #ffffff;
+  --nutui-color-primary-bg: #E8F5E9;
+  --nutui-color-primary-disable: #A5D6A7;
+
+  --nutui-button-primary-background-color: #4CAF50;
+  --nutui-button-primary-border-color: #4CAF50;
+  --nutui-button-primary-color: #ffffff;
+  --nutui-button-primary-pressed: #388E3C;
+  --nutui-button-primary-disabled: #A5D6A7;
+
+  --nutui-brand-color: #4CAF50;
+}
+
+// 页面通用工具类
+// 注意：用 height:100% 而非 100vh——
+// H5 端页面容器 .taro_page / .taro_router 高度为 100%，
+// 而底部 TabBar 是正常文档流（50px）占位，100vh 会高出视口导致
+// 整页出现滚动条，且底部操作栏被 TabBar 遮挡（例如菜谱页的
+// 「随机点菜 / 邀请下单 / 下单」栏）。100% 跟随容器即可正确避让。
+.ggc-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-page);
+}
+
+.ggc-flex {
+  display: flex;
+  align-items: center;
+}
+
+.ggc-flex-1 {
+  flex: 1;
+  min-width: 0;
+}

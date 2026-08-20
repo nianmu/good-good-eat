@@ -37,5 +37,5 @@ build/
 # 沙箱/临时密钥（勿提交）
 .git-ssh/
 
-# H5/Taro 独立子工程（有自己的 git）
-/h5/
+# H5/Taro consolidated into this single root repo (h5/.gitignore governs build/temp)
+h5-backup.bundle

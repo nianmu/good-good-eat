@@ -1,0 +1,72 @@
+/**
+ * 团队协作购物车 WebSocket 客户端（三期）——好好吃饭
+ * 连接 /ws/team/{teamId}?token=...，收发购物车实时事件。
+ * 协议见 server/app/ws/handlers.py。
+ */
+import Taro from '@tarojs/taro'
+import config from '../api/config'
+
+export type TeamCartEvent = { event: string; data?: any; seq?: number }
+
+function wsBase(): string {
+  const base = (config.apiBase || '').toString()
+  return base
+    .replace(/^https:\/\//, 'wss://')
+    .replace(/^http:\/\//, 'ws://')
+    .replace(/\/api\/v1$/, '')
+}
+
+export class TeamCartSocket {
+  private task: any
+  private connected = false
+  private listeners: Array<(e: TeamCartEvent) => void> = []
+
+  constructor(private teamId: string | number, private token: string) {}
+
+  connect() {
+    const url = `${wsBase()}/ws/team/${this.teamId}?token=${encodeURIComponent(this.token)}`
+    this.task = Taro.connectSocket({ url })
+    this.task.onOpen(() => {
+      this.connected = true
+      this.listeners.forEach((l) => l({ event: 'open' }))
+      this.task.onMessage((res: any) => {
+        const raw = typeof res === 'string' ? res : res?.data
+        try {
+          const msg: TeamCartEvent = JSON.parse(raw)
+          this.listeners.forEach((l) => l(msg))
+        } catch {
+          /* 忽略非 JSON（心跳等） */
+        }
+      })
+      this.task.onClose(() => {
+        this.connected = false
+        this.listeners.forEach((l) => l({ event: 'close' }))
+      })
+      this.task.onError(() => {
+        this.connected = false
+      })
+    })
+  }
+
+  onMessage(fn: (e: TeamCartEvent) => void) {
+    this.listeners.push(fn)
+  }
+
+  send(event: string, data: any = {}) {
+    if (this.connected && this.task) {
+      this.task.send({ data: JSON.stringify({ event, data }) })
+    }
+  }
+
+  close() {
+    if (this.task) {
+      try {
+        this.task.close()
+      } catch {
+        /* ignore */
+      }
+    }
+    this.connected = false
+    this.task = undefined
+  }
+}
