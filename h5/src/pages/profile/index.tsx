@@ -107,7 +107,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
+    <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {/* 顶部绿色主题区 */}
       <View style={{ background: 'linear-gradient(160deg,#4CAF50,#388E3C)', padding: '32px 20px 20px', color: '#fff' }}>
         <View style={{ fontSize: '13px', opacity: 0.85 }}>只为好好吃饭</View>

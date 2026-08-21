@@ -75,7 +75,7 @@ export default function MessagesPage() {
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })
 
   return (
-    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
+    <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {total > 0 && (
         <View style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '13px', color: '#999', background: '#fff' }}>
           <Text>共 {total} 条</Text>

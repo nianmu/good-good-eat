@@ -144,7 +144,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <View style={{ minHeight: '100vh', background: '#F5F5F5' }}>
+    <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: '#F5F5F5' }}>
       {/* 顶部状态筛选 */}
       <ScrollView scrollX show-scrollbar={false} style={{ background: '#fff', borderBottom: '1px solid #eee', whiteSpace: 'nowrap' }}>
         <View style={{ display: 'inline-flex', padding: '8px 8px 0' }}>

@@ -243,7 +243,7 @@ export default function MenuPage() {
     : ((categories.find((c: any) => String(c.id) === String(activeCategoryId)))?.name || '全部菜品') + '（' + dishes.length + '）'
 
   return (
-    <View className="ggc-page" style={{ position: 'relative' }}>
+    <View className="ggc-page ggc-tabbar-page" style={{ position: 'relative' }}>
       {/* 顶部用户区 + 团队 */}
       <View style={{ background: 'linear-gradient(135deg,#4CAF50,#388E3C)', padding: '18px 16px 24px', color: '#fff', flexShrink: 0 }}>
         <View style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -369,7 +369,7 @@ export default function MenuPage() {
       </View>
 
       {/* 底部操作栏（预留 tabbar 50px 空间） */}
-      <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', paddingBottom: '60px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
+      <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
         <Button type="primary" fill="outline" size="small" style={{ flex: 1, fontSize: '13px' }} loading={randomLoading} onClick={onRandom}>
           🎲 {randomLoading ? '推荐中…' : '随机点菜'}
         </Button>
