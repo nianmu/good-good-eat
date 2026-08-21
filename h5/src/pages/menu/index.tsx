@@ -368,8 +368,8 @@ export default function MenuPage() {
         </ScrollView>
       </View>
 
-      {/* 底部操作栏 */}
-      <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
+      {/* 底部操作栏（预留 tabbar 50px 空间） */}
+      <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', paddingBottom: '60px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
         <Button type="primary" fill="outline" size="small" style={{ flex: 1, fontSize: '13px' }} loading={randomLoading} onClick={onRandom}>
           🎲 {randomLoading ? '推荐中…' : '随机点菜'}
         </Button>

@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useLaunch } from '@tarojs/taro'
+import { View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 
 import '@nutui/nutui-react-taro/dist/style.css'
@@ -18,11 +19,11 @@ function App({ children }: PropsWithChildren<any>) {
     }
   })
 
-  return <>
+  return <View>
     {children}
     <AppToast />
     <AppModal />
-  </>
+  </View>
 }
 
 export default App
