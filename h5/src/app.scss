@@ -73,27 +73,24 @@ page {
   background: var(--color-bg-page);
 }
 
-// 底部固定操作栏（应用于 TabBar 页面内的非 fixed 底部栏）
+// 底部固定操作栏（TabBar 页面内，定位在 tabbar 上方 50px）
+// 用 position:fixed + bottom:50px 避开 tabbar，不受 flex 布局高度影响
 .ggc-bottom-bar {
-  display: flex;
-  gap: 8px;
-  padding: 10px 16px;
-  padding-bottom: calc(10px + var(--tabbar-safe-bottom));
-  background: #fff;
-  border-top: 1px solid #eee;
-  flex-shrink: 0;
-}
-
-// 底部 fixed 操作栏（非 TabBar 页面，无 tabbar 遮挡）
-.ggc-fixed-bottom {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 50px;  // tabbar 高度，始终在 tabbar 正上方
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
   background: #fff;
-  padding: 12px 16px;
-  border-top: 1px solid var(--color-border);
-  z-index: 10;
+  border-top: 1px solid #eee;
+  z-index: 100;
+}
+
+// TabBar 页面内容区底部预留操作栏空间（操作栏高度约 60px）
+.ggc-page.ggc-tabbar-page {
+  padding-bottom: 70px;
 }
 
 .ggc-flex {
