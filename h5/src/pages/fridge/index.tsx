@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton, Tag, Input } from '@nutui/nutui-react-taro'
 import { fridge } from '../../api'
@@ -23,7 +24,7 @@ export default function FridgePage() {
         setItems(res[0] || [])
         setSuggest(res[1] || [])
       })
-      .catch(() => Taro.showToast({ title: '冰箱加载失败', icon: 'none' }))
+      .catch(() => showToast({ title: '冰箱加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   }
 
@@ -31,14 +32,14 @@ export default function FridgePage() {
 
   const onAdd = () => {
     const name = addName.trim()
-    if (!name) { Taro.showToast({ title: '请输入食材名称', icon: 'none' }); return }
+    if (!name) { showToast({ title: '请输入食材名称', icon: 'none' }); return }
     fridge.add(name, addQuantity).then(() => {
       setAddName(''); setAddQuantity(''); loadAll()
-    }).catch(() => Taro.showToast({ title: '添加失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '添加失败', icon: 'none' }))
   }
 
   const onDelete = (id: any) => {
-    fridge.remove(id).then(() => loadAll()).catch(() => Taro.showToast({ title: '删除失败', icon: 'none' }))
+    fridge.remove(id).then(() => loadAll()).catch(() => showToast({ title: '删除失败', icon: 'none' }))
   }
 
   const onSuggestTap = (it: any) => {

@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { favorites } from '../../api'
@@ -32,7 +33,7 @@ export default function FavoritesPage() {
       setTotal(res.total || 0)
       setPage(p + 1)
       setHasMore(items.length >= PAGE_SIZE)
-    }).catch(() => Taro.showToast({ title: '收藏加载失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '收藏加载失败', icon: 'none' }))
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }
 
@@ -44,7 +45,7 @@ export default function FavoritesPage() {
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })
 
   const onUnfavorite = (id: any) => {
-    favorites.remove(id).then(() => load(true)).catch(() => Taro.showToast({ title: '操作失败', icon: 'none' }))
+    favorites.remove(id).then(() => load(true)).catch(() => showToast({ title: '操作失败', icon: 'none' }))
   }
 
   return (

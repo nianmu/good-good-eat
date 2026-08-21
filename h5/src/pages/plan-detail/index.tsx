@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Dialog, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { plans } from '../../api'
@@ -22,7 +23,7 @@ export default function PlanDetailPage() {
     plans.detail(pid).then((r: any) => {
       setPlan(r)
       Taro.setNavigationBarTitle({ title: r.name || '计划详情' })
-    }).catch(() => Taro.showToast({ title: '加载失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   })
 
@@ -36,21 +37,21 @@ export default function PlanDetailPage() {
 
   const onAddAll = () => {
     const dishes = (plan.items || []).map((it: any) => it.dish).filter(Boolean)
-    if (!dishes.length) { Taro.showToast({ title: '暂无菜品', icon: 'none' }); return }
+    if (!dishes.length) { showToast({ title: '暂无菜品', icon: 'none' }); return }
     const cart: Record<string, number> = { ...(store.get('cart') || {}) }
     ;(plan.items || []).forEach((it: any) => {
       if (it.dish) cart[String(it.dish.id)] = (cart[String(it.dish.id)] || 0) + it.quantity
     })
     store.set('cart', cart)
-    Taro.showToast({ title: '已加入购物车：' + addText(), icon: 'none' })
+    showToast({ title: '已加入购物车：' + addText(), icon: 'none' })
   }
 
   const onDelete = () => {
     plans.remove(id).then(() => {
-      Taro.showToast({ title: '已删除', icon: 'success' })
+      showToast({ title: '已删除', icon: 'success' })
       setDelVisible(false)
       setTimeout(() => Taro.navigateBack(), 600)
-    }).catch(() => Taro.showToast({ title: '删除失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '删除失败', icon: 'none' }))
   }
 
   if (loading) {

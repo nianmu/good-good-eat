@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { messages as messagesApi } from '../../api'
@@ -54,7 +55,7 @@ export default function MessagesPage() {
         setPage(p)
         setHasMore((res.items || []).length >= PAGE_SIZE)
       })
-      .catch(() => Taro.showToast({ title: '消息加载失败', icon: 'none' }))
+      .catch(() => showToast({ title: '消息加载失败', icon: 'none' }))
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }
 
@@ -68,7 +69,7 @@ export default function MessagesPage() {
         setList((prev: any[]) => prev.map((x) => (x.id === m.id ? { ...x, is_read: true } : x)))
         setUnread((u: number) => Math.max(0, u - 1))
       })
-      .catch(() => Taro.showToast({ title: '操作失败', icon: 'none' }))
+      .catch(() => showToast({ title: '操作失败', icon: 'none' }))
   }
 
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })

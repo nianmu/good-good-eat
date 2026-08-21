@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { chef, orders, guestLogin } from '../../api'
 import StatusTag from '../../components/status-tag'
@@ -54,7 +55,7 @@ export default function ChefBoardPage() {
       setLoading(false)
       setRefreshing(false)
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '加载失败', icon: 'none' })
+      showToast({ title: e?.message || '加载失败', icon: 'none' })
       setLoading(false)
       setRefreshing(false)
     }
@@ -85,10 +86,10 @@ export default function ChefBoardPage() {
       } else {
         await orders.status(id, act.status as string)
       }
-      Taro.showToast({ title: act.label + '成功', icon: 'none' })
+      showToast({ title: act.label + '成功', icon: 'none' })
       await loadAll()
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '操作失败', icon: 'none' })
+      showToast({ title: e?.message || '操作失败', icon: 'none' })
     } finally {
       setSubmitting(false)
     }

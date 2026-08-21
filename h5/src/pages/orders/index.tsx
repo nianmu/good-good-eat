@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { Empty, Skeleton, Price } from '@nutui/nutui-react-taro'
 import { request, guestLogin } from '../../api/request'
 import StatusTag from '../../components/status-tag'
@@ -76,7 +77,7 @@ export default function OrdersPage() {
     try {
       await fetchPage(targetPage, reset)
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '加载失败', icon: 'none' })
+      showToast({ title: e?.message || '加载失败', icon: 'none' })
       setLoading(false)
       setLoadingMore(false)
       busy.current = false
@@ -121,7 +122,7 @@ export default function OrdersPage() {
         setLoading(false)
         setLoadingMore(false)
       } catch (e: any) {
-        Taro.showToast({ title: e?.message || '加载失败', icon: 'none' })
+        showToast({ title: e?.message || '加载失败', icon: 'none' })
         setLoading(false)
         setLoadingMore(false)
       } finally {

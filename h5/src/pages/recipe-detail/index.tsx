@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Dialog, Empty, Skeleton, Tag } from '@nutui/nutui-react-taro'
 import { recipes } from '../../api'
@@ -24,7 +25,7 @@ export default function RecipeDetailPage() {
       const owner = user && user.id != null && String(user.id) === String(r.user_id)
       setRecipe(r)
       setIsOwner(!!owner)
-    }).catch(() => Taro.showToast({ title: '加载失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   })
 
@@ -32,10 +33,10 @@ export default function RecipeDetailPage() {
 
   const doDelete = () => {
     recipes.remove(id).then(() => {
-      Taro.showToast({ title: '已删除', icon: 'success' })
+      showToast({ title: '已删除', icon: 'success' })
       setDelVisible(false)
       setTimeout(() => Taro.navigateBack(), 600)
-    }).catch(() => Taro.showToast({ title: '删除失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '删除失败', icon: 'none' }))
   }
 
   if (loading) {

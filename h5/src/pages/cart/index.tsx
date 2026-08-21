@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { InputNumber, Button, Empty } from '@nutui/nutui-react-taro'
 
 import { auth, dishes as dishApi, teams as teamApi, orders as orderApi } from '../../api'
@@ -144,7 +145,7 @@ export default function CartPage() {
   const onRemove = (dishId: string) => {
     store.setCartQuantity(dishId, 0)
     rebuild(dishMap)
-    Taro.showToast({ title: '已删除', icon: 'none' })
+    showToast({ title: '已删除', icon: 'none' })
   }
 
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })
@@ -156,11 +157,11 @@ export default function CartPage() {
     if (!requireLogin('下单需要登录')) return
     if (submitting) return
     if (!totalCount) {
-      Taro.showToast({ title: '购物车是空的', icon: 'none' })
+      showToast({ title: '购物车是空的', icon: 'none' })
       return
     }
     if (!teamId) {
-      Taro.showToast({ title: '请先选择下单团队', icon: 'none' })
+      showToast({ title: '请先选择下单团队', icon: 'none' })
       return
     }
     const payload = items.map((it) => ({ dish_id: it.dish_id, quantity: it.quantity }))
@@ -168,13 +169,13 @@ export default function CartPage() {
     orderApi.create(teamId, payload)
       .then((order: any) => {
         store.set('cart', {})
-        Taro.showToast({ title: '下单成功，取餐码 ' + order.pickup_code, icon: 'none' })
+        showToast({ title: '下单成功，取餐码 ' + order.pickup_code, icon: 'none' })
         setTimeout(() => {
           Taro.redirectTo({ url: '/pages/order-detail/index?id=' + order.id })
         }, 800)
       })
       .catch((e: any) => {
-        Taro.showToast({ title: (e as any)?.message || '下单失败', icon: 'none' })
+        showToast({ title: (e as any)?.message || '下单失败', icon: 'none' })
         setSubmitting(false)
       })
   }

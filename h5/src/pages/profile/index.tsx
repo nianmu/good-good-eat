@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Tag, Dialog, Input } from '@nutui/nutui-react-taro'
 import { auth } from '../../api'
@@ -61,7 +62,7 @@ export default function ProfilePage() {
     auth.me()
       .then((res: any) => applyUser(res.user || res))
       .catch(() => {
-        Taro.showToast({ title: '加载失败', icon: 'none' })
+        showToast({ title: '加载失败', icon: 'none' })
       })
       .finally(() => setLoading(false))
   }
@@ -80,7 +81,7 @@ export default function ProfilePage() {
   const onSaveNickname = async () => {
     const name = editNicknameValue.trim()
     if (!name) {
-      Taro.showToast({ title: '昵称不能为空', icon: 'none' })
+      showToast({ title: '昵称不能为空', icon: 'none' })
       return
     }
     if (editNicknameLoading) return
@@ -92,9 +93,9 @@ export default function ProfilePage() {
         applyUser(res.user)
       }
       setEditNicknameVisible(false)
-      Taro.showToast({ title: '修改成功', icon: 'success' })
+      showToast({ title: '修改成功', icon: 'success' })
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '修改失败', icon: 'none' })
+      showToast({ title: e?.message || '修改失败', icon: 'none' })
     } finally {
       setEditNicknameLoading(false)
     }
@@ -102,7 +103,7 @@ export default function ProfilePage() {
 
   const onFeature = (f: any) => {
     if (f.url) Taro.navigateTo({ url: f.url })
-    else Taro.showToast({ title: `「${f.name}」开发中，敬请期待`, icon: 'none' })
+    else showToast({ title: `「${f.name}」开发中，敬请期待`, icon: 'none' })
   }
 
   return (

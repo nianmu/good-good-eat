@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton, Input } from '@nutui/nutui-react-taro'
 import { basket } from '../../api'
@@ -18,7 +19,7 @@ export default function BasketPage() {
   const loadList = () => {
     setLoading(true)
     basket.list().then((res: any) => setItems(res || []))
-      .catch(() => Taro.showToast({ title: '菜篮加载失败', icon: 'none' }))
+      .catch(() => showToast({ title: '菜篮加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   }
 
@@ -28,18 +29,18 @@ export default function BasketPage() {
 
   const onAdd = () => {
     const name = addName.trim()
-    if (!name) { Taro.showToast({ title: '请输入待购名称', icon: 'none' }); return }
+    if (!name) { showToast({ title: '请输入待购名称', icon: 'none' }); return }
     basket.add(name, addQuantity).then(() => { setAddName(''); setAddQuantity(''); loadList() })
-      .catch(() => Taro.showToast({ title: '添加失败', icon: 'none' }))
+      .catch(() => showToast({ title: '添加失败', icon: 'none' }))
   }
 
   const onCheck = (it: any) => {
     basket.toggle(it.id, !it.checked).then(() => loadList())
-      .catch(() => Taro.showToast({ title: '操作失败', icon: 'none' }))
+      .catch(() => showToast({ title: '操作失败', icon: 'none' }))
   }
 
   const onDelete = (id: any) => {
-    basket.remove(id).then(() => loadList()).catch(() => Taro.showToast({ title: '删除失败', icon: 'none' }))
+    basket.remove(id).then(() => loadList()).catch(() => showToast({ title: '删除失败', icon: 'none' }))
   }
 
   return (

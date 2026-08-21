@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { Button, Empty, Input, Skeleton } from '@nutui/nutui-react-taro'
 import { teams, guestLogin } from '../../api'
 import { requireLogin } from '../../utils/auth'
@@ -47,7 +48,7 @@ export default function TeamListPage() {
       setLoading(false)
       setRefreshing(false)
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '加载失败', icon: 'none' })
+      showToast({ title: e?.message || '加载失败', icon: 'none' })
       setLoading(false)
     }
   }
@@ -67,7 +68,7 @@ export default function TeamListPage() {
     if (submitting) return
     const name = (createName || '').trim()
     if (!name) {
-      Taro.showToast({ title: '请输入团队名称', icon: 'none' })
+      showToast({ title: '请输入团队名称', icon: 'none' })
       return
     }
     setSubmitting(true)
@@ -75,10 +76,10 @@ export default function TeamListPage() {
       const team: any = await teams.create(name)
       setCreateName('')
       setSubmitting(false)
-      Taro.showToast({ title: '创建成功，邀请码 ' + team.invite_code, icon: 'none' })
+      showToast({ title: '创建成功，邀请码 ' + team.invite_code, icon: 'none' })
       loadTeams()
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '创建失败', icon: 'none' })
+      showToast({ title: e?.message || '创建失败', icon: 'none' })
       setSubmitting(false)
     }
   }
@@ -88,7 +89,7 @@ export default function TeamListPage() {
     if (submitting) return
     const code = (joinCode || '').trim()
     if (!code) {
-      Taro.showToast({ title: '请输入邀请码', icon: 'none' })
+      showToast({ title: '请输入邀请码', icon: 'none' })
       return
     }
     setSubmitting(true)
@@ -96,10 +97,10 @@ export default function TeamListPage() {
       const team: any = await teams.join(code)
       setJoinCode('')
       setSubmitting(false)
-      Taro.showToast({ title: '已加入「' + team.name + '」', icon: 'none' })
+      showToast({ title: '已加入「' + team.name + '」', icon: 'none' })
       loadTeams()
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '加入失败', icon: 'none' })
+      showToast({ title: e?.message || '加入失败', icon: 'none' })
       setSubmitting(false)
     }
   }

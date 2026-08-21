@@ -1,5 +1,6 @@
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Input } from '@nutui/nutui-react-taro'
 import { categories, dishes, plans } from '../../api'
@@ -30,7 +31,7 @@ export default function PlanEditPage() {
         setActiveCatId(cats.length ? cats[0].id : '')
         setLoaded(true)
       })
-      .catch(() => Taro.showToast({ title: '加载失败', icon: 'none' }))
+      .catch(() => showToast({ title: '加载失败', icon: 'none' }))
 
     const params = p || router.params || {}
     if (params.from === 'recommend') {
@@ -40,7 +41,7 @@ export default function PlanEditPage() {
         setItems(plan.map((d: any) => ({ dish: d, quantity: 1 })))
         setRecommendReason(res.reason || '')
         if (plan.length) setName((n) => n || `今天吃什么（${people}人）`)
-      }).catch(() => Taro.showToast({ title: '推荐加载失败', icon: 'none' }))
+      }).catch(() => showToast({ title: '推荐加载失败', icon: 'none' }))
     }
   })
 
@@ -66,8 +67,8 @@ export default function PlanEditPage() {
   })
 
   const onSave = () => {
-    if (!name.trim()) { Taro.showToast({ title: '请填写计划名称', icon: 'none' }); return }
-    if (!items.length) { Taro.showToast({ title: '请至少选择一道菜', icon: 'none' }); return }
+    if (!name.trim()) { showToast({ title: '请填写计划名称', icon: 'none' }); return }
+    if (!items.length) { showToast({ title: '请至少选择一道菜', icon: 'none' }); return }
     if (saving) return
     setSaving(true)
     plans.create({
@@ -75,9 +76,9 @@ export default function PlanEditPage() {
       note: note || '',
       items: items.map((it) => ({ dish_id: it.dish.id, quantity: it.quantity }))
     }).then(() => {
-      Taro.showToast({ title: '已保存', icon: 'success' })
+      showToast({ title: '已保存', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 600)
-    }).catch(() => { Taro.showToast({ title: '保存失败', icon: 'none' }); setSaving(false) })
+    }).catch(() => { showToast({ title: '保存失败', icon: 'none' }); setSaving(false) })
   }
 
   const label = { display: 'block', fontSize: '14px', fontWeight: 600, color: '#333', margin: '14px 0 8px' } as const

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter, useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { InputNumber, Button } from '@nutui/nutui-react-taro'
 
 import { dishes as dishApi, favorites as favApi } from '../../api'
@@ -26,7 +27,7 @@ export default function DishDetailPage() {
         setQty(1)
         setFavorited(!!d.is_favorite)
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   })
 
@@ -34,7 +35,7 @@ export default function DishDetailPage() {
     if (!dish) return
     const cur = store.get('cart')[dish.id] || 0
     store.setCartQuantity(dish.id, cur + qty)
-    Taro.showToast({ title: '已加入购物车', icon: 'success' })
+    showToast({ title: '已加入购物车', icon: 'success' })
     setTimeout(() => Taro.navigateBack({ delta: 1 }), 600)
   }
 
@@ -44,9 +45,9 @@ export default function DishDetailPage() {
     ;(next ? favApi.toggle(dish.id) : favApi.remove(dish.id))
       .then(() => {
         setFavorited(next)
-        Taro.showToast({ title: next ? '已收藏' : '已取消收藏', icon: 'none' })
+        showToast({ title: next ? '已收藏' : '已取消收藏', icon: 'none' })
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
   }
 
   if (loading) {

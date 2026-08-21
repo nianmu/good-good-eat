@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Input, TextArea } from '@nutui/nutui-react-taro'
 import { recipes } from '../../api'
@@ -33,7 +34,7 @@ export default function RecipeEditPage() {
           cookTime: r.cook_time ? String(r.cook_time) : '', difficulty: r.difficulty || ''
         }))
         .catch(() => {
-          Taro.showToast({ title: '加载失败', icon: 'none' })
+          showToast({ title: '加载失败', icon: 'none' })
         })
     } else {
       Taro.setNavigationBarTitle({ title: '新建菜谱' })
@@ -58,16 +59,16 @@ export default function RecipeEditPage() {
 
   const onSave = () => {
     const payload = buildPayload()
-    if (!payload.name.trim()) { Taro.showToast({ title: '请填写菜谱名称', icon: 'none' }); return }
-    if (!payload.ingredients.length) { Taro.showToast({ title: '请填写至少一种食材', icon: 'none' }); return }
+    if (!payload.name.trim()) { showToast({ title: '请填写菜谱名称', icon: 'none' }); return }
+    if (!payload.ingredients.length) { showToast({ title: '请填写至少一种食材', icon: 'none' }); return }
     if (saving) return
     setSaving(true)
     const call = id ? recipes.update(id, payload) : recipes.create(payload)
     call.then(() => {
-      Taro.showToast({ title: '已保存', icon: 'success' })
+      showToast({ title: '已保存', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 600)
     }).catch(() => {
-      Taro.showToast({ title: '保存失败', icon: 'none' })
+      showToast({ title: '保存失败', icon: 'none' })
       setSaving(false)
     })
   }

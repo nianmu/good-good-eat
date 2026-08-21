@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { plans } from '../../api'
@@ -32,7 +33,7 @@ export default function PlansPage() {
       setTotal(res.total || 0)
       setPage(p + 1)
       setHasMore(items.length >= PAGE_SIZE)
-    }).catch(() => Taro.showToast({ title: '计划加载失败', icon: 'none' }))
+    }).catch(() => showToast({ title: '计划加载失败', icon: 'none' }))
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }
 

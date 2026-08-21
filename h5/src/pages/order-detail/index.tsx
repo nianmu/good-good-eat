@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter, useLoad } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
+import { showModal } from '../../components/app-modal'
 import { Button } from '@nutui/nutui-react-taro'
 
 import { orders as orderApi } from '../../api'
@@ -64,7 +66,7 @@ export default function OrderDetailPage() {
         const user = Taro.getStorageSync('ggc_user')
         setCurrentUserId(user?.id || 0)
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
   }
 
@@ -88,7 +90,7 @@ export default function OrderDetailPage() {
 
     // 情况①：无固定厨师 & 无人认领
     if (!teamChefId && !orderChefId) {
-      Taro.showModal({
+      showModal({
         title: '暂无厨师',
         content: '当前团队没有固定厨师，且无人认领做菜。\n\n请先在团队中指定厨师，或让成员认领做菜后再发送。',
         confirmText: '去团队',
@@ -104,7 +106,7 @@ export default function OrderDetailPage() {
 
     // 情况③：有固定厨师 & 有人认领（且不是同一人）
     if (teamChefId && orderChefId && teamChefId !== orderChefId) {
-      Taro.showModal({
+      showModal({
         title: '确认发送',
         content: `当前厨师：\n🏠 固定厨师：${teamChefName || '未知'}\n👨‍🍳 认领人：${orderChefName || '未知'}\n\n确定发送订单？`,
         success(res) {
@@ -116,7 +118,7 @@ export default function OrderDetailPage() {
 
     // 情况②：有固定厨师（无人认领，或认领人=固定厨师）
     const chefName = orderChefName || teamChefName || '未知'
-    Taro.showModal({
+    showModal({
       title: '确认发送',
       content: `当前厨师为「${chefName}」，确定发送订单？`,
       success(res) {
@@ -130,12 +132,12 @@ export default function OrderDetailPage() {
     setSubmitting(true)
     orderApi.accept(order.id)
       .then(() => {
-        Taro.showToast({ title: '已发送，等待厨师接单', icon: 'none' })
+        showToast({ title: '已发送，等待厨师接单', icon: 'none' })
         setSubmitting(false)
         loadOrder()
       })
       .catch((e: any) => {
-        Taro.showToast({ title: (e as any)?.message || '发送失败', icon: 'none' })
+        showToast({ title: (e as any)?.message || '发送失败', icon: 'none' })
         setSubmitting(false)
       })
   }
@@ -146,12 +148,12 @@ export default function OrderDetailPage() {
     setSubmitting(true)
     orderApi.claim(order.id)
       .then(() => {
-        Taro.showToast({ title: '已认领做菜，加油！', icon: 'none' })
+        showToast({ title: '已认领做菜，加油！', icon: 'none' })
         setSubmitting(false)
         loadOrder()
       })
       .catch((e: any) => {
-        Taro.showToast({ title: (e as any)?.message || '认领失败', icon: 'none' })
+        showToast({ title: (e as any)?.message || '认领失败', icon: 'none' })
         setSubmitting(false)
       })
   }
@@ -162,12 +164,12 @@ export default function OrderDetailPage() {
     setSubmitting(true)
     orderApi.status(order.id, target)
       .then(() => {
-        Taro.showToast({ title: toast, icon: 'none' })
+        showToast({ title: toast, icon: 'none' })
         setSubmitting(false)
         loadOrder()
       })
       .catch((e: any) => {
-        Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
+        showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
         setSubmitting(false)
       })
   }
@@ -178,12 +180,12 @@ export default function OrderDetailPage() {
     setSubmitting(true)
     orderApi.status(order.id, 'completed')
       .then(() => {
-        Taro.showToast({ title: '取餐成功，祝用餐愉快！', icon: 'none' })
+        showToast({ title: '取餐成功，祝用餐愉快！', icon: 'none' })
         setSubmitting(false)
         loadOrder()
       })
       .catch((e: any) => {
-        Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
+        showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
         setSubmitting(false)
       })
   }
@@ -347,8 +349,8 @@ export default function OrderDetailPage() {
     const text = buildOrderText()
     if (!text) return
     Taro.setClipboardData({ data: text })
-      .then(() => Taro.showToast({ title: '已复制订单信息，去微信群粘贴吧', icon: 'none' }))
-      .catch(() => Taro.showToast({ title: '复制失败', icon: 'none' }))
+      .then(() => showToast({ title: '已复制订单信息，去微信群粘贴吧', icon: 'none' }))
+      .catch(() => showToast({ title: '复制失败', icon: 'none' }))
   }
 
   const goOrders = () => Taro.switchTab({ url: '/pages/orders/index' })

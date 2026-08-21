@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { ActionSheet, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { teams, guestLogin } from '../../api'
 
@@ -47,7 +48,7 @@ export default function TeamDetailPage() {
       setLoading(false)
       setRefreshing(false)
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '加载失败', icon: 'none' })
+      showToast({ title: e?.message || '加载失败', icon: 'none' })
       setLoading(false)
       setRefreshing(false)
     }
@@ -64,7 +65,7 @@ export default function TeamDetailPage() {
     Taro.setClipboardData({
       data: code,
       success: () => {
-        Taro.showToast({ title: '邀请码已复制，发给伙伴一起点菜吧', icon: 'none' })
+        showToast({ title: '邀请码已复制，发给伙伴一起点菜吧', icon: 'none' })
       }
     })
   }
@@ -72,11 +73,11 @@ export default function TeamDetailPage() {
   function onAssignChef() {
     if (!team) return
     if (team.role !== 'organizer') {
-      Taro.showToast({ title: '仅组织者可指定厨师', icon: 'none' })
+      showToast({ title: '仅组织者可指定厨师', icon: 'none' })
       return
     }
     if (!members.length) {
-      Taro.showToast({ title: '暂无成员可指定', icon: 'none' })
+      showToast({ title: '暂无成员可指定', icon: 'none' })
       return
     }
     setSheetVisible(true)
@@ -88,10 +89,10 @@ export default function TeamDetailPage() {
     if (!target) return
     try {
       await teams.setChef(team.id, target.id)
-      Taro.showToast({ title: '已指定 ' + target.nickname + ' 为厨师', icon: 'none' })
+      showToast({ title: '已指定 ' + target.nickname + ' 为厨师', icon: 'none' })
       loadTeam()
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '操作失败', icon: 'none' })
+      showToast({ title: e?.message || '操作失败', icon: 'none' })
     }
   }
 

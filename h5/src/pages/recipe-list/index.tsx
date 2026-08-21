@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton, Tag } from '@nutui/nutui-react-taro'
 import { recipes } from '../../api'
@@ -34,7 +35,7 @@ export default function RecipeListPage() {
         setPage(p + 1)
         setHasMore(items.length >= PAGE_SIZE)
       })
-      .catch(() => Taro.showToast({ title: '菜谱加载失败', icon: 'none' }))
+      .catch(() => showToast({ title: '菜谱加载失败', icon: 'none' }))
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
 
 import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi } from '../../api'
@@ -156,9 +157,9 @@ export default function MenuPage() {
         const map = { ...favoritedMap }
         if (next) map[d.id] = true; else delete map[d.id]
         setFavoritedMap(map)
-        if (cur) Taro.showToast({ title: '已取消收藏', icon: 'none' })
+        if (cur) showToast({ title: '已取消收藏', icon: 'none' })
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
   }
 
   /** 随机点菜（均衡） */
@@ -169,13 +170,13 @@ export default function MenuPage() {
       .then((res: any) => {
         const picks = res || []
         if (!picks.length) {
-          Taro.showToast({ title: '暂无可推荐的菜品', icon: 'none' })
+          showToast({ title: '暂无可推荐的菜品', icon: 'none' })
           return
         }
         addGroupToCart(picks)
-        Taro.showToast({ title: '推荐：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
+        showToast({ title: '推荐：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
       .finally(() => setRandomLoading(false))
   }
 
@@ -187,13 +188,13 @@ export default function MenuPage() {
       .then((res: any) => {
         const picks = res || []
         if (!picks.length) {
-          Taro.showToast({ title: '暂无可推荐的菜品', icon: 'none' })
+          showToast({ title: '暂无可推荐的菜品', icon: 'none' })
           return
         }
         addGroupToCart(picks)
-        Taro.showToast({ title: '惊喜：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
+        showToast({ title: '惊喜：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
       })
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
       .finally(() => setRandomLoading(false))
   }
 
@@ -204,7 +205,7 @@ export default function MenuPage() {
     setRecommend(null)
     dishApi.recommend(Math.max(1, Math.min(20, people)))
       .then((res: any) => setRecommend(res))
-      .catch((e: any) => Taro.showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
+      .catch((e: any) => showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
       .finally(() => setRecommendLoading(false))
   }
 
@@ -214,23 +215,23 @@ export default function MenuPage() {
     addGroupToCart(plan)
     setRecommendVisible(false)
     setRecommend(null)
-    Taro.showToast({ title: '已加入购物车', icon: 'none' })
+    showToast({ title: '已加入购物车', icon: 'none' })
   }
 
   const onRecommendSavePlan = () => {
     const plan = (recommend && recommend.plan) || []
     if (!plan.length) return
     // 存为计划：跳 plans 页（用户可进一步编辑），简单 toast 提示
-    Taro.showToast({ title: '已保存为今日计划（' + plan.length + ' 道）', icon: 'none' })
+    showToast({ title: '已保存为今日计划（' + plan.length + ' 道）', icon: 'none' })
     setRecommendVisible(false)
     setRecommend(null)
   }
 
-  const onInvite = () => Taro.showToast({ title: '邀请链接即将上线，敬请期待', icon: 'none' })
+  const onInvite = () => showToast({ title: '邀请链接即将上线，敬请期待', icon: 'none' })
 
   const onSubmit = () => {
     if (!cartCount) {
-      Taro.showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
+      showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
       return
     }
     if (!requireLogin('下单需要登录')) return

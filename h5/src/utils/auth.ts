@@ -3,6 +3,7 @@
  * 游客可浏览，下单/创建团队等关键操作前弹窗引导登录。
  */
 import Taro from '@tarojs/taro'
+import { showModal } from '../components/app-modal'
 
 /** 当前用户是否为游客（未注册/未登录） */
 export function isGuest(): boolean {
@@ -23,7 +24,7 @@ export function isGuest(): boolean {
 export function requireLogin(prompt = '请先登录后再操作'): boolean {
   if (!isGuest()) return true
 
-  Taro.showModal({
+  showModal({
     title: '提示',
     content: prompt + '\n登录后订单和数据将永久保存',
     confirmText: '去登录',

@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useEffect, useState } from 'react'
 import { Button, Input } from '@nutui/nutui-react-taro'
 import { auth } from '../../api'
@@ -50,7 +51,7 @@ export default function AuthPage() {
       // 确保 token 和用户信息写入本地
       if (res?.token) setToken(res.token)
       if (res?.user) Taro.setStorageSync('ggc_user', res.user)
-      Taro.showToast({ title: mode === 'login' ? '登录成功' : '注册成功', icon: 'success' })
+      showToast({ title: mode === 'login' ? '登录成功' : '注册成功', icon: 'success' })
       setTimeout(goHome, 600)
     } catch (e: any) {
       setError(e?.message || '操作失败')

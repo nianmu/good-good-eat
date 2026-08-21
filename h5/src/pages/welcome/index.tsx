@@ -1,5 +1,6 @@
 import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button } from '@nutui/nutui-react-taro'
 import { auth } from '../../api'
@@ -27,7 +28,7 @@ export default function WelcomePage() {
       await auth.guest()
       goHome()
     } catch {
-      Taro.showToast({ title: '网络异常，请重试', icon: 'none' })
+      showToast({ title: '网络异常，请重试', icon: 'none' })
       setLoading('')
     }
   }
@@ -43,10 +44,10 @@ export default function WelcomePage() {
         setToken(res.token)
         Taro.setStorageSync('ggc_user', res.user)
       }
-      Taro.showToast({ title: '登录成功', icon: 'success' })
+      showToast({ title: '登录成功', icon: 'success' })
       setTimeout(goHome, 600)
     } catch (e: any) {
-      Taro.showToast({ title: e?.message || '微信登录失败', icon: 'none' })
+      showToast({ title: e?.message || '微信登录失败', icon: 'none' })
       setLoading('')
     }
   }
