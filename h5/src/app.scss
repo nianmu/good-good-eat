@@ -102,3 +102,27 @@ page {
   flex: 1;
   min-width: 0;
 }
+
+// 搜索框占位符样式
+.ggc-search-placeholder {
+  color: #BBBBBB;
+  font-size: 14px;
+}
+
+// ===== H5 端 Taro Input 垂直居中修复 =====
+// Taro <Input> H5 渲染：taro-input-core > input.weui-input
+// 默认 height:1.47em / line-height:1.47em，远小于容器，导致文字偏上。
+// 强制 input 撑满父容器高度，文字自然垂直居中。
+taro-input-core {
+  display: block;
+  height: 100%;
+
+  input {
+    height: 100% !important;
+    line-height: 1 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+  }
+}

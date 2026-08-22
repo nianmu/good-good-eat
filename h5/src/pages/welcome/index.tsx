@@ -1,9 +1,9 @@
 import { View, Text, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@nutui/nutui-react-taro'
-import { auth } from '../../api'
+import { auth, teams as teamApi } from '../../api'
 import { setToken } from '../../api/request'
 
 /**
@@ -12,13 +12,30 @@ import { setToken } from '../../api/request'
  *   1. 游客随便逛逛 → 自动游客登录 → 进菜谱
  *   2. 用户登录 → 跳转登录页
  *   3. 微信一键登录 → wx.login → /auth/wx-login（仅小程序端）
+ *
+ * 支持 invite_code 参数：来自好友分享链接，登录/注册后自动加入团队。
  */
 export default function WelcomePage() {
+  const router = useRouter()
+  const inviteCode = router.params.invite_code || ''
   const [loading, setLoading] = useState<'guest' | 'wx' | ''>('')
 
+  // 存储邀请码，登录后使用
+  useEffect(() => {
+    if (inviteCode) {
+      Taro.setStorageSync('ggc_invite_code', inviteCode)
+    }
+  }, [inviteCode])
+
   const goHome = () => Taro.switchTab({ url: '/pages/menu/index' })
-  const goLogin = () => Taro.navigateTo({ url: '/pages/auth/index?mode=login' })
-  const goRegister = () => Taro.navigateTo({ url: '/pages/auth/index?mode=register' })
+  const goLogin = () => {
+    const qs = inviteCode ? `?invite_code=${inviteCode}` : ''
+    Taro.navigateTo({ url: '/pages/auth/index?mode=login' + qs })
+  }
+  const goRegister = () => {
+    const qs = inviteCode ? `?invite_code=${inviteCode}` : ''
+    Taro.navigateTo({ url: '/pages/auth/index?mode=register' + qs })
+  }
 
   // 游客登录
   const onGuest = async () => {
@@ -26,6 +43,10 @@ export default function WelcomePage() {
     setLoading('guest')
     try {
       await auth.guest()
+      // 如果带有邀请码，游客登录后也尝试加入团队
+      if (inviteCode) {
+        await joinTeamByCode(inviteCode)
+      }
       goHome()
     } catch {
       showToast({ title: '网络异常，请重试', icon: 'none' })
@@ -44,11 +65,27 @@ export default function WelcomePage() {
         setToken(res.token)
         Taro.setStorageSync('ggc_user', res.user)
       }
+      // 登录后如果有邀请码，自动加入团队
+      if (inviteCode) {
+        await joinTeamByCode(inviteCode)
+      }
       showToast({ title: '登录成功', icon: 'success' })
       setTimeout(goHome, 600)
     } catch (e: any) {
       showToast({ title: e?.message || '微信登录失败', icon: 'none' })
       setLoading('')
+    }
+  }
+
+  // 通过邀请码加入团队
+  const joinTeamByCode = async (code: string) => {
+    try {
+      const team: any = await teamApi.join(code)
+      if (team?.name) {
+        showToast({ title: '已加入「' + team.name + '」', icon: 'success' })
+      }
+    } catch {
+      // 加入失败不阻断主流程（可能已在团队中）
     }
   }
 

@@ -29,10 +29,8 @@ export function requireLogin(prompt = '请先登录后再操作'): boolean {
     content: prompt + '\n登录后订单和数据将永久保存',
     confirmText: '去登录',
     cancelText: '取消',
-    success(res) {
-      if (res.confirm) {
-        Taro.navigateTo({ url: '/pages/auth/index' })
-      }
+    onConfirm() {
+      Taro.navigateTo({ url: '/pages/auth/index' })
     }
   })
   return false

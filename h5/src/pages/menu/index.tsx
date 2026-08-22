@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro, { useLoad, useDidShow } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
 
-import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi } from '../../api'
+import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans } from '../../api'
 import { store } from '../../store'
 import { requireLogin } from '../../utils/auth'
 
@@ -70,12 +70,14 @@ export default function MenuPage() {
     const k = (kw || '').trim()
     let list = all
     if (k) {
+      // 搜索模式：全局匹配，忽略分类
       list = all.filter((d: any) =>
         (d.name || '').indexOf(k) >= 0 ||
         (d.description || '').indexOf(k) >= 0 ||
         ((d.ingredients || []) as string[]).some((i) => i.indexOf(k) >= 0)
       )
     } else if (catId) {
+      // 分类模式
       list = all.filter((d: any) => String(d.category_id) === String(catId))
     }
     setDishes(list)
@@ -112,9 +114,32 @@ export default function MenuPage() {
     loadUser() // 从团队页返回时刷新团队/当前团队
   })
 
+  // 小程序：右上角分享给好友，携带邀请码
+  useShareAppMessage(() => {
+    const team = teams.find((t: any) => String(t.id) === String(currentTeamId))
+    const code = team?.invite_code
+    return {
+      title: code ? `「${team.name}」邀请你一起点菜` : '好好吃饭，一起点菜吧',
+      path: code ? `/pages/welcome/index?invite_code=${code}` : '/pages/welcome/index',
+    }
+  })
+
   const onSearch = (v: string) => {
     setKeyword(v)
-    applyFilter(categories, allDishes, keyword ? '' : activeCategoryId, v)
+    const k = (v || '').trim()
+    if (k) {
+      // 有搜索词：全局搜索，不受分类限制
+      applyFilter(categories, allDishes, '', v)
+    } else {
+      // 清空搜索：回到当前分类视图
+      applyFilter(categories, allDishes, activeCategoryId, '')
+    }
+  }
+
+  /** 清空搜索并恢复分类视图 */
+  const clearSearch = () => {
+    setKeyword('')
+    applyFilter(categories, allDishes, activeCategoryId, '')
   }
 
   const onCategoryTap = (id: string) => {
@@ -140,9 +165,9 @@ export default function MenuPage() {
   const addCart = (id: number) => setQty(id, (cart[id] || 0) + 1)
   const minusCart = (id: number) => setQty(id, (cart[id] || 0) - 1)
 
-  /** 一组菜品批量加入购物车（随机/推荐共用） */
-  const addGroupToCart = (picks: any[]) => {
-    const c = { ...store.get('cart') }
+  /** 一组菜品替换购物车（随机/推荐场景：清空旧数据，重新生成） */
+  const replaceCart = (picks: any[]) => {
+    const c: Record<string, number> = {}
     picks.forEach((d: any) => { c[d.id] = (c[d.id] || 0) + 1 })
     store.set('cart', c)
     setCart(c)
@@ -162,24 +187,6 @@ export default function MenuPage() {
       .catch((e: any) => showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
   }
 
-  /** 随机点菜（均衡） */
-  const onRandom = () => {
-    if (randomLoading) return
-    setRandomLoading(true)
-    dishApi.random(3, 'balanced')
-      .then((res: any) => {
-        const picks = res || []
-        if (!picks.length) {
-          showToast({ title: '暂无可推荐的菜品', icon: 'none' })
-          return
-        }
-        addGroupToCart(picks)
-        showToast({ title: '推荐：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
-      })
-      .catch((e: any) => showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
-      .finally(() => setRandomLoading(false))
-  }
-
   /** 惊喜推荐 */
   const onSurprise = () => {
     if (randomLoading) return
@@ -191,7 +198,7 @@ export default function MenuPage() {
           showToast({ title: '暂无可推荐的菜品', icon: 'none' })
           return
         }
-        addGroupToCart(picks)
+        replaceCart(picks)
         showToast({ title: '惊喜：' + picks.map((d: any) => d.name).join('、'), icon: 'none' })
       })
       .catch((e: any) => showToast({ title: (e as any)?.message || '推荐失败', icon: 'none' }))
@@ -212,7 +219,7 @@ export default function MenuPage() {
   const onRecommendAddAll = () => {
     const plan = (recommend && recommend.plan) || []
     if (!plan.length) return
-    addGroupToCart(plan)
+    replaceCart(plan)
     setRecommendVisible(false)
     setRecommend(null)
     showToast({ title: '已加入购物车', icon: 'none' })
@@ -221,13 +228,48 @@ export default function MenuPage() {
   const onRecommendSavePlan = () => {
     const plan = (recommend && recommend.plan) || []
     if (!plan.length) return
-    // 存为计划：跳 plans 页（用户可进一步编辑），简单 toast 提示
-    showToast({ title: '已保存为今日计划（' + plan.length + ' 道）', icon: 'none' })
+    const reason = recommend?.reason || ''
+    // 调用后端 plans API 持久化
+    plans.create({
+      name: reason || '今天吃什么',
+      note: reason,
+      items: plan.map((d: any) => ({ dish_id: d.id, quantity: 1 }))
+    }).then(() => {
+      showToast({ title: '已保存为今日计划（' + plan.length + ' 道）', icon: 'success' })
+    }).catch((e: any) => {
+      showToast({ title: e?.message || '保存失败', icon: 'none' })
+    })
     setRecommendVisible(false)
     setRecommend(null)
   }
 
-  const onInvite = () => showToast({ title: '邀请链接即将上线，敬请期待', icon: 'none' })
+  /** 邀请下单：H5 复制邀请码，小程序转发分享 */
+  const onInvite = () => {
+    if (!requireLogin('邀请下单需要登录')) return
+    // 未选择团队 → 引导先创建/选择团队
+    if (!currentTeamId) {
+      Taro.navigateTo({ url: '/pages/team-list/index' })
+      return
+    }
+    const team = teams.find((t: any) => String(t.id) === String(currentTeamId))
+    const inviteCode = team?.invite_code
+    if (!inviteCode) {
+      showToast({ title: '该团队暂无邀请码', icon: 'none' })
+      return
+    }
+    if (process.env.TARO_ENV === 'weapp') {
+      // 小程序：提示用户点击右上角转发
+      showToast({ title: '请点击右上角「转发」分享给好友', icon: 'none' })
+    } else {
+      // H5 / 其他端：复制邀请码
+      Taro.setClipboardData({
+        data: inviteCode,
+        success: () => {
+          showToast({ title: '邀请码已复制，发给伙伴一起点菜吧', icon: 'none' })
+        }
+      })
+    }
+  }
 
   const onSubmit = () => {
     if (!cartCount) {
@@ -263,22 +305,39 @@ export default function MenuPage() {
         </View>
       </View>
 
-      {/* 搜索栏 */}
-      <View style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', background: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 }}>
-        <View style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', height: '36px', padding: '0 12px', background: '#F5F5F5', borderRadius: '999px' }}>
-          <Text style={{ opacity: .5 }}>🔍</Text>
+      {/* 搜索栏 + 点单 */}
+      <View style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: '#fff', flexShrink: 0 }}>
+        {/* 搜索输入框 */}
+        <View style={{
+          flex: 1, display: 'flex', alignItems: 'center',
+          height: '40px', padding: '0 14px', borderRadius: '10px',
+           border: '1px solid #ECECEC',
+        }}>
+          <Text style={{ fontSize: '14px', color: '#BDBDBD', marginRight: '6px', flexShrink: 0 }}>🔍</Text>
           <Input
-            style={{ flex: 1, fontSize: '14px' }}
+            style={{ flex: 1, height: '40px', fontSize: '14px', color: '#1A1A1A' }}
             placeholder="搜索菜品或食材"
             value={keyword}
             onChange={(v: string) => onSearch(v)}
           />
+          {!!keyword && (
+            <Text onClick={clearSearch} style={{ fontSize: '16px', color: '#BDBDBD', padding: '0 2px', cursor: 'pointer', flexShrink: 0 }}>✕</Text>
+          )}
         </View>
-        <View style={{ display: 'flex', alignItems: 'center', color: GREENS.primary, fontWeight: 500, fontSize: '14px', gap: '4px' }}
+        {/* 点单入口 */}
+        <View style={{
+          display: 'flex', alignItems: 'center', gap: '4px',
+          padding: '0 6px', height: '40px', flexShrink: 0, cursor: 'pointer',
+        }}
           onClick={() => Taro.navigateTo({ url: '/pages/cart/index' })}>
-          <Text>点单</Text>
+          <Text style={{ fontSize: '15px', color: GREENS.primary, fontWeight: 600 }}>🛒</Text>
           {cartCount > 0 && (
-            <View style={{ minWidth: '18px', height: '18px', padding: '0 5px', borderRadius: '999px', background: GREENS.primary, color: '#fff', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{
+              minWidth: '18px', height: '18px', padding: '0 5px',
+              borderRadius: '999px', background: GREENS.primary, color: '#fff',
+              fontSize: '11px', fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               {cartCount}
             </View>
           )}
@@ -299,10 +358,10 @@ export default function MenuPage() {
 
       {/* 主体：左侧分类 + 右侧菜品 */}
       <View style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        {/* 左侧分类 */}
-        <ScrollView scrollY style={{ width: '88px', background: '#F5F5F5', flexShrink: 0, height: '100%' }}>
+        {/* 左侧分类（搜索态下弱化但可点击，点击即退出搜索） */}
+        <ScrollView scrollY style={{ width: '88px', background: '#F5F5F5', flexShrink: 0, height: '100%', opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s' }}>
           {categories.map((c: any) => {
-            const active = String(c.id) === String(activeCategoryId)
+            const active = !keyword && String(c.id) === String(activeCategoryId)
             return (
               <View key={c.id} onClick={() => onCategoryTap(c.id)}
                 style={{
@@ -321,7 +380,12 @@ export default function MenuPage() {
 
         {/* 右侧菜品列表 */}
         <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px', background: '#fff' }}>
-          <View style={{ fontSize: '13px', color: '#666', marginBottom: '12px', paddingLeft: '4px' }}>{dishesTitle}</View>
+          <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
+            <Text style={{ fontSize: '13px', color: '#666' }}>{dishesTitle}</Text>
+            {!!keyword && (
+              <Text onClick={clearSearch} style={{ fontSize: '12px', color: GREENS.primary, cursor: 'pointer' }}>清除搜索</Text>
+            )}
+          </View>
           {loading && <View style={{ color: '#999', fontSize: '14px', textAlign: 'center', padding: '24px' }}>加载中…</View>}
           {!loading && dishes.length === 0 && (
             <Empty description="没有找到相关菜品" image={<Text style={{ fontSize: '48px' }}>🍽</Text>} />
@@ -370,9 +434,6 @@ export default function MenuPage() {
 
       {/* 底部操作栏（预留 tabbar 50px 空间） */}
       <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
-        <Button type="primary" fill="outline" size="small" style={{ flex: 1, fontSize: '13px' }} loading={randomLoading} onClick={onRandom}>
-          🎲 {randomLoading ? '推荐中…' : '随机点菜'}
-        </Button>
         <Button fill="none" size="small" style={{ flex: 1, fontSize: '13px', color: '#FF9800', background: '#FFF3E0' }} onClick={onInvite}>
           📨 邀请下单
         </Button>

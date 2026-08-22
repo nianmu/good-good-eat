@@ -95,10 +95,8 @@ export default function OrderDetailPage() {
         content: '当前团队没有固定厨师，且无人认领做菜。\n\n请先在团队中指定厨师，或让成员认领做菜后再发送。',
         confirmText: '去团队',
         cancelText: '知道了',
-        success(res) {
-          if (res.confirm) {
-            Taro.navigateTo({ url: `/pages/team-detail/index?id=${order.team_id}` })
-          }
+        onConfirm() {
+          Taro.navigateTo({ url: `/pages/team-detail/index?id=${order.team_id}` })
         }
       })
       return
@@ -109,9 +107,7 @@ export default function OrderDetailPage() {
       showModal({
         title: '确认发送',
         content: `当前厨师：\n🏠 固定厨师：${teamChefName || '未知'}\n👨‍🍳 认领人：${orderChefName || '未知'}\n\n确定发送订单？`,
-        success(res) {
-          if (res.confirm) doSendToChef()
-        }
+        onConfirm() { doSendToChef() }
       })
       return
     }
@@ -121,9 +117,7 @@ export default function OrderDetailPage() {
     showModal({
       title: '确认发送',
       content: `当前厨师为「${chefName}」，确定发送订单？`,
-      success(res) {
-        if (res.confirm) doSendToChef()
-      }
+      onConfirm() { doSendToChef() }
     })
   }
 

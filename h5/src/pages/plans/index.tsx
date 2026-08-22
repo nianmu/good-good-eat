@@ -38,7 +38,7 @@ export default function PlansPage() {
   }
 
   useLoad(() => load(true))
-  useDidShow(() => { if (list.length > 0) load(true) })
+  useDidShow(() => load(true))
   useReachBottom(() => load(false))
 
   const goDetail = (id: any) => Taro.navigateTo({ url: `/pages/plan-detail/index?id=${id}` })

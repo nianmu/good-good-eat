@@ -3,7 +3,7 @@ import Taro, { useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useEffect, useState } from 'react'
 import { Button, Input } from '@nutui/nutui-react-taro'
-import { auth } from '../../api'
+import { auth, teams as teamApi } from '../../api'
 import { setToken } from '../../api/request'
 
 /**
@@ -52,6 +52,19 @@ export default function AuthPage() {
       if (res?.token) setToken(res.token)
       if (res?.user) Taro.setStorageSync('ggc_user', res.user)
       showToast({ title: mode === 'login' ? '登录成功' : '注册成功', icon: 'success' })
+      // 登录/注册成功后，如果有邀请码，自动加入团队
+      const savedCode = router.params?.invite_code || Taro.getStorageSync('ggc_invite_code') || ''
+      if (savedCode) {
+        try {
+          const team: any = await teamApi.join(savedCode)
+          if (team?.name) {
+            showToast({ title: '已加入「' + team.name + '」', icon: 'success' })
+          }
+          Taro.removeStorageSync('ggc_invite_code')
+        } catch {
+          // 加入失败不阻断主流程
+        }
+      }
       setTimeout(goHome, 600)
     } catch (e: any) {
       setError(e?.message || '操作失败')
@@ -129,16 +142,16 @@ export default function AuthPage() {
           <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>用户名</Text>
           <View style={{
             display: 'flex', alignItems: 'center', gap: '10px',
-            background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
+            height: '44px', background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
             border: '1px solid #E8E8E8',
           }}>
-            <Text style={{ fontSize: '16px' }}>👤</Text>
+            <Text style={{ fontSize: '16px', flexShrink: 0 }}>👤</Text>
             <Input
               type="text"
               placeholder="字母/数字/下划线，3-32 位"
               value={username}
               onChange={(v) => { setUsername(String(v || '').trim()); setError('') }}
-              style={{ flex: 1, background: 'transparent', border: 'none' }}
+              style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
             />
           </View>
         </View>
@@ -151,16 +164,16 @@ export default function AuthPage() {
             </Text>
             <View style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
+              height: '44px', background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
               border: '1px solid #E8E8E8',
             }}>
-              <Text style={{ fontSize: '16px' }}>✏️</Text>
+              <Text style={{ fontSize: '16px', flexShrink: 0 }}>✏️</Text>
               <Input
                 type="text"
                 placeholder="你的昵称"
                 value={nickname}
                 onChange={(v) => setNickname(String(v || ''))}
-                style={{ flex: 1, background: 'transparent', border: 'none' }}
+                style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
               />
             </View>
           </View>
@@ -171,16 +184,16 @@ export default function AuthPage() {
           <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>密码</Text>
           <View style={{
             display: 'flex', alignItems: 'center', gap: '10px',
-            background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
+            height: '44px', background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
             border: '1px solid #E8E8E8',
           }}>
-            <Text style={{ fontSize: '16px' }}>🔒</Text>
+            <Text style={{ fontSize: '16px', flexShrink: 0 }}>🔒</Text>
             <Input
               type="password"
               placeholder={mode === 'register' ? '至少 6 位' : '请输入密码'}
               value={password}
               onChange={(v) => { setPassword(String(v || '')); setError('') }}
-              style={{ flex: 1, background: 'transparent', border: 'none' }}
+              style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
             />
           </View>
         </View>
