@@ -454,13 +454,19 @@ export default function MenuPage() {
         <View style={{ padding: '16px 24px 24px' }}>
           <View style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: '#666', marginBottom: '12px' }}>
             <Text>几个人吃？</Text>
-            <Input
-              type="number"
-              value={peopleText}
-              style={{ width: '70px', height: '34px', border: '1px solid #E0E0E0', borderRadius: '8px', textAlign: 'center', fontSize: '15px' }}
-              onChange={(v: string) => setPeopleText(v)}
-              disabled={recommendLoading}
-            />
+            <View style={{
+              width: '70px', height: '36px',
+              border: '1px solid #E0E0E0', borderRadius: '8px',
+              overflow: 'hidden', flexShrink: 0,
+            }}>
+              <Input
+                type="number"
+                value={peopleText}
+                style={{ width: '100%', height: '36px', textAlign: 'center', fontSize: '15px' }}
+                onChange={(v: string) => setPeopleText(v)}
+                disabled={recommendLoading}
+              />
+            </View>
             <Button type="primary" size="small" style={{ flex: 1 }} loading={recommendLoading} onClick={onRecommendLoad}>给我推荐</Button>
           </View>
 
