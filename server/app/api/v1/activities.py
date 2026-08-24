@@ -148,6 +148,12 @@ def create_activity(
     db.add(activity)
     db.commit()
     db.refresh(activity)
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.created", {"activity": _activity_to_dict(activity)})
+    except Exception:
+        pass
     return ok(_activity_to_dict(activity))
 
 
@@ -315,6 +321,12 @@ def update_activity_status(
     activity.status = target
     db.commit()
     db.refresh(activity)
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.status_changed", {"activity": _activity_to_dict(activity)})
+    except Exception:
+        pass
     return ok(_activity_to_dict(activity))
 
 
@@ -374,7 +386,14 @@ def add_activity_item(
         db.commit()
         db.refresh(existing)
         chef_user = db.get(User, existing.chef_id) if existing.chef_id else None
-        return ok(_item_to_dict(existing, dish, user, chef_user))
+        payload = _item_to_dict(existing, dish, user, chef_user)
+        try:
+            from app.ws.handlers import manager
+
+            manager.broadcast_sync(activity.team_id, "activity.item_added", {"item": payload, "activity_id": activity_id})
+        except Exception:
+            pass
+        return ok(payload)
 
     item = ActivityItem(
         activity_id=activity_id,
@@ -387,7 +406,14 @@ def add_activity_item(
     db.add(item)
     db.commit()
     db.refresh(item)
-    return ok(_item_to_dict(item, dish, user, None))
+    payload = _item_to_dict(item, dish, user, None)
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.item_added", {"item": payload, "activity_id": activity_id})
+    except Exception:
+        pass
+    return ok(payload)
 
 
 @router.delete("/{activity_id}/items/{item_id}")
@@ -413,6 +439,12 @@ def remove_activity_item(
 
     db.delete(item)
     db.commit()
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.item_removed", {"item_id": item_id, "activity_id": activity_id})
+    except Exception:
+        pass
     return ok({"item_id": item_id})
 
 
@@ -456,7 +488,14 @@ def update_item_chef(
     added_user = db.get(User, item.added_by)
     chef_user = db.get(User, item.chef_id) if item.chef_id else None
     # 若 chef_id 为 null 且 team 有固定厨师，前端回落显示；此处不自动填充，保留 null
-    return ok(_item_to_dict(item, dish, added_user, chef_user))
+    payload = _item_to_dict(item, dish, added_user, chef_user)
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.item_chef_changed", {"item": payload, "activity_id": activity_id})
+    except Exception:
+        pass
+    return ok(payload)
 
 
 @router.put("/{activity_id}/items/{item_id}/status")
@@ -505,4 +544,11 @@ def update_item_status(
     dish = db.get(Dish, item.dish_id)
     added_user = db.get(User, item.added_by)
     chef_user = db.get(User, item.chef_id) if item.chef_id else None
-    return ok(_item_to_dict(item, dish, added_user, chef_user))
+    payload = _item_to_dict(item, dish, added_user, chef_user)
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.item_status_changed", {"item": payload, "activity_id": activity_id})
+    except Exception:
+        pass
+    return ok(payload)
