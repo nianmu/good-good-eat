@@ -4,7 +4,7 @@ import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { Input, Button, Popup, Empty, ActionSheet } from '@nutui/nutui-react-taro'
 
-import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans } from '../../api'
+import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans, activities } from '../../api'
 import { store } from '../../store'
 import { requireLogin } from '../../utils/auth'
 
@@ -32,6 +32,7 @@ export default function MenuPage() {
   const [recommend, setRecommend] = useState<any>(null)
   const [peopleText, setPeopleText] = useState('3')
   const [teamPickerVisible, setTeamPickerVisible] = useState(false)
+  const [joining, setJoining] = useState(false)
 
   const syncCart = () => {
     const c = store.get('cart') || {}
@@ -272,13 +273,53 @@ export default function MenuPage() {
     }
   }
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!cartCount) {
       showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
       return
     }
-    if (!requireLogin('下单需要登录')) return
-    Taro.navigateTo({ url: '/pages/cart/index' })
+    if (!requireLogin('加入活动需要登录')) return
+    if (!currentTeamId) {
+      showToast({ title: '请先选择团队', icon: 'none' })
+      Taro.navigateTo({ url: '/pages/team-list/index' })
+      return
+    }
+    if (joining) return
+    const cartData = store.get('cart') || {}
+    const entries = Object.entries(cartData).filter(([, qty]) => Number(qty) > 0)
+    if (!entries.length) {
+      showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
+      return
+    }
+    setJoining(true)
+    try {
+      let activityId: string | number = ''
+      try {
+        const listRes: any = await activities.list({ team_id: currentTeamId, status: 'ordering' })
+        const first = (listRes?.items?.[0]) ?? null
+        if (first?.id) activityId = first.id
+      } catch {}
+      if (!activityId) {
+        const name = currentTeamName ? currentTeamName + '·日常' : '日常活动'
+        const created: any = await activities.create({ team_id: currentTeamId, type: 'daily', name })
+        activityId = created?.id ?? ''
+        if (!activityId) throw new Error('创建活动失败')
+      }
+      for (const [dishId, qty] of entries) {
+        await activities.addItem(activityId, dishId, Number(qty))
+      }
+      store.set('cart', {})
+      setCart({})
+      setCartCount(0)
+      showToast({ title: '已加入活动', icon: 'success' })
+      setTimeout(() => {
+        Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
+      }, 600)
+    } catch (e: any) {
+      showToast({ title: e?.message || '加入活动失败', icon: 'none' })
+    } finally {
+      setJoining(false)
+    }
   }
 
   const onTeamPickerSelect = (_item: any, index: number) => {
@@ -457,8 +498,8 @@ export default function MenuPage() {
         <Button fill="none" size="small" style={{ flex: 1, fontSize: '13px', color: '#FF9800', background: '#FFF3E0' }} onClick={onInvite}>
           📨 邀请下单
         </Button>
-        <Button type="primary" size="small" style={{ flex: 1.5, fontSize: '13px' }} onClick={onSubmit}>
-          下单{cartCount > 0 ? '（' + cartCount + '）' : ''}
+        <Button type="primary" size="small" style={{ flex: 1.5, fontSize: '13px' }} loading={joining} onClick={onSubmit}>
+          {joining ? '加入中…' : `加入活动${cartCount > 0 ? '（' + cartCount + '）' : ''}`}
         </Button>
       </View>
 

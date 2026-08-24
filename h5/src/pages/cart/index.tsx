@@ -4,7 +4,7 @@ import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { InputNumber, Button, Empty } from '@nutui/nutui-react-taro'
 
-import { auth, dishes as dishApi, teams as teamApi, orders as orderApi } from '../../api'
+import { auth, dishes as dishApi, teams as teamApi, activities } from '../../api'
 import { store } from '../../store'
 import { TeamCartSocket } from '../../utils/team_ws'
 import { requireLogin } from '../../utils/auth'
@@ -153,8 +153,8 @@ export default function CartPage() {
 
   const [teamDropdownVisible, setTeamDropdownVisible] = useState(false)
 
-  const onSubmit = () => {
-    if (!requireLogin('下单需要登录')) return
+  const onSubmit = async () => {
+    if (!requireLogin('加入活动需要登录')) return
     if (submitting) return
     if (!totalCount) {
       showToast({ title: '购物车是空的', icon: 'none' })
@@ -164,20 +164,37 @@ export default function CartPage() {
       showToast({ title: '请先选择下单团队', icon: 'none' })
       return
     }
-    const payload = items.map((it) => ({ dish_id: it.dish_id, quantity: it.quantity }))
+    if (!items.length) {
+      showToast({ title: '购物车是空的', icon: 'none' })
+      return
+    }
     setSubmitting(true)
-    orderApi.create(teamId, payload)
-      .then((order: any) => {
-        store.set('cart', {})
-        showToast({ title: '下单成功，取餐码 ' + order.pickup_code, icon: 'none' })
-        setTimeout(() => {
-          Taro.redirectTo({ url: '/pages/order-detail/index?id=' + order.id })
-        }, 800)
-      })
-      .catch((e: any) => {
-        showToast({ title: (e as any)?.message || '下单失败', icon: 'none' })
-        setSubmitting(false)
-      })
+    try {
+      let activityId: string | number = ''
+      try {
+        const listRes: any = await activities.list({ team_id: teamId, status: 'ordering' })
+        const first = listRes?.items?.[0] ?? null
+        if (first?.id) activityId = first.id
+      } catch {}
+      if (!activityId) {
+        const teamName = teams.find((t: any) => String(t.id) === String(teamId))?.name || ''
+        const name = teamName ? teamName + '·日常' : '日常活动'
+        const created: any = await activities.create({ team_id: teamId, type: 'daily', name })
+        activityId = created?.id ?? ''
+        if (!activityId) throw new Error('创建活动失败')
+      }
+      for (const it of items) {
+        await activities.addItem(activityId, it.dish_id, Number(it.quantity))
+      }
+      store.set('cart', {})
+      showToast({ title: '已加入活动', icon: 'success' })
+      setTimeout(() => {
+        Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
+      }, 600)
+    } catch (e: any) {
+      showToast({ title: e?.message || '加入活动失败', icon: 'none' })
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -311,7 +328,7 @@ export default function CartPage() {
           <View style={{ flex: 1 }} />
           <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>共 {totalCount} 道</Text>
           <Button type="primary" size="small" style={{ fontSize: '14px' }} loading={submitting} onClick={onSubmit}>
-            {submitting ? '提交中…' : '提交下单'}
+            {submitting ? '加入中…' : '加入活动'}
           </Button>
         </View>
       )}
