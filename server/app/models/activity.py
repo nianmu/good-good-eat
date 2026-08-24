@@ -35,8 +35,8 @@ class Activity(Base):
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
-    team: Mapped[object] = relationship(foreign_keys=[team_id])
-    creator: Mapped[object] = relationship(foreign_keys=[created_by])
+    team: Mapped["Team"] = relationship(foreign_keys=[team_id])
+    creator: Mapped["User"] = relationship(foreign_keys=[created_by])
     items: Mapped[list[ActivityItem]] = relationship(
         back_populates="activity", cascade="all, delete-orphan"
     )
@@ -66,6 +66,6 @@ class ActivityItem(Base):
     added_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
 
     activity: Mapped[Activity] = relationship(back_populates="items")
-    dish: Mapped[object] = relationship()
-    added_user: Mapped[object] = relationship(foreign_keys=[added_by])
-    chef: Mapped[object | None] = relationship(foreign_keys=[chef_id])
+    dish: Mapped["Dish"] = relationship()
+    added_user: Mapped["User"] = relationship(foreign_keys=[added_by])
+    chef: Mapped["User | None"] = relationship(foreign_keys=[chef_id])
