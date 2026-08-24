@@ -40,12 +40,33 @@ export const favorites = {
 
 export const teams = {
   my: () => request({ url: '/me' }).then((r: any) => r.user?.teams || []),
-  create: (name: string) => request({ url: '/teams', method: 'POST', data: { name } }),
+  create: (name: string, description?: string) =>
+    request({ url: '/teams', method: 'POST', data: { name, description } }),
   join: (inviteCode: string) => request({ url: '/teams/join', method: 'POST', data: { invite_code: inviteCode } }),
   detail: (id: number | string) => request({ url: `/teams/${id}` }),
   setChef: (id: number | string, userId: number | null) =>
     request({ url: `/teams/${id}/chef`, method: 'PUT', data: { user_id: userId } }),
-  cart: (id: number | string) => request({ url: `/teams/${id}/cart` })
+  cart: (id: number | string) => request({ url: `/teams/${id}/cart` }),
+  leave: (id: number | string) => request({ url: `/teams/${id}/leave`, method: 'POST' }),
+  removeMember: (id: number | string, userId: number | string) =>
+    request({ url: `/teams/${id}/members/${userId}`, method: 'DELETE' })
+}
+
+export const activities = {
+  create: (data: { team_id: number | string; type: string; name: string; people?: number; remark?: string }) =>
+    request({ url: '/activities', method: 'POST', data }),
+  list: (params?: any) => request({ url: '/activities', data: params }),
+  detail: (id: number | string) => request({ url: `/activities/${id}` }),
+  updateStatus: (id: number | string, target: string) =>
+    request({ url: `/activities/${id}/status`, method: 'POST', data: { target } }),
+  addItem: (id: number | string, dish_id: number | string, quantity: number) =>
+    request({ url: `/activities/${id}/items`, method: 'POST', data: { dish_id, quantity } }),
+  removeItem: (id: number | string, itemId: number | string) =>
+    request({ url: `/activities/${id}/items/${itemId}`, method: 'DELETE' }),
+  updateChef: (id: number | string, itemId: number | string, user_id: number | string | null) =>
+    request({ url: `/activities/${id}/items/${itemId}/chef`, method: 'PUT', data: { user_id } }),
+  updateItemStatus: (id: number | string, itemId: number | string, target: string) =>
+    request({ url: `/activities/${id}/items/${itemId}/status`, method: 'PUT', data: { target } })
 }
 
 export const orders = {
