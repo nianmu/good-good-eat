@@ -203,6 +203,10 @@ export default function ActivitiesPage() {
     Taro.switchTab({ url: '/pages/menu/index' })
   }
 
+  function goOrdersArchive() {
+    Taro.navigateTo({ url: '/pages/orders/index' })
+  }
+
   return (
     <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {/* 顶部状态 Tab */}
@@ -239,6 +243,13 @@ export default function ActivitiesPage() {
           ))}
         </View>
       </ScrollView>
+
+      {/* 归档入口：旧订单保留为普通页面，非 Tab */}
+      <View style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 12px 0' }}>
+        <Text onClick={goOrdersArchive} style={{ fontSize: 12, color: '#999' }}>
+          查看历史订单 ›
+        </Text>
+      </View>
 
       {/* 列表主体 */}
       <ScrollView
