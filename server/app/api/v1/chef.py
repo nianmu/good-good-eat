@@ -24,7 +24,13 @@ _ACTIVE_STATUSES = ("pending", "accepted", "cooking", "ready")
 
 
 def _my_chef_order_query(user_id: int):
-    """我作为厨师收到的订单：团队固定厨师==我 或 订单 chef_id==我。"""
+    """我作为厨师收到的订单：团队固定厨师==我 或 订单 chef_id==我，或无固定厨师团队的待接单（同团队可见可接）。"""
+    # 无固定厨师且我为成员的团队 ids
+    unassigned_team_ids = (
+        select(Team.id)
+        .join(TeamMember, TeamMember.team_id == Team.id)
+        .where(TeamMember.user_id == user_id, Team.chef_id.is_(None))
+    )
     return (
         select(Order)
         .where(
@@ -34,6 +40,7 @@ def _my_chef_order_query(user_id: int):
                     select(Team.id).where(Team.chef_id == user_id)
                 ))
                 | (Order.chef_id == user_id)
+                | (Order.team_id.in_(unassigned_team_ids))
             ),
         )
         .options(

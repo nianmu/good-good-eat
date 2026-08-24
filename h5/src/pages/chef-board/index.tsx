@@ -5,12 +5,15 @@
  * - 数据走 chef.orders / chef.orders/aggregated
  * 对齐原生小程序 pages/chef-board。
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { chef, orders, guestLogin } from '../../api'
+import { loadToken } from '../../api/request'
+import { store } from '../../store'
+import { TeamCartSocket } from '../../utils/team_ws'
 import StatusTag from '../../components/status-tag'
 import { formatTime, dishSummary } from '../../utils/format'
 
@@ -42,6 +45,7 @@ export default function ChefBoardPage() {
   const [ingredients, setIngredients] = useState<any[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const wsRef = useRef<TeamCartSocket | null>(null)
 
   async function loadAll() {
     setLoading(true)
@@ -68,6 +72,18 @@ export default function ChefBoardPage() {
 
   useDidShow(() => {
     loadAll()
+    const teamId = (store.get('currentTeamId') as any) || Taro.getStorageSync('ggc_team') || ''
+    const token = loadToken()
+    if (!teamId || !token) return
+    if (wsRef.current) { try { wsRef.current.close() } catch {} wsRef.current = null }
+    const ws = new TeamCartSocket(teamId, token)
+    ws.onMessage((e) => {
+      if (e.event && e.event.startsWith('order.')) {
+        loadAll()
+      }
+    })
+    ws.connect().catch(() => {})
+    wsRef.current = ws
   })
 
   function onOrderTap(id: number | string) {
@@ -90,6 +106,7 @@ export default function ChefBoardPage() {
       await loadAll()
     } catch (e: any) {
       showToast({ title: e?.message || '操作失败', icon: 'none' })
+      await loadAll()
     } finally {
       setSubmitting(false)
     }

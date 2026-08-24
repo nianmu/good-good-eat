@@ -160,7 +160,7 @@ def set_team_chef(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """指定固定厨师：仅组织者可操作；目标必须是团队内成员。"""
+    """指定固定厨师：仅组织者可操作；目标必须是团队内成员，传空则取消固定厨师。"""
     if _member_role(db, team_id, user.id) != "organizer":
         raise ApiError(403, 40302, "仅组织者可指定厨师")
 
@@ -169,6 +169,13 @@ def set_team_chef(
     )
     if team is None:
         raise ApiError(404, 40401, "团队不存在")
+
+    # 取消固定厨师：user_id 为空
+    if body.user_id is None:
+        team.chef_id = None
+        db.commit()
+        db.refresh(team)
+        return ok({"id": team.id, "chef": None, "chef_id": None})
 
     if _member_role(db, team_id, body.user_id) is None:
         raise ApiError(400, 40002, "该成员不在团队中")

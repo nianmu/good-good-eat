@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
+import { Input, Button, Popup, Empty, ActionSheet } from '@nutui/nutui-react-taro'
 
 import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans } from '../../api'
 import { store } from '../../store'
@@ -31,6 +31,7 @@ export default function MenuPage() {
   const [recommendLoading, setRecommendLoading] = useState(false)
   const [recommend, setRecommend] = useState<any>(null)
   const [peopleText, setPeopleText] = useState('3')
+  const [teamPickerVisible, setTeamPickerVisible] = useState(false)
 
   const syncCart = () => {
     const c = store.get('cart') || {}
@@ -280,6 +281,22 @@ export default function MenuPage() {
     Taro.navigateTo({ url: '/pages/cart/index' })
   }
 
+  const onTeamPickerSelect = (_item: any, index: number) => {
+    // 最后一项为“管理团队…”
+    if (index === teams.length) {
+      setTeamPickerVisible(false)
+      Taro.navigateTo({ url: '/pages/team-list/index' })
+      return
+    }
+    const t = teams[index]
+    if (!t) return
+    store.set('currentTeamId', String(t.id))
+    setCurrentTeamId(String(t.id))
+    setCurrentTeamName(t.name)
+    setTeamPickerVisible(false)
+    showToast({ title: `已切换到「${t.name}」`, icon: 'none' })
+  }
+
   const dishesTitle = keyword
     ? '搜索「' + keyword + '」（' + dishes.length + '）'
     : ((categories.find((c: any) => String(c.id) === String(activeCategoryId)))?.name || '全部菜品') + '（' + dishes.length + '）'
@@ -297,7 +314,10 @@ export default function MenuPage() {
             <View style={{ fontSize: '12px', opacity: .9 }}>只为好好吃饭</View>
           </View>
           <View style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(255,255,255,.2)', borderRadius: '999px', fontSize: '13px', cursor: 'pointer' }}
-            onClick={() => Taro.navigateTo({ url: '/pages/team-list/index' })}>
+            onClick={() => {
+              if (!teams.length) { Taro.navigateTo({ url: '/pages/team-list/index' }); return }
+              setTeamPickerVisible(true)
+            }}>
             <Text>🏠</Text>
             <Text>{currentTeamName || '选择团队'}</Text>
             <Text style={{ fontSize: '10px', opacity: .8 }}>▾</Text>
@@ -441,6 +461,17 @@ export default function MenuPage() {
           下单{cartCount > 0 ? '（' + cartCount + '）' : ''}
         </Button>
       </View>
+
+      {/* 团队切换下拉 */}
+      <ActionSheet
+        visible={teamPickerVisible}
+        title="切换团队"
+        cancelText="取消"
+        options={[...teams.map((t: any) => ({ name: `${t.name}${String(t.id)===String(currentTeamId)?' ✓':''}` })), { name: '⚙️ 管理团队…' }]}
+        optionKey={{ name: 'name' }}
+        onSelect={onTeamPickerSelect}
+        onCancel={() => setTeamPickerVisible(false)}
+      />
 
       {/* 今天吃什么 推荐弹层 */}
       <Popup

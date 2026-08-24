@@ -1,11 +1,13 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
-import Taro, { useRouter, useLoad } from '@tarojs/taro'
+import Taro, { useRouter, useLoad, useDidShow, useDidHide } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { showModal } from '../../components/app-modal'
 import { Button } from '@nutui/nutui-react-taro'
 
 import { orders as orderApi } from '../../api'
+import { loadToken } from '../../api/request'
+import { TeamCartSocket } from '../../utils/team_ws'
 
 // 订单详情页——好好吃饭
 // 取餐码 + 步骤条 + 信息行 + 菜品清单 + 角色感知按钮
@@ -38,6 +40,7 @@ export default function OrderDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const wsRef = useRef<TeamCartSocket | null>(null)
 
   const fmt = (n: any) => Number(n || 0).toFixed(2)
 
@@ -71,6 +74,29 @@ export default function OrderDetailPage() {
   }
 
   useLoad(() => loadOrder())
+  useDidShow(() => loadOrder())
+  // 详情页实时：订单被他人接单/认领/流转时自动刷新
+  useEffect(() => {
+    const teamId = (order as any)?.team_id
+    const token = loadToken()
+    if (!teamId || !token) return
+    if (wsRef.current) { try { wsRef.current.close() } catch {} wsRef.current = null }
+    const ws = new TeamCartSocket(teamId, token)
+    ws.onMessage((e) => {
+      const oid = (e.data as any)?.order?.id
+      if (e.event && e.event.startsWith('order.') && (!oid || String(oid) === String(orderId))) {
+        loadOrder()
+        if (e.event === 'order.accepted' || e.event === 'order.claimed') {
+          const name = (e.data as any)?.order?.chef_nickname || (e.data as any)?.order?.user_nickname || ''
+          showToast({ title: `订单已被${name ? ' ' + name : ''}更新`, icon: 'none' })
+        }
+      }
+    })
+    ws.connect().catch(() => {})
+    wsRef.current = ws
+    return () => { try { ws.close() } catch {} }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.team_id])
 
   // 判断当前用户角色
   const isOwner = order && currentUserId === order.user_id  // 下单人
@@ -133,6 +159,7 @@ export default function OrderDetailPage() {
       .catch((e: any) => {
         showToast({ title: (e as any)?.message || '发送失败', icon: 'none' })
         setSubmitting(false)
+        loadOrder()
       })
   }
 
@@ -149,6 +176,7 @@ export default function OrderDetailPage() {
       .catch((e: any) => {
         showToast({ title: (e as any)?.message || '认领失败', icon: 'none' })
         setSubmitting(false)
+        loadOrder()
       })
   }
 
@@ -165,6 +193,7 @@ export default function OrderDetailPage() {
       .catch((e: any) => {
         showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
         setSubmitting(false)
+        loadOrder()
       })
   }
 
@@ -181,6 +210,7 @@ export default function OrderDetailPage() {
       .catch((e: any) => {
         showToast({ title: (e as any)?.message || '操作失败', icon: 'none' })
         setSubmitting(false)
+        loadOrder()
       })
   }
 

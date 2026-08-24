@@ -57,6 +57,22 @@ class ConnectionManager:
             except Exception:
                 self.disconnect(team_id, ws)
 
+    def broadcast_sync(self, team_id: int, event: str, data: dict, exclude: WebSocket | None = None) -> None:
+        """同步上下文中触发广播（订单状态等），兼容 sync 路由。"""
+        import asyncio
+
+        try:
+            loop = asyncio.get_running_loop()
+            # 已在事件循环中（如 async 路由），创建任务
+            loop.create_task(self.broadcast(team_id, event, data, exclude))
+        except RuntimeError:
+            # 无事件循环（sync 路由/测试），新建循环执行
+            try:
+                asyncio.run(self.broadcast(team_id, event, data, exclude))
+            except RuntimeError:
+                # 已有 loop 但未运行时的兜底（极少见）
+                pass
+
     # ===== 团队购物车 =====
     def cart_snapshot(self, team_id: int) -> dict:
         """当前团队购物车快照（供 join 时下发与 REST 查询）。"""

@@ -85,7 +85,18 @@ export default function TeamDetailPage() {
 
   async function handleSelectChef(_item: any, index: number) {
     setSheetVisible(false)
-    const target = members[index]
+    // 第 0 项为“不指定（取消固定厨师）”
+    if (index === 0) {
+      try {
+        await teams.setChef(team.id, null)
+        showToast({ title: '已取消固定厨师', icon: 'none' })
+        loadTeam()
+      } catch (e: any) {
+        showToast({ title: e?.message || '操作失败', icon: 'none' })
+      }
+      return
+    }
+    const target = members[index - 1]
     if (!target) return
     try {
       await teams.setChef(team.id, target.id)
@@ -177,7 +188,7 @@ export default function TeamDetailPage() {
         visible={sheetVisible}
         title="选择指定为厨师"
         cancelText="取消"
-        options={members.map((m) => ({ name: m.nickname }))}
+        options={[{ name: '🚫 不指定（取消固定厨师）' }, ...members.map((m) => ({ name: m.nickname }))]}
         optionKey={{ name: 'name' }}
         onSelect={(item, idx) => handleSelectChef(item, idx)}
         onCancel={() => setSheetVisible(false)}

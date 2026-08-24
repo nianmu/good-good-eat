@@ -43,7 +43,7 @@ export const teams = {
   create: (name: string) => request({ url: '/teams', method: 'POST', data: { name } }),
   join: (inviteCode: string) => request({ url: '/teams/join', method: 'POST', data: { invite_code: inviteCode } }),
   detail: (id: number | string) => request({ url: `/teams/${id}` }),
-  setChef: (id: number | string, userId: number) =>
+  setChef: (id: number | string, userId: number | null) =>
     request({ url: `/teams/${id}/chef`, method: 'PUT', data: { user_id: userId } }),
   cart: (id: number | string) => request({ url: `/teams/${id}/cart` })
 }

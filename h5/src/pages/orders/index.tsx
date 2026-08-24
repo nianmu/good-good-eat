@@ -8,10 +8,12 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
+import Taro, { useDidShow, useDidHide, useReachBottom } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { Empty, Skeleton, Price } from '@nutui/nutui-react-taro'
-import { request, guestLogin } from '../../api/request'
+import { request, guestLogin, loadToken } from '../../api/request'
+import { store } from '../../store'
+import { TeamCartSocket } from '../../utils/team_ws'
 import StatusTag from '../../components/status-tag'
 import { formatTime, dishSummary } from '../../utils/format'
 
@@ -46,17 +48,17 @@ export default function OrdersPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  const firstShow = useRef(true)
   const busy = useRef(false)
+  const wsRef = useRef<TeamCartSocket | null>(null)
 
-  // 拉取指定页并合并：reset=true 覆盖列表
+  // 拉取指定页并合并：reset=true 覆盖列表；同团队可见可接单
   async function fetchPage(targetPage: number, reset: boolean) {
     try {
       await guestLogin().catch(() => null)
-      const res: any = await request({
-        url: '/orders',
-        data: { page: targetPage, page_size: PAGE_SIZE, status }
-      })
+      const teamId = (store.get('currentTeamId') as any) || Taro.getStorageSync('ggc_team') || ''
+      const data: any = { page: targetPage, page_size: PAGE_SIZE, status }
+      if (teamId) data.team_id = teamId
+      const res: any = await request({ url: '/orders', data })
       const items = (res.items || []).map(normalize)
       setOrders((prev) => (reset ? items : prev.concat(items)))
       setPage(res.page || targetPage)
@@ -86,14 +88,31 @@ export default function OrdersPage() {
 
   // 首次加载
   useEffect(() => {
-    if (firstShow.current) loadOrders(true)
+    loadOrders(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 从详情返回刷新
+  // 每次进入页面都刷新，更新状态（TabBar 切换、详情返回均触发）
   useDidShow(() => {
-    if (!firstShow.current) loadOrders(true, true)
-    firstShow.current = false
+    busy.current = false
+    loadOrders(true, true)
+    // 实时订阅：同团队订单状态变更时自动刷新，防多人同时接单
+    const teamId = (store.get('currentTeamId') as any) || Taro.getStorageSync('ggc_team') || ''
+    const token = loadToken()
+    if (!teamId || !token) return
+    if (wsRef.current) { try { wsRef.current.close() } catch {} wsRef.current = null }
+    const ws = new TeamCartSocket(teamId, token)
+    ws.onMessage((e) => {
+      if (e.event && e.event.startsWith('order.')) {
+        busy.current = false
+        loadOrders(true, true)
+      }
+    })
+    ws.connect().catch(() => {})
+    wsRef.current = ws
+  })
+  useDidHide(() => {
+    if (wsRef.current) { try { wsRef.current.close() } catch {} wsRef.current = null }
   })
 
   useReachBottom(() => {
@@ -112,10 +131,10 @@ export default function OrdersPage() {
       setHasMore(true)
       try {
         await guestLogin().catch(() => null)
-        const res: any = await request({
-          url: '/orders',
-          data: { page: 1, page_size: PAGE_SIZE, status: key }
-        })
+        const teamId = (store.get('currentTeamId') as any) || Taro.getStorageSync('ggc_team') || ''
+        const data: any = { page: 1, page_size: PAGE_SIZE, status: key }
+        if (teamId) data.team_id = teamId
+        const res: any = await request({ url: '/orders', data })
         setOrders((res.items || []).map(normalize))
         setPage(res.page || 1)
         setHasMore(!!res.has_more)

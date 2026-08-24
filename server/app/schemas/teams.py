@@ -14,4 +14,4 @@ class TeamJoinIn(BaseModel):
 
 
 class TeamSetChefIn(BaseModel):
-    user_id: int = Field(..., description="要指定为固定厨师的本团队成员 id")
+    user_id: int | None = Field(default=None, description="要指定为固定厨师的本团队成员 id；传 null/不传则取消固定厨师")
