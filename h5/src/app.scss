@@ -83,8 +83,8 @@ page {
   display: flex;
   gap: 8px;
   padding: 10px 16px;
-  background: #fff;
-  border-top: 1px solid #eee;
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-divider);
   z-index: 100;
 }
 
@@ -109,20 +109,96 @@ page {
   font-size: 14px;
 }
 
-// ===== H5 端 Taro Input 垂直居中修复 =====
-// Taro <Input> H5 渲染：taro-input-core > input.weui-input
-// 默认 height:1.47em / line-height:1.47em，远小于容器，导致文字偏上。
-// 强制 input 撑满父容器高度，文字自然垂直居中。
+// ===== H5 端 Taro / NutUI Input 垂直居中修复 =====
+// Taro <Input> H5 渲染：taro-input-core > input.weui-input（NutUI 外层为 .nut-input > .nut-input-native）
+// 默认 weui-input height 1.47em 远小于容器，导致文字偏上或被裁剪（常见于 36px 小输入框）。
+// 修复：外层 flex 居中，内部 input 高度自适应、靠 flex 居中，而非 height:100% + line-height 强行撑满。
+// 这样容器高度由外层 View 高度决定，文字始终垂直居中且不会因 min-height 被裁剪。
 taro-input-core {
-  display: block;
-  height: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 0 !important;
 
-  input {
-    height: 100% !important;
-    line-height: 1 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+  // Taro H5 内层为 <input class="weui-input"> / <textarea>，用 class 避免被 Taro 编译器改写为 taro-input-core
+  input.weui-input,
+  textarea,
+  .weui-input,
+  .taro-textarea {
+    flex: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    line-height: 1.4 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    outline: none !important;
     box-sizing: border-box !important;
-    vertical-align: middle !important;
+    background: transparent !important;
   }
+}
+
+// NutUI 输入框原生容器同样 flex 居中，避免 weui-input 与容器高度不一致
+.nut-input-native {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+// ===== 暗黑主题（系统主题 → 深色模式）=====
+// 通过 document.documentElement[data-theme="dark"] 或页面根元素切换。
+// H5 端由 app.tsx initTheme() 在启动时设置；weapp 端由页面 class 继承（最佳努力）。
+[data-theme="dark"],
+.theme-dark {
+  --color-primary: #66BB6A;
+  --color-primary-dark: #4CAF50;
+  --color-primary-light: #A5D6A7;
+  --color-primary-bg: #1B3A1B;
+  --color-accent: #FFB74D;
+  --color-danger: #EF5350;
+  --color-text-primary: #E0E0E0;
+  --color-text-secondary: #AAAAAA;
+  --color-text-placeholder: #777777;
+  --color-bg-page: #121212;
+  --color-bg-card: #1E1E1E;
+  --color-border: #333333;
+  --color-divider: #2A2A2A;
+
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+// ===== H5 data-theme=dark 对 body/page 生效（H5 用 :root + body）=====
+[data-theme="dark"] {
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] body {
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+// ===== 暗黑主题下 NutUI 组件变量对齐 =====
+[data-theme="dark"] {
+  --nutui-color-primary: #66BB6A;
+  --nutui-color-primary-stop: #66BB6A;
+  --nutui-color-primary-light: #81C784;
+  --nutui-color-primary-light-pressed: #1B3A1B;
+  --nutui-color-primary-pressed: #4CAF50;
+  --nutui-color-primary-text: #ffffff;
+  --nutui-color-primary-bg: #1B3A1B;
+  --nutui-color-primary-disable: #555555;
+
+  --nutui-button-primary-background-color: #66BB6A;
+  --nutui-button-primary-border-color: #66BB6A;
+  --nutui-button-primary-color: #ffffff;
+  --nutui-button-primary-pressed: #4CAF50;
+  --nutui-button-primary-disabled: #555555;
+
+  --nutui-brand-color: #66BB6A;
 }

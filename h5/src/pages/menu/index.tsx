@@ -306,7 +306,7 @@ export default function MenuPage() {
       </View>
 
       {/* 搜索栏 + 点单 */}
-      <View style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: '#fff', flexShrink: 0 }}>
+      <View style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'var(--color-bg-card)', flexShrink: 0 }}>
         {/* 搜索输入框 */}
         <View style={{
           flex: 1, display: 'flex', alignItems: 'center',
@@ -315,7 +315,7 @@ export default function MenuPage() {
         }}>
           <Text style={{ fontSize: '14px', color: '#BDBDBD', marginRight: '6px', flexShrink: 0 }}>🔍</Text>
           <Input
-            style={{ flex: 1, height: '40px', fontSize: '14px', color: '#1A1A1A' }}
+            style={{ flex: 1, height: '40px', lineHeight: '40px', fontSize: '14px', color: 'var(--color-text-primary)' }}
             placeholder="搜索菜品或食材"
             value={keyword}
             onChange={(v: string) => onSearch(v)}
@@ -345,7 +345,7 @@ export default function MenuPage() {
       </View>
 
       {/* 五期：今天吃什么 / 惊喜推荐 快捷区 */}
-      <View style={{ display: 'flex', gap: '10px', padding: '10px 16px', background: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 }}>
+      <View style={{ display: 'flex', gap: '10px', padding: '10px 16px', background: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-divider)', flexShrink: 0 }}>
         <View onClick={() => { setRecommendVisible(true); setPeopleText('3'); setRecommend(null) }}
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '36px', borderRadius: '8px', background: '#FFF3E0', color: '#FF9800', fontWeight: 500, fontSize: '14px' }}>
           <Text>🤔</Text><Text>今天吃什么</Text>
@@ -359,7 +359,7 @@ export default function MenuPage() {
       {/* 主体：左侧分类 + 右侧菜品 */}
       <View style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         {/* 左侧分类（搜索态下弱化但可点击，点击即退出搜索） */}
-        <ScrollView scrollY style={{ width: '88px', background: '#F5F5F5', flexShrink: 0, height: '100%', opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s' }}>
+        <ScrollView scrollY style={{ width: '88px', background: 'var(--color-bg-page)', flexShrink: 0, height: '100%', opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s' }}>
           {categories.map((c: any) => {
             const active = !keyword && String(c.id) === String(activeCategoryId)
             return (
@@ -372,21 +372,21 @@ export default function MenuPage() {
                 {active && <View style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '3px', height: '24px', background: GREENS.primary, borderRadius: '0 2px 2px 0' }} />}
                 <Text style={{ fontSize: '20px' }}>{c.icon}</Text>
                 <Text style={{ fontSize: '11px', textAlign: 'center', color: active ? GREENS.primary : '#666', fontWeight: active ? 600 : 400 }}>{c.name}</Text>
-                <Text style={{ fontSize: '9px', color: '#999' }}>{c.count}</Text>
+                <Text style={{ fontSize: '9px', color: 'var(--color-text-placeholder)' }}>{c.count}</Text>
               </View>
             )
           })}
         </ScrollView>
 
         {/* 右侧菜品列表 */}
-        <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px', background: '#fff' }}>
+        <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px', background: 'var(--color-bg-card)' }}>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
-            <Text style={{ fontSize: '13px', color: '#666' }}>{dishesTitle}</Text>
+            <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{dishesTitle}</Text>
             {!!keyword && (
               <Text onClick={clearSearch} style={{ fontSize: '12px', color: GREENS.primary, cursor: 'pointer' }}>清除搜索</Text>
             )}
           </View>
-          {loading && <View style={{ color: '#999', fontSize: '14px', textAlign: 'center', padding: '24px' }}>加载中…</View>}
+          {loading && <View style={{ color: 'var(--color-text-placeholder)', fontSize: '14px', textAlign: 'center', padding: '24px' }}>加载中…</View>}
           {!loading && dishes.length === 0 && (
             <Empty description="没有找到相关菜品" image={<Text style={{ fontSize: '48px' }}>🍽</Text>} />
           )}
@@ -407,10 +407,10 @@ export default function MenuPage() {
                       <Text>{fav ? '❤️' : '🤍'}</Text>
                     </View>
                   </View>
-                  <View style={{ color: '#999', fontSize: '11px', marginTop: '2px' }}>{d.description}</View>
+                  <View style={{ color: 'var(--color-text-placeholder)', fontSize: '11px', marginTop: '2px' }}>{d.description}</View>
                   <View style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                     <Text style={{ color: '#FF9800', fontSize: '12px' }}>★ {d.rating || '-'}
-                      {d.rating_count ? <Text style={{ color: '#999', fontSize: '10px' }}>（{d.rating_count}人评）</Text> : null}
+                      {d.rating_count ? <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '10px' }}>（{d.rating_count}人评）</Text> : null}
                     </Text>
                     <Text style={{ color: greyd }}>·</Text>
                     <Text style={{ color: GREENS.primaryDark, fontSize: '12px' }}>{d.category_name || ''}</Text>
@@ -433,7 +433,7 @@ export default function MenuPage() {
       </View>
 
       {/* 底部操作栏（预留 tabbar 50px 空间） */}
-      <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
+      <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
         <Button fill="none" size="small" style={{ flex: 1, fontSize: '13px', color: '#FF9800', background: '#FFF3E0' }} onClick={onInvite}>
           📨 邀请下单
         </Button>
@@ -452,11 +452,11 @@ export default function MenuPage() {
         style={{ maxHeight: '80vh', overflow: 'auto' }}
       >
         <View style={{ padding: '16px 24px 24px' }}>
-          <View style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: '#666', marginBottom: '12px' }}>
+          <View style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
             <Text>几个人吃？</Text>
             <View style={{
               width: '70px', height: '36px',
-              border: '1px solid #E0E0E0', borderRadius: '8px',
+              border: '1px solid var(--color-border)', borderRadius: '8px',
               overflow: 'hidden', flexShrink: 0,
             }}>
               <Input
@@ -470,7 +470,7 @@ export default function MenuPage() {
             <Button type="primary" size="small" style={{ flex: 1 }} loading={recommendLoading} onClick={onRecommendLoad}>给我推荐</Button>
           </View>
 
-          {recommendLoading && <View style={{ color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' }}>推荐中…</View>}
+          {recommendLoading && <View style={{ color: 'var(--color-text-placeholder)', fontSize: '14px', textAlign: 'center', padding: '20px' }}>推荐中…</View>}
 
           {!recommendLoading && recommend && (
             <>
@@ -502,6 +502,6 @@ export default function MenuPage() {
   )
 }
 
-const greyd = '#999'
-const qtyBtn = { width: '26px', height: '26px', borderRadius: '50%', background: '#eee', color: '#333', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '15px' }
+const greyd = 'var(--color-text-placeholder)'
+const qtyBtn = { width: '26px', height: '26px', borderRadius: '50%', background: 'var(--color-bg-page)', color: 'var(--color-text-primary)', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '15px' }
 

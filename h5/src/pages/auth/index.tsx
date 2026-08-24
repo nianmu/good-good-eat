@@ -78,7 +78,7 @@ export default function AuthPage() {
   }
 
   return (
-    <View style={{ minHeight: '100vh', background: '#F5F5F5' }}>
+    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {/* 顶部品牌头图 */}
       <View style={{
         background: 'linear-gradient(160deg, #4CAF50, #388E3C)',
@@ -110,13 +110,13 @@ export default function AuthPage() {
 
       {/* 表单卡片 */}
       <View style={{
-        background: '#fff', margin: '-16px 16px 0', borderRadius: '16px',
+        background: 'var(--color-bg-card)', margin: '-16px 16px 0', borderRadius: '16px',
         padding: '24px 20px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
         position: 'relative', zIndex: 1,
       }}>
         {/* Tab 切换 */}
         <View style={{
-          display: 'flex', background: '#F5F5F5', borderRadius: '10px',
+          display: 'flex', background: 'var(--color-bg-page)', borderRadius: '10px',
           padding: '3px', marginBottom: '24px',
         }}>
           {(['login', 'register'] as const).map((m) => (
@@ -139,7 +139,7 @@ export default function AuthPage() {
 
         {/* 用户名 */}
         <View style={{ marginBottom: '16px' }}>
-          <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>用户名</Text>
+          <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>用户名</Text>
           <View style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             height: '44px', background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
@@ -151,7 +151,7 @@ export default function AuthPage() {
               placeholder="字母/数字/下划线，3-32 位"
               value={username}
               onChange={(v) => { setUsername(String(v || '').trim()); setError('') }}
-              style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
+              style={{ flex: 1, height: '44px', lineHeight: '44px', background: 'transparent', border: 'none' }}
             />
           </View>
         </View>
@@ -159,8 +159,8 @@ export default function AuthPage() {
         {/* 昵称（仅注册） */}
         {mode === 'register' && (
           <View style={{ marginBottom: '16px' }}>
-            <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>
-              昵称 <Text style={{ color: '#bbb', fontSize: '12px' }}>(选填，展示给家人)</Text>
+            <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+              昵称 <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>(选填，展示给家人)</Text>
             </Text>
             <View style={{
               display: 'flex', alignItems: 'center', gap: '10px',
@@ -173,7 +173,7 @@ export default function AuthPage() {
                 placeholder="你的昵称"
                 value={nickname}
                 onChange={(v) => setNickname(String(v || ''))}
-                style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
+                style={{ flex: 1, height: '44px', lineHeight: '44px', background: 'transparent', border: 'none' }}
               />
             </View>
           </View>
@@ -181,7 +181,7 @@ export default function AuthPage() {
 
         {/* 密码 */}
         <View style={{ marginBottom: '16px' }}>
-          <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>密码</Text>
+          <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>密码</Text>
           <View style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             height: '44px', background: '#F8F9FA', borderRadius: '10px', padding: '0 14px',
@@ -193,7 +193,7 @@ export default function AuthPage() {
               placeholder={mode === 'register' ? '至少 6 位' : '请输入密码'}
               value={password}
               onChange={(v) => { setPassword(String(v || '')); setError('') }}
-              style={{ flex: 1, height: '44px', background: 'transparent', border: 'none' }}
+              style={{ flex: 1, height: '44px', lineHeight: '44px', background: 'transparent', border: 'none' }}
             />
           </View>
         </View>
@@ -227,7 +227,7 @@ export default function AuthPage() {
         {/* 游客入口 */}
         <View style={{ textAlign: 'center', marginTop: '16px' }}>
           <Text
-            style={{ fontSize: '13px', color: '#999' }}
+            style={{ fontSize: '13px', color: 'var(--color-text-placeholder)' }}
             onClick={() => Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/menu/index' }))}
           >
             暂不登录，游客模式逛逛 ›
@@ -237,7 +237,7 @@ export default function AuthPage() {
 
       {/* 底部提示 */}
       <View style={{ padding: '28px 24px', textAlign: 'center' }}>
-        <Text style={{ fontSize: '11px', color: '#bbb', lineHeight: '1.8' }}>
+        <Text style={{ fontSize: '11px', color: 'var(--color-text-placeholder)', lineHeight: '1.8' }}>
           登录后自动绑定当前游客数据{'\n'}订单和菜谱不会丢失
         </Text>
       </View>
