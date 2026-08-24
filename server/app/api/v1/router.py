@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    activities,
     auth,
     basket,
     chef,
@@ -30,3 +31,4 @@ api_router.include_router(recipes.router)
 api_router.include_router(fridge.router)
 api_router.include_router(basket.router)
 api_router.include_router(plans.router)
+api_router.include_router(activities.router)
