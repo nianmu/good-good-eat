@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { Button, Empty, Input, Skeleton } from '@nutui/nutui-react-taro'
+import { Button, Empty, Input, Skeleton, TextArea } from '@nutui/nutui-react-taro'
 import { teams, guestLogin } from '../../api'
 import { requireLogin } from '../../utils/auth'
 
@@ -32,6 +32,7 @@ function normalizeTeams(list: any[]) {
 export default function TeamListPage() {
   const [teamList, setTeamList] = useState<any[]>([])
   const [createName, setCreateName] = useState('')
+  const [createDesc, setCreateDesc] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -73,8 +74,10 @@ export default function TeamListPage() {
     }
     setSubmitting(true)
     try {
-      const team: any = await teams.create(name)
+      const desc = (createDesc || '').trim() || undefined
+      const team: any = await teams.create(name, desc)
       setCreateName('')
+      setCreateDesc('')
       setSubmitting(false)
       showToast({ title: '创建成功，邀请码 ' + team.invite_code, icon: 'none' })
       loadTeams()
@@ -131,6 +134,15 @@ export default function TeamListPage() {
               />
             </View>
             <Button size="small" type="primary" loading={submitting} onClick={onCreate}>创建</Button>
+          </View>
+          <View style={{ marginTop: 8, background: 'var(--color-bg-page)', borderRadius: 6, padding: '4px 8px' }}>
+            <TextArea
+              value={createDesc}
+              placeholder="团队描述（可选）"
+              maxLength={100}
+              onChange={(v) => setCreateDesc(v || '')}
+              style={{ width: '100%' }}
+            />
           </View>
         </View>
 

@@ -10,8 +10,9 @@ import { useEffect, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { ActionSheet, Empty, Skeleton } from '@nutui/nutui-react-taro'
+import { ActionSheet, Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
 import { teams, guestLogin } from '../../api'
+import { showModal } from '../../components/app-modal'
 
 const ROLE_LABELS: Record<string, string> = { organizer: '组织者', member: '成员' }
 
@@ -107,6 +108,42 @@ export default function TeamDetailPage() {
     }
   }
 
+  function onLeaveTeam() {
+    if (!team) return
+    showModal({
+      title: '退出团队',
+      content: `确定要退出「${team.name}」吗？`,
+      confirmText: '退出',
+      onConfirm: async () => {
+        try {
+          await teams.leave(team.id)
+          showToast({ title: '已退出团队', icon: 'none' })
+          setTimeout(() => { Taro.navigateBack() }, 600)
+        } catch (e: any) {
+          showToast({ title: e?.message || '退出失败', icon: 'none' })
+        }
+      }
+    })
+  }
+
+  function onRemoveMember(member: any) {
+    if (!team) return
+    showModal({
+      title: '移除成员',
+      content: `确定要将「${member.nickname}」移出团队吗？`,
+      confirmText: '移除',
+      onConfirm: async () => {
+        try {
+          await teams.removeMember(team.id, member.id)
+          showToast({ title: '已移除 ' + member.nickname, icon: 'none' })
+          loadTeam()
+        } catch (e: any) {
+          showToast({ title: e?.message || '移除失败', icon: 'none' })
+        }
+      }
+    })
+  }
+
   return (
     <ScrollView
       scrollY
@@ -139,6 +176,9 @@ export default function TeamDetailPage() {
                   </Text>
                 </View>
                 <View style={{ fontSize: 12, color: 'var(--color-text-placeholder)', marginTop: 4 }}>{team.member_count} 位成员</View>
+                {team.description ? (
+                  <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 6, lineHeight: '1.6' }}>{team.description}</View>
+                ) : null}
               </View>
             </View>
 
@@ -162,7 +202,7 @@ export default function TeamDetailPage() {
           </View>
 
           {/* 成员列表 */}
-          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
             <View style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>成员列表（{members.length}）</View>
             {members.length === 0 ? (
               <Empty description="暂无成员" status="shop" />
@@ -172,13 +212,21 @@ export default function TeamDetailPage() {
                   <View style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                     {m.avatar}
                   </View>
-                  <View style={{ fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <View style={{ flex: 1, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Text>{m.nickname}</Text>
                     <Text style={{ fontSize: 11, color: 'var(--color-text-placeholder)', background: 'var(--color-bg-page)', padding: '1px 8px', borderRadius: 999 }}>{m.role_label}</Text>
                   </View>
+                  {team.role === 'organizer' && (
+                    <Text onClick={() => onRemoveMember(m)} style={{ fontSize: 13, color: '#F44336', padding: '4px 10px', cursor: 'pointer' }}>移除</Text>
+                  )}
                 </View>
               ))
             )}
+          </View>
+
+          {/* 退出团队 */}
+          <View style={{ padding: '4px 0 24px' }}>
+            <Button fill="outline" style={{ width: '100%', color: '#F44336', borderColor: '#F44336' }} onClick={onLeaveTeam}>退出团队</Button>
           </View>
         </View>
       )}
