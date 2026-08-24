@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class TeamCreateIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=32, description="团队名称")
+    description: str | None = Field(default=None, max_length=500, description="团队简介")
 
 
 class TeamJoinIn(BaseModel):

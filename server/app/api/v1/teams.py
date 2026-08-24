@@ -69,6 +69,7 @@ def _team_payload(db: Session, team: Team, actor: User) -> dict:
     return {
         "id": team.id,
         "name": team.name,
+        "description": team.description,
         "icon": "🏠",
         "invite_code": team.invite_code,
         "member_count": len(team.members),
@@ -90,7 +91,9 @@ def create_team(
     if not name:
         raise ApiError(400, 40000, "团队名称不能为空")
 
-    team = Team(name=name, owner_id=user.id, invite_code=_unique_invite_code(db))
+    team = Team(
+        name=name, description=body.description, owner_id=user.id, invite_code=_unique_invite_code(db)
+    )
     db.add(team)
     db.flush()
     db.add(TeamMember(team_id=team.id, user_id=user.id, role="organizer"))
