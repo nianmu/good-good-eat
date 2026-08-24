@@ -19,3 +19,22 @@ class ActivityStatusIn(BaseModel):
     """活动状态流转目标。"""
 
     target: str = Field(min_length=1, max_length=16, description="目标状态 ordering|preparing|cooking|completed")
+
+
+class ActivityItemCreateIn(BaseModel):
+    """点菜请求。"""
+
+    dish_id: int = Field(description="菜品 id")
+    quantity: int = Field(ge=1, le=999, description="数量 1-999")
+
+
+class ActivityItemChefIn(BaseModel):
+    """改厨师请求。"""
+
+    user_id: int | None = Field(default=None, description="厨师用户 id，null 回落团队固定厨师")
+
+
+class ActivityItemStatusIn(BaseModel):
+    """单菜进度目标。"""
+
+    target: str = Field(min_length=1, max_length=16, description="目标状态 pending|prepared|cooking|done")

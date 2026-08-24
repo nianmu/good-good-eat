@@ -23,7 +23,13 @@ from app.models.activity import Activity, ActivityItem
 from app.models.dish import Dish
 from app.models.fridge import FridgeItem
 from app.models.user import Team, TeamMember, User
-from app.schemas.activities import ActivityCreateIn, ActivityStatusIn
+from app.schemas.activities import (
+    ActivityCreateIn,
+    ActivityItemChefIn,
+    ActivityItemCreateIn,
+    ActivityItemStatusIn,
+    ActivityStatusIn,
+)
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 
@@ -36,6 +42,14 @@ _STATUS_FLOW: dict[str, set[str]] = {
 }
 _ALL_STATUSES = set(_STATUS_FLOW) | {s for vals in _STATUS_FLOW.values() for s in vals}
 _PROGRESS_PERCENT = {"ordering": 0, "preparing": 33, "cooking": 66, "completed": 100}
+
+_ITEM_STATUS_FLOW: dict[str, set[str]] = {
+    "pending": {"prepared"},
+    "prepared": {"cooking"},
+    "cooking": {"done"},
+    "done": set(),
+}
+_ALL_ITEM_STATUSES = set(_ITEM_STATUS_FLOW) | {s for vals in _ITEM_STATUS_FLOW.values() for s in vals}
 
 
 def _ensure_member(db: Session, team_id: int, user_id: int) -> None:
@@ -302,3 +316,193 @@ def update_activity_status(
     db.commit()
     db.refresh(activity)
     return ok(_activity_to_dict(activity))
+
+
+def _member_role(db: Session, team_id: int, user_id: int) -> str | None:
+    return db.scalar(select(TeamMember.role).where(TeamMember.team_id == team_id, TeamMember.user_id == user_id))
+
+
+def _item_to_dict(it: ActivityItem, dish: Dish | None, added_user: User | None, chef_user: User | None) -> dict:
+    return {
+        "id": it.id,
+        "activity_id": it.activity_id,
+        "dish_id": it.dish_id,
+        "dish_name": dish.name if dish else None,
+        "dish_emoji": dish.emoji if dish else None,
+        "quantity": it.quantity,
+        "added_by": it.added_by,
+        "added_by_nickname": added_user.nickname if added_user else None,
+        "chef_id": it.chef_id,
+        "chef_nickname": chef_user.nickname if chef_user else None,
+        "status": it.status,
+        "added_at": it.added_at.strftime("%Y-%m-%d %H:%M:%S") if it.added_at else None,
+    }
+
+
+@router.post("/{activity_id}/items")
+def add_activity_item(
+    activity_id: int,
+    body: ActivityItemCreateIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """点菜：校验 dish 存在且 active，quantity 1-999，防同人同菜重复累加。"""
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    dish = db.get(Dish, body.dish_id)
+    if dish is None or not dish.is_active:
+        raise ApiError(404, 40401, "菜品不存在或已下架")
+
+    # 防同人同菜重复：若已存在则累加 quantity
+    existing = db.scalar(
+        select(ActivityItem)
+        .where(
+            ActivityItem.activity_id == activity_id,
+            ActivityItem.dish_id == body.dish_id,
+            ActivityItem.added_by == user.id,
+        )
+        .with_for_update()
+    )
+    if existing is not None:
+        new_qty = existing.quantity + body.quantity
+        if new_qty > 999:
+            raise ApiError(400, 40000, "数量超出上限 999")
+        existing.quantity = new_qty
+        db.commit()
+        db.refresh(existing)
+        chef_user = db.get(User, existing.chef_id) if existing.chef_id else None
+        return ok(_item_to_dict(existing, dish, user, chef_user))
+
+    item = ActivityItem(
+        activity_id=activity_id,
+        dish_id=body.dish_id,
+        quantity=body.quantity,
+        added_by=user.id,
+        chef_id=None,
+        status="pending",
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return ok(_item_to_dict(item, dish, user, None))
+
+
+@router.delete("/{activity_id}/items/{item_id}")
+def remove_activity_item(
+    activity_id: int,
+    item_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """移除：仅 added_by 或组织者可删。"""
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    item = db.scalar(select(ActivityItem).where(ActivityItem.id == item_id, ActivityItem.activity_id == activity_id))
+    if item is None:
+        raise ApiError(404, 40401, "菜品明细不存在")
+
+    role = _member_role(db, activity.team_id, user.id)
+    if item.added_by != user.id and role != "organizer":
+        raise ApiError(403, 40301, "仅点菜人或组织者可移除")
+
+    db.delete(item)
+    db.commit()
+    return ok({"item_id": item_id})
+
+
+@router.put("/{activity_id}/items/{item_id}/chef")
+def update_item_chef(
+    activity_id: int,
+    item_id: int,
+    body: ActivityItemChefIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """改厨师：null 回落 team.chef_id，user_id 需为团队成员；任意成员可改自己为厨师或清空，组织者可改任意。"""
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    item = db.scalar(select(ActivityItem).where(ActivityItem.id == item_id, ActivityItem.activity_id == activity_id))
+    if item is None:
+        raise ApiError(404, 40401, "菜品明细不存在")
+
+    team = db.get(Team, activity.team_id)
+    target_user_id = body.user_id
+
+    if target_user_id is not None:
+        # 需为团队成员
+        if db.scalar(select(TeamMember.id).where(TeamMember.team_id == activity.team_id, TeamMember.user_id == target_user_id)) is None:
+            raise ApiError(400, 40002, "该成员不在团队中")
+        # 权限：任意成员可改自己为厨师；组织者可改任意；其他情况 403
+        role = _member_role(db, activity.team_id, user.id)
+        if target_user_id != user.id and role != "organizer":
+            raise ApiError(403, 40301, "仅组织者可指定他人为厨师")
+    else:
+        # 清空回落：任意成员可清空（或仅组织者/本人？按需求任意成员可清空）
+        pass
+
+    item.chef_id = target_user_id
+    db.commit()
+    db.refresh(item)
+    dish = db.get(Dish, item.dish_id)
+    added_user = db.get(User, item.added_by)
+    chef_user = db.get(User, item.chef_id) if item.chef_id else None
+    # 若 chef_id 为 null 且 team 有固定厨师，前端回落显示；此处不自动填充，保留 null
+    return ok(_item_to_dict(item, dish, added_user, chef_user))
+
+
+@router.put("/{activity_id}/items/{item_id}/status")
+def update_item_status(
+    activity_id: int,
+    item_id: int,
+    body: ActivityItemStatusIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """单菜推进 pending→prepared→cooking→done 单向，需 with_for_update，仅 item.chef_id（或回落 team.chef_id）可推，非法流转 40003。"""
+    target = body.target.strip()
+    if target not in _ALL_ITEM_STATUSES:
+        raise ApiError(400, 40003, f"未知菜品状态：{target}")
+
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    # 行锁
+    item = db.scalar(
+        select(ActivityItem).where(ActivityItem.id == item_id, ActivityItem.activity_id == activity_id).with_for_update()
+    )
+    if item is None:
+        raise ApiError(404, 40401, "菜品明细不存在")
+
+    # 权限：仅有效厨师可推
+    team = db.get(Team, activity.team_id)
+    effective_chef_id = item.chef_id if item.chef_id is not None else (team.chef_id if team else None)
+    if effective_chef_id is None:
+        raise ApiError(403, 40301, "仅厨师可推进状态")
+    if user.id != effective_chef_id:
+        raise ApiError(403, 40301, "仅厨师可推进状态")
+
+    current = item.status
+    if target == current:
+        raise ApiError(400, 40003, f"菜品已处于 {target} 状态")
+    allowed = _ITEM_STATUS_FLOW.get(current, set())
+    if target not in allowed:
+        raise ApiError(400, 40003, f"菜品状态不能从 {current} 流转到 {target}")
+
+    item.status = target
+    db.commit()
+    db.refresh(item)
+    dish = db.get(Dish, item.dish_id)
+    added_user = db.get(User, item.added_by)
+    chef_user = db.get(User, item.chef_id) if item.chef_id else None
+    return ok(_item_to_dict(item, dish, added_user, chef_user))
