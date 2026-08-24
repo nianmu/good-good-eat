@@ -156,6 +156,88 @@ def team_detail(
     return ok({"team": _team_payload(db, team, user), "members": members})
 
 
+@router.post("/teams/{team_id}/leave")
+def leave_team(
+    team_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """成员自退；组织者自退且团队还有其他人时 400 提示先转让；最后一人自退解散团队。"""
+    team = db.scalar(select(Team).where(Team.id == team_id))
+    if team is None:
+        raise ApiError(404, 40401, "团队不存在")
+
+    role = _member_role(db, team_id, user.id)
+    if role is None:
+        raise ApiError(403, 40301, "无权查看该团队")
+
+    # 组织者自退
+    if role == "organizer":
+        other_count = db.scalar(
+            select(TeamMember.id).where(
+                TeamMember.team_id == team_id, TeamMember.user_id != user.id
+            )
+        )
+        if other_count is not None:
+            raise ApiError(400, 40006, "请先转让组织者")
+
+        # 最后一人（组织者独留）— 解散团队
+        # 先清固定厨师引用避免外键约束（若 chef_id 指向自己）
+        # 团队的 members 通过 cascade 删除，团队本身删除
+        db.delete(team)
+        db.commit()
+        return ok({"team_id": team_id})
+
+    # 普通成员自退
+    membership = db.scalar(
+        select(TeamMember).where(TeamMember.team_id == team_id, TeamMember.user_id == user.id)
+    )
+    if membership is not None:
+        db.delete(membership)
+    # 若退出的成员是固定厨师，清空
+    if team.chef_id == user.id:
+        team.chef_id = None
+    db.commit()
+    return ok({"team_id": team_id})
+
+
+@router.delete("/teams/{team_id}/members/{user_id}")
+def remove_member(
+    team_id: int,
+    user_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """组织者移除成员；校验请求者为 organizer、目标为成员且非组织者本人。"""
+    # 校验请求者为组织者
+    if _member_role(db, team_id, user.id) != "organizer":
+        raise ApiError(403, 40302, "仅组织者可移除成员")
+
+    team = db.scalar(select(Team).where(Team.id == team_id))
+    if team is None:
+        raise ApiError(404, 40401, "团队不存在")
+
+    target_role = _member_role(db, team_id, user_id)
+    if target_role is None:
+        raise ApiError(400, 40002, "该成员不在团队中")
+
+    if target_role == "organizer":
+        raise ApiError(400, 40007, "不能移除组织者")
+
+    if user_id == user.id:
+        raise ApiError(400, 40000, "不能移除自己，请使用退出接口")
+
+    membership = db.scalar(
+        select(TeamMember).where(TeamMember.team_id == team_id, TeamMember.user_id == user_id)
+    )
+    if membership is not None:
+        db.delete(membership)
+    if team.chef_id == user_id:
+        team.chef_id = None
+    db.commit()
+    return ok({"team_id": team_id})
+
+
 @router.put("/teams/{team_id}/chef")
 def set_team_chef(
     team_id: int,
