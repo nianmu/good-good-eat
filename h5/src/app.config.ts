@@ -3,6 +3,8 @@ export default defineAppConfig({
     'pages/welcome/index',
     'pages/menu/index',
     'pages/orders/index',
+    'pages/activities/index',
+    'pages/activity-detail/index',
     'pages/messages/index',
     'pages/profile/index',
     'pages/order-detail/index',
@@ -43,8 +45,8 @@ export default defineAppConfig({
         selectedIconPath: 'assets/tabbar/menu-active.png'
       },
       {
-        pagePath: 'pages/orders/index',
-        text: '订单',
+        pagePath: 'pages/activities/index',
+        text: '活动',
         iconPath: 'assets/tabbar/orders.png',
         selectedIconPath: 'assets/tabbar/orders-active.png'
       },
