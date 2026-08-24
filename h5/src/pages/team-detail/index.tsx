@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 团队详情页——好好吃饭 跨端 H5
  * - 团队信息（名称 / 角色 / 成员数）
  * - 邀请码可复制（Taro.setClipboardData）
@@ -102,7 +102,7 @@ export default function TeamDetailPage() {
       refresherEnabled
       refresherTriggered={refreshing}
       onRefresherRefresh={() => { setRefreshing(true); loadTeam() }}
-      style={{ height: '100vh', background: '#F5F5F5' }}
+      style={{ height: '100vh', background: 'var(--color-bg-page)' }}
     >
       {loading ? (
         <View style={{ padding: 16 }}>
@@ -115,55 +115,55 @@ export default function TeamDetailPage() {
       ) : (
         <View style={{ padding: 12 }}>
           {/* 团队信息 */}
-          <View style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
             <View style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <View style={{ width: 48, height: 48, borderRadius: 12, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
                 {team.icon || '🏠'}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <View style={{ fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Text>{team.name}</Text>
-                  <Text style={{ fontSize: 11, color: '#4CAF50', background: '#E8F5E9', padding: '1px 8px', borderRadius: 999 }}>
+                  <Text style={{ fontSize: 11, color: '#4CAF50', background: 'var(--color-primary-bg)', padding: '1px 8px', borderRadius: 999 }}>
                     {team.role === 'organizer' ? '我是组织者' : '我是成员'}
                   </Text>
                 </View>
-                <View style={{ fontSize: 12, color: '#999', marginTop: 4 }}>{team.member_count} 位成员</View>
+                <View style={{ fontSize: 12, color: 'var(--color-text-placeholder)', marginTop: 4 }}>{team.member_count} 位成员</View>
               </View>
             </View>
 
             {/* 邀请码 */}
-            <View style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderTop: '1px solid #eee' }}>
-              <Text style={{ fontSize: 13, color: '#666' }}>邀请码</Text>
+            <View style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderTop: '1px solid var(--color-divider)' }}>
+              <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>邀请码</Text>
               <Text style={{ flex: 1, fontSize: 14, fontWeight: 600, letterSpacing: 1, color: '#388E3C' }}>{team.invite_code || '—'}</Text>
-              <Text onClick={onCopyInvite} style={{ padding: '3px 12px', background: '#E8F5E9', color: '#4CAF50', fontSize: 12, borderRadius: 999 }}>复制</Text>
+              <Text onClick={onCopyInvite} style={{ padding: '3px 12px', background: 'var(--color-primary-bg)', color: '#4CAF50', fontSize: 12, borderRadius: 999 }}>复制</Text>
             </View>
 
             {/* 固定厨师 */}
-            <View style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderTop: '1px solid #eee' }}>
-              <Text style={{ fontSize: 13, color: '#666' }}>固定厨师</Text>
+            <View style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderTop: '1px solid var(--color-divider)' }}>
+              <Text style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>固定厨师</Text>
               <Text style={{ flex: 1, fontSize: 13, color: team.chef ? '#1A1A1A' : '#FF9800' }}>
                 {team.chef ? '👨‍🍳 ' + team.chef : '厨师待认领'}
               </Text>
               {team.role === 'organizer' && (
-                <Text onClick={onAssignChef} style={{ fontSize: 12, color: '#999', flexShrink: 0 }}>指定厨师 ›</Text>
+                <Text onClick={onAssignChef} style={{ fontSize: 12, color: 'var(--color-text-placeholder)', flexShrink: 0 }}>指定厨师 ›</Text>
               )}
             </View>
           </View>
 
           {/* 成员列表 */}
-          <View style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <View style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>成员列表（{members.length}）</View>
             {members.length === 0 ? (
               <Empty description="暂无成员" status="shop" />
             ) : (
               members.map((m) => (
-                <View key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                  <View style={{ width: 36, height: 36, borderRadius: '50%', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                <View key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--color-divider)' }}>
+                  <View style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                     {m.avatar}
                   </View>
                   <View style={{ fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Text>{m.nickname}</Text>
-                    <Text style={{ fontSize: 11, color: '#999', background: '#F5F5F5', padding: '1px 8px', borderRadius: 999 }}>{m.role_label}</Text>
+                    <Text style={{ fontSize: 11, color: 'var(--color-text-placeholder)', background: 'var(--color-bg-page)', padding: '1px 8px', borderRadius: 999 }}>{m.role_label}</Text>
                   </View>
                 </View>
               ))

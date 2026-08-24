@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
@@ -185,14 +185,14 @@ export default function CartPage() {
       <View style={{ flex: 1, overflow: 'auto' }}>
         {items.length > 0 && (
           <>
-            <View style={{ margin: '12px', padding: '14px', background: '#fff', borderRadius: '10px' }}>
+            <View style={{ margin: '12px', padding: '14px', background: 'var(--color-bg-card)', borderRadius: '10px' }}>
               <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: '14px', color: '#666' }}>下单团队</Text>
+                <Text style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>下单团队</Text>
 
                 {/* 无团队 → 右上角新增按钮 */}
                 {teams.length === 0 && (
                   <View onClick={goTeamList}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: '#E8F5E9', color: '#4CAF50', fontWeight: 600 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: 'var(--color-primary-bg)', color: '#4CAF50', fontWeight: 600 }}>
                     ＋ 新增团队
                   </View>
                 )}
@@ -205,14 +205,14 @@ export default function CartPage() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: '6px',
                         padding: '6px 14px', borderRadius: '10px', fontSize: '13px',
-                        cursor: 'pointer', background: '#F5F5F5', border: '1px solid #E0E0E0',
+                        cursor: 'pointer', background: 'var(--color-bg-page)', border: '1px solid var(--color-border)',
                         minWidth: '120px', justifyContent: 'space-between',
                       }}
                     >
-                      <Text style={{ fontWeight: 600, color: '#333' }}>
+                      <Text style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
                         {teams.find((t: any) => String(t.id) === String(teamId))?.name || '选择团队'}
                       </Text>
-                      <Text style={{ fontSize: '10px', color: '#999', transform: teamDropdownVisible ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</Text>
+                      <Text style={{ fontSize: '10px', color: 'var(--color-text-placeholder)', transform: teamDropdownVisible ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</Text>
                     </View>
 
                     {/* 下拉面板 */}
@@ -222,7 +222,7 @@ export default function CartPage() {
                         <View onClick={() => setTeamDropdownVisible(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} />
                         <View style={{
                           position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                          background: '#fff', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                          background: 'var(--color-bg-card)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
                           minWidth: '180px', zIndex: 100, overflow: 'hidden',
                           border: '1px solid #E8E8E8',
                         }}>
@@ -276,13 +276,13 @@ export default function CartPage() {
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={{ fontSize: '15px', fontWeight: 600, display: 'block' }}>{it.name}</Text>
-                    <Text style={{ color: '#999', fontSize: '12px' }}>¥{it.price_text} / 份</Text>
+                    <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>¥{it.price_text} / 份</Text>
                   </View>
                   <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                     <InputNumber value={it.quantity} min={1} onChange={(v: any) => onQty(it.dish_id, v)} />
                     <View style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                       <Text style={{ color: '#F44336', fontWeight: 600, fontSize: '14px' }}>¥{it.total_text}</Text>
-                      <Text onClick={() => onRemove(it.dish_id)} style={{ color: '#999', fontSize: '12px', textDecoration: 'underline' }}>删除</Text>
+                      <Text onClick={() => onRemove(it.dish_id)} style={{ color: 'var(--color-text-placeholder)', fontSize: '12px', textDecoration: 'underline' }}>删除</Text>
                     </View>
                   </View>
                 </View>
@@ -303,13 +303,13 @@ export default function CartPage() {
       </View>
 
       {items.length > 0 && (
-        <View style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
+        <View style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
           <View>
-            <Text style={{ fontSize: '12px', color: '#666' }}>合计</Text>
+            <Text style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>合计</Text>
             <Text style={{ color: '#F44336', fontSize: '20px', fontWeight: 700 }}>¥{fmt(totalAmount)}</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <Text style={{ color: '#999', fontSize: '12px' }}>共 {totalCount} 道</Text>
+          <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>共 {totalCount} 道</Text>
           <Button type="primary" size="small" style={{ fontSize: '14px' }} loading={submitting} onClick={onSubmit}>
             {submitting ? '提交中…' : '提交下单'}
           </Button>

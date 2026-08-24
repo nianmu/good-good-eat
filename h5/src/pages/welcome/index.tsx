@@ -1,4 +1,4 @@
-import { View, Text, Image } from '@tarojs/components'
+﻿import { View, Text, Image } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState, useEffect } from 'react'
@@ -109,10 +109,10 @@ export default function WelcomePage() {
         }}>
           🥬
         </View>
-        <Text style={{ fontSize: '26px', fontWeight: 800, color: '#1A1A1A', letterSpacing: '2px' }}>
+        <Text style={{ fontSize: '26px', fontWeight: 800, color: 'var(--color-text-primary)', letterSpacing: '2px' }}>
           好好吃饭
         </Text>
-        <Text style={{ fontSize: '14px', color: '#666', marginTop: '10px', letterSpacing: '1px' }}>
+        <Text style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '10px', letterSpacing: '1px' }}>
           只为好好吃饭，愿每一次下厨都成为幸福的开始
         </Text>
       </View>
@@ -165,7 +165,7 @@ export default function WelcomePage() {
 
         {/* 注册引导 */}
         <View style={{ textAlign: 'center', marginTop: '8px' }}>
-          <Text style={{ fontSize: '13px', color: '#999' }}>
+          <Text style={{ fontSize: '13px', color: 'var(--color-text-placeholder)' }}>
             还没有账号？
           </Text>
           <Text

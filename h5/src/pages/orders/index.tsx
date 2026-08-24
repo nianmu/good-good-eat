@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 订单列表页（TabBar·订单）——好好吃饭 跨端 H5
  * - 顶部状态筛选（全部/待接单/制作中/待取餐/已完成）
  * - 分页加载：useReachBottom 触发加载更多
@@ -144,9 +144,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: '#F5F5F5' }}>
+    <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {/* 顶部状态筛选 */}
-      <ScrollView scrollX show-scrollbar={false} style={{ background: '#fff', borderBottom: '1px solid #eee', whiteSpace: 'nowrap' }}>
+      <ScrollView scrollX show-scrollbar={false} style={{ background: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-divider)', whiteSpace: 'nowrap' }}>
         <View style={{ display: 'inline-flex', padding: '8px 8px 0' }}>
           {STATUS_TABS.map((t) => (
             <View
@@ -172,10 +172,10 @@ export default function OrdersPage() {
       {/* 角色切换入口 */}
       <View
         onClick={onRoleTap}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', background: '#fff', borderBottom: '1px solid #eee' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', background: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-divider)' }}
       >
-        <Text style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A1A' }}>我的订单</Text>
-        <Text style={{ fontSize: '12px', color: '#999' }}>切换为厨师看板 ›</Text>
+        <Text style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>我的订单</Text>
+        <Text style={{ fontSize: '12px', color: 'var(--color-text-placeholder)' }}>切换为厨师看板 ›</Text>
       </View>
 
       {/* 列表主体 */}
@@ -187,7 +187,7 @@ export default function OrdersPage() {
         style={{ padding: '12px', minHeight: '50vh' }}
       >
         {loading && orders.length === 0 ? (
-          <View style={{ background: '#fff', borderRadius: 12, padding: 16 }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16 }}>
             <Skeleton rows={4} animated />
           </View>
         ) : orders.length === 0 ? (
@@ -201,12 +201,12 @@ export default function OrdersPage() {
               <View
                 key={o.id}
                 onClick={() => onOrderTap(o.id)}
-                style={{ background: '#fff', borderRadius: 12, padding: '12px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: '12px 16px', marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
               >
                 <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <StatusTag status={o.status} />
-                    <Text style={{ fontSize: 12, color: '#999' }}>{o.team_name}</Text>
+                    <Text style={{ fontSize: 12, color: 'var(--color-text-placeholder)' }}>{o.team_name}</Text>
                   </View>
                   <Text style={{ fontSize: 13, fontWeight: 600, color: '#388E3C' }}>取餐码 {o.pickup_code}</Text>
                 </View>
@@ -214,13 +214,13 @@ export default function OrdersPage() {
                   {o.summary}
                 </View>
                 <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 12, color: '#999' }}>{o.time_text}</Text>
+                  <Text style={{ fontSize: 12, color: 'var(--color-text-placeholder)' }}>{o.time_text}</Text>
                   <Price price={Number(o.amount_text)} symbol="¥" thousands={false} />
                 </View>
               </View>
             ))}
 
-            <View style={{ padding: '12px 0 40px', textAlign: 'center', fontSize: 12, color: '#999' }}>
+            <View style={{ padding: '12px 0 40px', textAlign: 'center', fontSize: 12, color: 'var(--color-text-placeholder)' }}>
               {loadingMore ? '加载中…' : !hasMore ? '—— 没有更多订单了 ——' : '上拉加载更多'}
             </View>
           </View>

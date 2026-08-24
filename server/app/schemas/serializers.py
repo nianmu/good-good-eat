@@ -70,8 +70,13 @@ def _json_arr(value: str | None) -> Any:
         return None
 
 
-def recipe_to_dict(recipe: Recipe, with_owner: bool = False) -> dict:
-    """用户自建菜谱 → dict。"""
+def recipe_to_dict(recipe: Recipe, with_owner: bool = False, author_name: str | None = None, is_favorite: bool | None = None) -> dict:
+    """用户自建菜谱 → dict。
+
+    - with_owner: 附带 user_id
+    - author_name: 作者昵称（公开菜谱库展示）
+    - is_favorite: 当前用户是否收藏（可选）
+    """
     data: dict[str, Any] = {
         "id": recipe.id,
         "name": recipe.name,
@@ -84,8 +89,13 @@ def recipe_to_dict(recipe: Recipe, with_owner: bool = False) -> dict:
         "difficulty": recipe.difficulty,
         "image_url": recipe.image_url,
         "is_public": recipe.is_public,
+        "dish_id": recipe.dish_id,
         "created_at": recipe.created_at.strftime("%Y-%m-%d %H:%M:%S") if recipe.created_at else None,
     }
+    if author_name is not None:
+        data["author"] = author_name
+    if is_favorite is not None:
+        data["is_favorite"] = is_favorite
     if with_owner:
         data["user_id"] = recipe.user_id
     return data

@@ -20,7 +20,8 @@ export const dishes = {
   list: (params?: any) => request({ url: '/dishes', data: params }),
   detail: (id: number | string) => request({ url: `/dishes/${id}` }),
   random: (n = 3, type = 'balanced') => request({ url: `/dishes/random?n=${n}&type=${type}` }),
-  recommend: (people = 3) => request({ url: `/dishes/recommend?people=${people}` })
+  recommend: (people = 3) => request({ url: `/dishes/recommend?people=${people}` }),
+  recipe: (id: number | string) => request({ url: `/recipes/by-dish/${id}` })
 }
 
 export const categories = {
@@ -80,7 +81,10 @@ export const recipes = {
   detail: (id: number | string) => request({ url: `/recipes/${id}` }),
   create: (data: any) => request({ url: '/recipes', method: 'POST', data }),
   update: (id: number | string, data: any) => request({ url: `/recipes/${id}`, method: 'PUT', data }),
-  remove: (id: number | string) => request({ url: `/recipes/${id}`, method: 'DELETE' })
+  remove: (id: number | string) => request({ url: `/recipes/${id}`, method: 'DELETE' }),
+  favorite: (id: number | string) => request({ url: `/recipes/${id}/favorite`, method: 'POST' }),
+  unfavorite: (id: number | string) => request({ url: `/recipes/${id}/favorite`, method: 'DELETE' }),
+  favoritesList: (params?: any) => request({ url: '/recipes/favorites', data: params })
 }
 
 export const fridge = {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
@@ -314,7 +314,7 @@ export default function OrderDetailPage() {
     // 复制按钮始终显示
     buttons.push(
       <Button key="copy" fill="none" size="small"
-        style={{ flex: 1, fontSize: '13px', background: '#F5F5F5' }}
+        style={{ flex: 1, fontSize: '13px', background: 'var(--color-bg-page)' }}
         disabled={submitting} onClick={onCopy}>
         📋 复制
       </Button>
@@ -350,11 +350,11 @@ export default function OrderDetailPage() {
   const goOrders = () => Taro.switchTab({ url: '/pages/orders/index' })
 
   if (loading) {
-    return <View style={{ padding: '40px', textAlign: 'center', color: '#999' }}>加载中…</View>
+    return <View style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-placeholder)' }}>加载中…</View>
   }
   if (!order) {
     return (
-      <View style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+      <View style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-placeholder)' }}>
         <Text style={{ fontSize: '40px' }}>📦</Text>
         <View>订单不存在或已删除</View>
         <Button type="primary" size="small" style={{ marginTop: '16px' }} onClick={goOrders}>查看我的订单</Button>
@@ -378,10 +378,10 @@ export default function OrderDetailPage() {
     <View className="ggc-page" style={{ position: 'relative' }}>
       <View style={{ flex: 1, overflow: 'auto', paddingBottom: '12px' }}>
         {/* 订单状态 + 步骤条 */}
-        <View style={{ margin: '12px', padding: '14px', background: '#fff', borderRadius: '10px' }}>
+        <View style={{ margin: '12px', padding: '14px', background: 'var(--color-bg-card)', borderRadius: '10px' }}>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <Text style={{ fontSize: '15px', fontWeight: 600 }}>订单状态</Text>
-            <View style={{ padding: '3px 10px', borderRadius: '999px', background: '#E8F5E9', color: '#388E3C', fontSize: '12px' }}>
+            <View style={{ padding: '3px 10px', borderRadius: '999px', background: 'var(--color-primary-bg)', color: '#388E3C', fontSize: '12px' }}>
               {STATUS_TEXT[order.status] || order.status}
             </View>
           </View>
@@ -410,7 +410,7 @@ export default function OrderDetailPage() {
         </View>
 
         {/* 信息行 */}
-        <View style={{ margin: '12px', padding: '6px 14px', background: '#fff', borderRadius: '10px' }}>
+        <View style={{ margin: '12px', padding: '6px 14px', background: 'var(--color-bg-card)', borderRadius: '10px' }}>
           {[
             ['点餐团队', order.team_name || '—'],
             ['点餐人', (order.user_avatar || '👤') + ' ' + (order.user_nickname || '—')],
@@ -418,17 +418,17 @@ export default function OrderDetailPage() {
             ['下单时间', order.created_at || '—']
           ].map(([k, v], i, arr) => (
             <View key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-              <Text style={{ color: '#666', fontSize: '14px' }}>{k}</Text>
-              <Text style={{ fontSize: '14px', color: '#333' }}>{v}</Text>
+              <Text style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>{k}</Text>
+              <Text style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{v}</Text>
             </View>
           ))}
         </View>
 
         {/* 菜品清单 */}
-        <View style={{ margin: '12px', padding: '14px', background: '#fff', borderRadius: '10px' }}>
+        <View style={{ margin: '12px', padding: '14px', background: 'var(--color-bg-card)', borderRadius: '10px' }}>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
             <Text style={{ fontSize: '15px', fontWeight: 600 }}>菜品清单</Text>
-            <Text style={{ color: '#999', fontSize: '12px' }}>共 {items.length} 种</Text>
+            <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>共 {items.length} 种</Text>
           </View>
           {items.map((it: any) => (
             <View key={it.dish_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
@@ -438,29 +438,29 @@ export default function OrderDetailPage() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontSize: '15px', fontWeight: 500, display: 'block' }}>{it.name}</Text>
                 <View style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <Text style={{ color: '#999', fontSize: '12px' }}>单价 ¥{fmt(it.price)}</Text>
+                  <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>单价 ¥{fmt(it.price)}</Text>
                   {it.user_nickname && (
-                    <Text style={{ color: '#4CAF50', fontSize: '11px', background: '#E8F5E9', padding: '1px 6px', borderRadius: '999px' }}>
+                    <Text style={{ color: '#4CAF50', fontSize: '11px', background: 'var(--color-primary-bg)', padding: '1px 6px', borderRadius: '999px' }}>
                       {(it.user_avatar || '👤') + ' ' + it.user_nickname}
                     </Text>
                   )}
                 </View>
               </View>
               <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: '13px', color: '#666' }}>×{it.quantity}</Text>
+                <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>×{it.quantity}</Text>
                 <Text style={{ fontSize: '14px', color: '#F44336', fontWeight: 600 }}>¥{fmt((Number(it.price) || 0) * it.quantity)}</Text>
               </View>
             </View>
           ))}
           <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px' }}>
-            <Text style={{ color: '#666', fontSize: '14px' }}>共 {order.total_count} 道</Text>
+            <Text style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>共 {order.total_count} 道</Text>
             <Text style={{ color: '#F44336', fontSize: '18px', fontWeight: 700 }}>¥{fmt(order.total_amount)}</Text>
           </View>
         </View>
       </View>
 
       {/* 底部操作栏 */}
-      <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: '#fff', borderTop: '1px solid #eee', flexShrink: 0 }}>
+      <View style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
         {renderActions()}
       </View>
     </View>

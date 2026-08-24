@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from '@tarojs/components'
+﻿import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -81,26 +81,26 @@ export default function PlanEditPage() {
     }).catch(() => { showToast({ title: '保存失败', icon: 'none' }); setSaving(false) })
   }
 
-  const label = { display: 'block', fontSize: '14px', fontWeight: 600, color: '#333', margin: '14px 0 8px' } as const
+  const label = { display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', margin: '14px 0 8px' } as const
 
   return (
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: '80px' }}>
       {/* 基本信息 */}
-      <View style={{ background: '#fff', padding: '4px 16px 12px', marginBottom: '12px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '4px 16px 12px', marginBottom: '12px' }}>
         <Text style={label}>名称</Text>
         <View style={{ width: '100%' }}>
-          <Input value={name} placeholder="如：一周家庭菜谱" onChange={(v) => setName(String(v || ''))} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
+          <Input value={name} placeholder="如：一周家庭菜谱" onChange={(v) => setName(String(v || ''))} style={{ background: 'var(--color-bg-page)', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
         </View>
         <Text style={label}>备注</Text>
         <View style={{ width: '100%' }}>
-          <Input value={note} placeholder="可选，如：荤素搭配" onChange={(v) => setNote(String(v || ''))} style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
+          <Input value={note} placeholder="可选，如：荤素搭配" onChange={(v) => setNote(String(v || ''))} style={{ background: 'var(--color-bg-page)', borderRadius: '8px', padding: '0 12px', height: '44px', fontSize: '15px' }} />
         </View>
         {recommendReason && <View style={{ fontSize: '13px', color: '#FF9800', marginTop: '10px' }}>🤔 {recommendReason}</View>}
       </View>
 
       {/* 已选清单 */}
       {items.length > 0 && (
-        <View style={{ background: '#fff', padding: '14px 16px', marginBottom: '12px' }}>
+        <View style={{ background: 'var(--color-bg-card)', padding: '14px 16px', marginBottom: '12px' }}>
           <Text style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>已选菜品（{items.length}）</Text>
           {items.map((it, idx) => (
             <View key={String(it.dish.id)} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--color-divider)' }}>
@@ -110,7 +110,7 @@ export default function PlanEditPage() {
                 <View style={{ fontSize: '12px', color: '#F44336' }}>¥{it.dish.price}</View>
               </View>
               <View style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <View onClick={() => dec(idx)} style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>−</View>
+                <View onClick={() => dec(idx)} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>−</View>
                 <Text style={{ fontSize: '15px', fontWeight: '600' }}>{it.quantity}</Text>
                 <View onClick={() => inc(idx)} style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#4CAF50', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>＋</View>
               </View>
@@ -120,7 +120,7 @@ export default function PlanEditPage() {
       )}
 
       {/* 手动选择 */}
-      <View style={{ background: '#fff', padding: '14px 0 16px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '14px 0 16px' }}>
         <Text style={{ ...label, marginLeft: '16px' }}>添加菜品</Text>
         <ScrollView scrollX style={{ whiteSpace: 'nowrap', padding: '0 16px' }}>
           <View style={{ display: 'inline-flex', gap: '8px' }}>
@@ -144,13 +144,13 @@ export default function PlanEditPage() {
               </View>
               <Text style={{ color: '#4CAF50', fontSize: '20px' }}>＋</Text>
             </View>
-          )) : loaded && <Text style={{ color: '#999', fontSize: '13px' }}>该分类暂无菜品</Text>}
+          )) : loaded && <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '13px' }}>该分类暂无菜品</Text>}
         </View>
       </View>
 
       {/* 底部保存栏 */}
-      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff', padding: '12px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <Text style={{ fontSize: '13px', color: '#666' }}>{items.length} 道菜</Text>
+      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'var(--color-bg-card)', padding: '12px 16px', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{items.length} 道菜</Text>
         <Button block type="primary" style={{ flex: 1 }} loading={saving} onClick={onSave}>保存计划</Button>
       </View>
     </View>

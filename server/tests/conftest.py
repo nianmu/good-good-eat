@@ -35,6 +35,7 @@ _TABLES_IN_DELETE_ORDER = (
     "orders",
     "team_members",
     "favorites",
+    "recipe_favorites",
     "plan_items",
     "plans",
     "recipes",
@@ -50,7 +51,8 @@ _TABLES_IN_DELETE_ORDER = (
 
 @pytest.fixture(scope="session")
 def _schema():
-    """session 级：按测试库建表，结束后整库拆表。"""
+    """session 级：先拆后建，保证测试库始终对齐当前模型（含新增表/列），结束后整库拆表。"""
+    Base.metadata.drop_all(TEST_ENGINE)
     Base.metadata.create_all(TEST_ENGINE)
     yield
     Base.metadata.drop_all(TEST_ENGINE)

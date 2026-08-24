@@ -2,12 +2,12 @@ import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
-import { Button, Input, TextArea } from '@nutui/nutui-react-taro'
+import { Button, Input, TextArea, Switch } from '@nutui/nutui-react-taro'
 import { recipes } from '../../api'
 
 //
 // 新建 / 编辑菜谱页——对齐原生 miniprogram/pages/recipe-edit
-// 名称 / emoji / 色块 / 描述 / 食材(逗号→数组) / 步骤(多行→数组) / 耗时 / 难度
+// 名称 / emoji / 色块 / 描述 / 食材(逗号→数组) / 步骤(多行→数组) / 耗时 / 难度 / 是否公开
 //
 
 const EMOJI_OPTIONS = ['🍖', '🥩', '🐟', '🍗', '🥦', '🍆', '🥚', '🍅', '🌽', '🍚', '🍜', '🥗', '🍲', '🥘', '🍳']
@@ -18,7 +18,8 @@ export default function RecipeEditPage() {
   const [id, setId] = useState<any>(null)
   const [form, setForm] = useState<any>({
     name: '', emoji: '🍽', color: '#FFAB91', description: '',
-    ingredientsText: '', stepsText: '', cookTime: '', difficulty: ''
+    ingredientsText: '', stepsText: '', cookTime: '', difficulty: '',
+    isPublic: false
   })
   const [saving, setSaving] = useState(false)
 
@@ -31,7 +32,8 @@ export default function RecipeEditPage() {
         .then((r: any) => setForm({
           name: r.name || '', emoji: r.emoji || '🍽', color: r.color || '#FFAB91', description: r.description || '',
           ingredientsText: (r.ingredients || []).join('，'), stepsText: (r.steps || []).join('\n'),
-          cookTime: r.cook_time ? String(r.cook_time) : '', difficulty: r.difficulty || ''
+          cookTime: r.cook_time ? String(r.cook_time) : '', difficulty: r.difficulty || '',
+          isPublic: !!r.is_public
         }))
         .catch(() => {
           showToast({ title: '加载失败', icon: 'none' })
@@ -53,7 +55,8 @@ export default function RecipeEditPage() {
       name: form.name, emoji: form.emoji, color: form.color, description: form.description,
       ingredients, steps,
       cook_time: cookTime && cookTime > 0 ? cookTime : null,
-      difficulty: form.difficulty || null
+      difficulty: form.difficulty || null,
+      is_public: !!form.isPublic
     }
   }
 
@@ -73,12 +76,12 @@ export default function RecipeEditPage() {
     })
   }
 
-  const label = { display: 'block', fontSize: '14px', fontWeight: 600, color: '#333', margin: '16px 0 8px' } as const
-  const inputStyle = { marginBottom: '4px' } as const
+  const label = { display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', margin: '16px 0 8px' } as const
+  const inputStyle = { marginBottom: '4px', height: '40px', lineHeight: '40px', background: 'var(--color-bg-page)', borderRadius: '8px', padding: '0 12px' } as const
 
   return (
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: '90px' }}>
-      <View style={{ background: '#fff', padding: '4px 16px 16px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '4px 16px 16px' }}>
         <Text style={label}>菜谱名称</Text>
         <Input value={form.name} placeholder="例如：妈妈的糖醋里脊" onChange={(v) => set('name', v)} style={inputStyle} />
 
@@ -88,7 +91,7 @@ export default function RecipeEditPage() {
             <View key={e} onClick={() => set('emoji', e)} style={{
               width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px',
               borderRadius: '10px', border: form.emoji === e ? '2px solid #4CAF50' : '2px solid transparent',
-              background: form.emoji === e ? 'var(--color-primary-bg)' : '#f5f5f5'
+              background: form.emoji === e ? 'var(--color-primary-bg)' : 'var(--color-bg-page)'
             }}>{e}</View>
           ))}
         </View>
@@ -98,7 +101,7 @@ export default function RecipeEditPage() {
           {COLOR_OPTIONS.map((c) => (
             <View key={c} onClick={() => set('color', c)} style={{
               width: '32px', height: '32px', borderRadius: '8px', background: c,
-              border: form.color === c ? '3px solid #1A1A1A' : '2px solid transparent'
+              border: form.color === c ? '3px solid var(--color-text-primary)' : '2px solid transparent'
             }} />
           ))}
         </View>
@@ -107,7 +110,7 @@ export default function RecipeEditPage() {
         <TextArea value={form.description} placeholder="用一句话介绍这道菜（可选）" maxlength={200} onChange={(v) => set('description', v)} style={{ width: '100%' }} />
       </View>
 
-      <View style={{ background: '#fff', padding: '4px 16px 16px', marginTop: '12px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '4px 16px 16px', marginTop: '12px' }}>
         <Text style={label}>食材（用逗号分隔）</Text>
         <TextArea value={form.ingredientsText} placeholder="例如：里脊肉，番茄酱，醋，糖" onChange={(v) => set('ingredientsText', v)} style={{ width: '100%' }} />
 
@@ -115,7 +118,7 @@ export default function RecipeEditPage() {
         <TextArea value={form.stepsText} placeholder={'例如：\n里脊切条腌 10 分钟\n裹淀粉下锅炸至金黄\n炒糖醋汁收汁裹匀'} onChange={(v) => set('stepsText', v)} style={{ width: '100%', minHeight: '120px' }} />
       </View>
 
-      <View style={{ background: '#fff', padding: '4px 16px 16px', marginTop: '12px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '4px 16px 16px', marginTop: '12px' }}>
         <Text style={label}>耗时（分钟）</Text>
         <Input type="number" value={form.cookTime} placeholder="例如：30" onChange={(v) => set('cookTime', v)} style={inputStyle} />
 
@@ -124,15 +127,24 @@ export default function RecipeEditPage() {
           {DIFFICULTY_OPTIONS.map((d) => (
             <View key={d} onClick={() => set('difficulty', d)} style={{
               padding: '8px 18px', borderRadius: '16px', fontSize: '14px',
-              background: form.difficulty === d ? '#4CAF50' : '#f0f0f0',
-              color: form.difficulty === d ? '#fff' : '#555'
+              background: form.difficulty === d ? '#4CAF50' : 'var(--color-bg-page)',
+              color: form.difficulty === d ? '#fff' : 'var(--color-text-secondary)'
             }}>{d}</View>
           ))}
         </View>
       </View>
 
+      {/* 是否公开 */}
+      <View style={{ background: 'var(--color-bg-card)', padding: '16px', marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View>
+          <Text style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>公开到菜谱库</Text>
+          <Text style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '2px' }}>所有人可见此菜谱</Text>
+        </View>
+        <Switch checked={form.isPublic} onChange={(v: boolean) => set('isPublic', v)} color="#4CAF50" />
+      </View>
+
       {/* 保存栏 */}
-      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff', padding: '12px 16px', borderTop: '1px solid var(--color-border)' }}>
+      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'var(--color-bg-card)', padding: '12px 16px', borderTop: '1px solid var(--color-divider)' }}>
         <Button block type="primary" loading={saving} onClick={onSave}>{saving ? '保存中…' : '保存菜谱'}</Button>
       </View>
     </View>

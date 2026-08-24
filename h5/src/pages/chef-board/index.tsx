@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 厨师看板（三期）——好好吃饭 跨端 H5
  * - 顶部聚合卡：待做订单数 / 按菜合并（菜名 xN + 食材）/ 食材汇总
  * - 订单列表：取餐码/状态/下单人/菜品摘要；按状态推进（接单→开始制作→完成制作→确认取餐）
@@ -101,7 +101,7 @@ export default function ChefBoardPage() {
       refresherEnabled
       refresherTriggered={refreshing}
       onRefresherRefresh={() => { setRefreshing(true); loadAll() }}
-      style={{ height: '100vh', background: '#F5F5F5' }}
+      style={{ height: '100vh', background: 'var(--color-bg-page)' }}
     >
       {loading ? (
         <View style={{ padding: 16 }}>
@@ -149,7 +149,7 @@ export default function ChefBoardPage() {
           </View>
 
           {/* 订单列表 */}
-          <View style={{ margin: '16px 2px 8px', fontSize: 15, fontWeight: 600, color: '#1A1A1A' }}>
+          <View style={{ margin: '16px 2px 8px', fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
             收到的订单（{ordersState.length}）
           </View>
 
@@ -162,16 +162,16 @@ export default function ChefBoardPage() {
               <View
                 key={o.id}
                 onClick={() => onOrderTap(o.id)}
-                style={{ background: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 12, marginBottom: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
               >
                 <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Text style={{ fontSize: 20, fontWeight: 700, color: '#388E3C' }}>{o.pickup_code}</Text>
                   <StatusTag status={o.status} />
-                  <Text style={{ marginLeft: 'auto', fontSize: 12, color: '#999' }}>{o.time_text}</Text>
+                  <Text style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-placeholder)' }}>{o.time_text}</Text>
                 </View>
-                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', fontSize: 13, color: '#666' }}>
+                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', fontSize: 13, color: 'var(--color-text-secondary)' }}>
                   <Text style={{ flex: 1 }}>{o.summary}</Text>
-                  <Text style={{ fontSize: 12, color: '#999' }}>{o.user_nickname} 点的</Text>
+                  <Text style={{ fontSize: 12, color: 'var(--color-text-placeholder)' }}>{o.user_nickname} 点的</Text>
                 </View>
                 <View style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   {o.action_label ? (
@@ -179,7 +179,7 @@ export default function ChefBoardPage() {
                       {o.action_label}
                     </Button>
                   ) : (
-                    <Text style={{ fontSize: 13, color: '#999' }}>已完成</Text>
+                    <Text style={{ fontSize: 13, color: 'var(--color-text-placeholder)' }}>已完成</Text>
                   )}
                 </View>
               </View>

@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -63,30 +63,30 @@ export default function PlanDetailPage() {
 
   return (
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: '80px' }}>
-      <View style={{ background: '#fff', padding: '18px 16px', marginBottom: '12px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '18px 16px', marginBottom: '12px' }}>
         <Text style={{ fontSize: '20px', fontWeight: 'bold' }}>{plan.name}</Text>
-        {plan.total_count != null && <Text style={{ display: 'block', fontSize: '13px', color: '#888', marginTop: '4px' }}>共 {plan.total_count} 份菜品</Text>}
-        {plan.note && <Text style={{ display: 'block', fontSize: '13px', color: '#999', marginTop: '6px' }}>{plan.note}</Text>}
+        {plan.total_count != null && <Text style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-placeholder)', marginTop: '4px' }}>共 {plan.total_count} 份菜品</Text>}
+        {plan.note && <Text style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-placeholder)', marginTop: '6px' }}>{plan.note}</Text>}
       </View>
 
-      <View style={{ background: '#fff', padding: '14px 16px' }}>
+      <View style={{ background: 'var(--color-bg-card)', padding: '14px 16px' }}>
         <Text style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>菜品清单</Text>
         {(plan.items || []).map((it: any, i: number) => (
           <View key={it.dish ? String(it.dish.id) : i} style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--color-divider)' }}>
             {it.dish ? (
               <View style={{ width: '42px', height: '42px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: it.dish.color || '#E8F5E9' }}>{it.dish.emoji}</View>
-            ) : <View style={{ width: '42px', height: '42px', borderRadius: '8px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🍽</View>}
+            ) : <View style={{ width: '42px', height: '42px', borderRadius: '8px', background: 'var(--color-bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🍽</View>}
             <View style={{ flex: 1, marginLeft: '10px' }}>
               <View style={{ fontSize: '15px' }}>{it.dish ? it.dish.name : '菜品已下架'}</View>
               {it.dish && <View style={{ fontSize: '12px', color: '#F44336' }}>¥{it.dish.price}</View>}
             </View>
-            <Text style={{ fontSize: '14px', color: '#666' }}>×{it.quantity}</Text>
+            <Text style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>×{it.quantity}</Text>
           </View>
         ))}
       </View>
 
       {/* 底部操作栏 */}
-      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff', display: 'flex', gap: '12px', padding: '12px 16px', borderTop: '1px solid var(--color-border)' }}>
+      <View style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: 'var(--color-bg-card)', display: 'flex', gap: '12px', padding: '12px 16px', borderTop: '1px solid var(--color-border)' }}>
         <Button plain type="danger" style={{ flex: 1 }} onClick={() => setDelVisible(true)}>删除</Button>
         <Button type="primary" style={{ flex: 2 }} onClick={onAddAll}>一键加入购物车</Button>
       </View>

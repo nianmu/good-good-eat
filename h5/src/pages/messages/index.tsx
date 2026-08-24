@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -77,7 +77,7 @@ export default function MessagesPage() {
   return (
     <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {total > 0 && (
-        <View style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '13px', color: '#999', background: '#fff' }}>
+        <View style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 16px', fontSize: '13px', color: 'var(--color-text-placeholder)', background: 'var(--color-bg-card)' }}>
           <Text>共 {total} 条</Text>
           {unread > 0 && <Text style={{ color: '#F44336' }}>{unread} 条未读</Text>}
         </View>
@@ -95,18 +95,18 @@ export default function MessagesPage() {
               {!m.is_read && <View style={{ position: 'absolute', top: '14px', left: '12px', width: '8px', height: '8px', borderRadius: '50%', background: '#F44336' }} />}
               <View style={{ paddingLeft: !m.is_read ? '12px' : '0' }}>
                 <View style={{ fontSize: '15px', fontWeight: '600', color: m.is_read ? '#666' : '#1A1A1A' }}>{m.title}</View>
-                {m.content ? <View style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>{m.content}</View> : null}
-                <View style={{ fontSize: '12px', color: '#bbb', marginTop: '6px' }}>{m.time_text}</View>
+                {m.content ? <View style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>{m.content}</View> : null}
+                <View style={{ fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '6px' }}>{m.time_text}</View>
               </View>
             </View>
           ))}
-          {loadingMore && <View style={{ textAlign: 'center', color: '#999', padding: '12px', fontSize: '13px' }}>加载更多…</View>}
-          {!hasMore && list.length > 0 && <View style={{ textAlign: 'center', color: '#bbb', padding: '12px', fontSize: '12px' }}>— 没有更多了 —</View>}
+          {loadingMore && <View style={{ textAlign: 'center', color: 'var(--color-text-placeholder)', padding: '12px', fontSize: '13px' }}>加载更多…</View>}
+          {!hasMore && list.length > 0 && <View style={{ textAlign: 'center', color: 'var(--color-text-placeholder)', padding: '12px', fontSize: '12px' }}>— 没有更多了 —</View>}
         </View>
       ) : (
         <View style={{ paddingTop: '20vh', textAlign: 'center' }}>
           <Empty description="暂无消息" imageSize={120} />
-          <Text style={{ display: 'block', fontSize: '12px', color: '#999', marginTop: '4px' }}>订单状态、团队动态会在此通知你</Text>
+          <Text style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '4px' }}>订单状态、团队动态会在此通知你</Text>
           <Button block type="primary" style={{ margin: '24px auto 0', width: '180px' }} onClick={goMenu}>去点菜</Button>
         </View>
       )}

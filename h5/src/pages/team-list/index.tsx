@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 团队列表页——好好吃饭 跨端 H5
  * - 我的团队列表（teams.my，来自 /me）
  * - 创建团队（teams.create，输入名称）
@@ -115,14 +115,14 @@ export default function TeamListPage() {
       refresherEnabled
       refresherTriggered={refreshing}
       onRefresherRefresh={() => { setRefreshing(true); loadTeams() }}
-      style={{ height: '100vh', background: '#F5F5F5' }}
+      style={{ height: '100vh', background: 'var(--color-bg-page)' }}
     >
       <View style={{ padding: 12 }}>
         {/* 创建团队 */}
-        <View style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
+        <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
           <View style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>创建团队</View>
           <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1, background: '#F5F5F5', borderRadius: 6, padding: '0 4px' }}>
+            <View style={{ flex: 1, background: 'var(--color-bg-page)', borderRadius: 6, padding: '0 4px' }}>
               <Input
                 value={createName}
                 placeholder="输入团队名称"
@@ -135,10 +135,10 @@ export default function TeamListPage() {
         </View>
 
         {/* 加入团队 */}
-        <View style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
+        <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 12 }}>
           <View style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>加入团队</View>
           <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1, background: '#F5F5F5', borderRadius: 6, padding: '0 4px' }}>
+            <View style={{ flex: 1, background: 'var(--color-bg-page)', borderRadius: 6, padding: '0 4px' }}>
               <Input
                 value={joinCode}
                 placeholder="输入 8 位邀请码"
@@ -151,10 +151,10 @@ export default function TeamListPage() {
         </View>
 
         {/* 我的团队 */}
-        <View style={{ fontSize: 13, color: '#666', padding: '4px 8px 8px' }}>我的团队（{teamList.length}）</View>
+        <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', padding: '4px 8px 8px' }}>我的团队（{teamList.length}）</View>
 
         {loading && teamList.length === 0 ? (
-          <View style={{ background: '#fff', borderRadius: 12, padding: 16 }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: 16 }}>
             <Skeleton rows={3} animated />
           </View>
         ) : teamList.length === 0 ? (
@@ -166,20 +166,20 @@ export default function TeamListPage() {
             <View
               key={t.id}
               onClick={() => onTeamTap(t.id)}
-              style={{ background: '#fff', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              style={{ background: 'var(--color-bg-card)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 8, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
                 {t.icon}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <View style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <Text style={{ flexShrink: 0 }}>{t.name}</Text>
-                  <Text style={{ fontSize: 11, color: '#4CAF50', background: '#E8F5E9', padding: '1px 8px', borderRadius: 999 }}>{t.role_label}</Text>
+                  <Text style={{ fontSize: 11, color: '#4CAF50', background: 'var(--color-primary-bg)', padding: '1px 8px', borderRadius: 999 }}>{t.role_label}</Text>
                 </View>
-                <View style={{ fontSize: 12, color: '#999', lineHeight: 1.7 }}>{t.member_count} 位成员 · 厨师：{t.chef || '待认领'}</View>
-                <View style={{ fontSize: 12, color: '#999', lineHeight: 1.7 }}>邀请码：{t.invite_code || '—'}</View>
+                <View style={{ fontSize: 12, color: 'var(--color-text-placeholder)', lineHeight: 1.7 }}>{t.member_count} 位成员 · 厨师：{t.chef || '待认领'}</View>
+                <View style={{ fontSize: 12, color: 'var(--color-text-placeholder)', lineHeight: 1.7 }}>邀请码：{t.invite_code || '—'}</View>
               </View>
-              <Text style={{ color: '#999', fontSize: 18 }}>›</Text>
+              <Text style={{ color: 'var(--color-text-placeholder)', fontSize: 18 }}>›</Text>
             </View>
           ))
         )}

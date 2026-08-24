@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -50,9 +50,9 @@ export default function FridgePage() {
   return (
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', padding: '12px' }}>
       {/* 添加食材 */}
-      <View style={{ display: 'flex', gap: '8px', background: '#fff', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
-        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="食材名称（如：五花肉）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
-        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+      <View style={{ display: 'flex', gap: '8px', background: 'var(--color-bg-card)', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
+        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="食材名称（如：五花肉）" style={{ flex: 1.4, background: 'var(--color-bg-page)', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: 'var(--color-bg-page)', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
         <Button size="small" type="primary" onClick={onAdd} style={{ height: '40px', flexShrink: 0 }}>＋</Button>
       </View>
 
@@ -61,10 +61,10 @@ export default function FridgePage() {
       ) : (
         <>
           {/* 我的冰箱 */}
-          <View style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
             <View style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>我的冰箱</Text>
-              <Text style={{ fontSize: '13px', color: '#999' }}>{items.length} 种</Text>
+              <Text style={{ fontSize: '13px', color: 'var(--color-text-placeholder)' }}>{items.length} 种</Text>
             </View>
             {items.length > 0 ? (
               items.map((it) => (
@@ -72,7 +72,7 @@ export default function FridgePage() {
                   <Text style={{ fontSize: '20px' }}>🧊</Text>
                   <View style={{ flex: 1, marginLeft: '10px' }}>
                     <View style={{ fontSize: '15px' }}>{it.name}</View>
-                    <View style={{ fontSize: '12px', color: '#999' }}>{it.quantity || '—'}</View>
+                    <View style={{ fontSize: '12px', color: 'var(--color-text-placeholder)' }}>{it.quantity || '—'}</View>
                   </View>
                   <Text onClick={() => onDelete(it.id)} style={{ color: '#F44336', fontSize: '13px', cursor: 'pointer' }}>删除</Text>
                 </View>
@@ -81,10 +81,10 @@ export default function FridgePage() {
           </View>
 
           {/* 冰箱能做的菜 */}
-          <View style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px' }}>
+          <View style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '14px 16px' }}>
             <View style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>冰箱能做的菜</Text>
-              <Text style={{ fontSize: '12px', color: '#999' }}>命中 2 种以上食材</Text>
+              <Text style={{ fontSize: '12px', color: 'var(--color-text-placeholder)' }}>命中 2 种以上食材</Text>
             </View>
             {suggest.length > 0 ? (
               suggest.map((s) => (
@@ -95,7 +95,7 @@ export default function FridgePage() {
                       <Text style={{ fontSize: '15px', fontWeight: '600' }}>{s.name}</Text>
                       <Tag type={s.source === 'recipe' ? 'primary' : 'warning'} plain>{s.source === 'recipe' ? '我的菜谱' : '平台菜品'}</Tag>
                     </View>
-                    <View style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>命中 {(s.matched || []).length}/{(s.total || 0)} · {(s.matched || []).join('、')}</View>
+                    <View style={{ fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '3px' }}>命中 {(s.matched || []).length}/{(s.total || 0)} · {(s.matched || []).join('、')}</View>
                   </View>
                   <Text style={{ color: '#ccc' }}>›</Text>
                 </View>

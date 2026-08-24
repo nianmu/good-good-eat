@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -48,7 +48,7 @@ export default function PlansPage() {
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: '80px' }}>
       <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px' }}>
         <Text style={{ fontSize: '17px', fontWeight: 'bold' }}>我的饮食计划</Text>
-        {total > 0 && <Text style={{ fontSize: '13px', color: '#999' }}>共 {total} 份</Text>}
+        {total > 0 && <Text style={{ fontSize: '13px', color: 'var(--color-text-placeholder)' }}>共 {total} 份</Text>}
       </View>
 
       {loading ? (
@@ -56,16 +56,16 @@ export default function PlansPage() {
       ) : list.length > 0 ? (
         <View style={{ padding: '0 12px' }}>
           {list.map((p) => (
-            <View key={p.id} onClick={() => goDetail(p.id)} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', marginBottom: '10px', cursor: 'pointer' }}>
+            <View key={p.id} onClick={() => goDetail(p.id)} style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '14px 16px', marginBottom: '10px', cursor: 'pointer' }}>
               <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>{p.name}</Text>
                 {p.total_count != null && <Text style={{ fontSize: '12px', color: '#4CAF50', background: 'var(--color-primary-bg)', padding: '2px 8px', borderRadius: '10px' }}>共 {p.total_count} 份</Text>}
               </View>
-              {p.note && <Text style={{ display: 'block', fontSize: '13px', color: '#999', marginTop: '4px' }}>{p.note}</Text>}
+              {p.note && <Text style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-placeholder)', marginTop: '4px' }}>{p.note}</Text>}
               {(p.summary || []).length > 0 && (
                 <View style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
                   {(p.summary || []).map((s: any, i: number) => (
-                    <Text key={s.dish_id ?? i} style={{ background: '#f5f5f5', color: '#555', padding: '3px 10px', borderRadius: '12px', fontSize: '12px' }}>
+                    <Text key={s.dish_id ?? i} style={{ background: 'var(--color-bg-page)', color: 'var(--color-text-secondary)', padding: '3px 10px', borderRadius: '12px', fontSize: '12px' }}>
                       {s.emoji ? `${s.emoji} ` : ''}{s.name}{s.quantity > 1 ? ` ×${s.quantity}` : ''}
                     </Text>
                   ))}
@@ -73,7 +73,7 @@ export default function PlansPage() {
               )}
             </View>
           ))}
-          {loadingMore && <View style={{ textAlign: 'center', color: '#999', padding: '12px', fontSize: '13px' }}>加载中…</View>}
+          {loadingMore && <View style={{ textAlign: 'center', color: 'var(--color-text-placeholder)', padding: '12px', fontSize: '13px' }}>加载中…</View>}
         </View>
       ) : (
         <View style={{ paddingTop: '15vh', textAlign: 'center' }}>

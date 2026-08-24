@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -46,19 +46,19 @@ export default function BasketPage() {
   return (
     <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', padding: '12px' }}>
       {/* 添加待购 */}
-      <View style={{ display: 'flex', gap: '8px', background: '#fff', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
-        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="待购物品（如：鸡蛋）" style={{ flex: 1.4, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
-        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+      <View style={{ display: 'flex', gap: '8px', background: 'var(--color-bg-card)', padding: '12px', borderRadius: '12px', marginBottom: '12px' }}>
+        <Input value={addName} onChange={(v) => setAddName(String(v || ''))} placeholder="待购物品（如：鸡蛋）" style={{ flex: 1.4, background: 'var(--color-bg-page)', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
+        <Input value={addQuantity} onChange={(v) => setAddQuantity(String(v || ''))} placeholder="数量（可选）" style={{ flex: 1, background: 'var(--color-bg-page)', borderRadius: '8px', padding: '8px 12px', fontSize: '14px' }} />
         <Button size="small" type="primary" onClick={onAdd} style={{ height: '40px', flexShrink: 0 }}>＋</Button>
       </View>
 
       {loading ? (
         <View style={{ padding: '8px' }}><Skeleton rows={4} animated /></View>
       ) : (
-        <View style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px' }}>
+        <View style={{ background: 'var(--color-bg-card)', borderRadius: '12px', padding: '14px 16px' }}>
           <View style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
             <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>待采购</Text>
-            <Text style={{ fontSize: '13px', color: '#999' }}>{items.length} 项 · {checkedCount} 已完成</Text>
+            <Text style={{ fontSize: '13px', color: 'var(--color-text-placeholder)' }}>{items.length} 项 · {checkedCount} 已完成</Text>
           </View>
           {items.length > 0 ? (
             items.map((it) => (
@@ -70,7 +70,7 @@ export default function BasketPage() {
                 }}>{it.checked ? '✓' : ''}</View>
                 <View style={{ flex: 1, marginLeft: '12px' }}>
                   <View style={{ fontSize: '15px', color: it.checked ? '#bbb' : '#1A1A1A', textDecoration: it.checked ? 'line-through' : 'none' }}>{it.name}</View>
-                  <View style={{ fontSize: '12px', color: '#999' }}>{it.quantity || '—'}</View>
+                  <View style={{ fontSize: '12px', color: 'var(--color-text-placeholder)' }}>{it.quantity || '—'}</View>
                 </View>
                 <Text onClick={() => onDelete(it.id)} style={{ color: '#F44336', fontSize: '13px', cursor: 'pointer' }}>删除</Text>
               </View>

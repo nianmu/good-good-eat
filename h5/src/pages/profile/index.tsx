@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+﻿import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -19,8 +19,8 @@ const FEATURES = [
   { id: 'basket', name: '厨房菜篮', icon: '🛒', color: '#4CAF50', url: '/pages/basket/index' },
   { id: 'favorite', name: '我的收藏', icon: '❤️', color: '#E91E63', url: '/pages/favorites/index' },
   { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0', url: '/pages/plans/index' },
-  { id: 'tutorial', name: '新手教程', icon: '📖', color: '#607D8B', url: '' },
-  { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722', url: '' },
+  { id: 'tutorial', name: '使用指南', icon: '📖', color: '#607D8B', url: '/pages/guide/index' },
+  { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722', url: '/pages/theme/index' },
   { id: 'feedback', name: '提点意见', icon: '💬', color: '#00BCD4', url: '' }
 ]
 
@@ -160,10 +160,10 @@ export default function ProfilePage() {
       </View>
 
       {/* 我的团队 */}
-      <View style={{ background: '#fff', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
+      <View style={{ background: 'var(--color-bg-card)', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
         <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
           <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>我的团队</Text>
-          <Text style={{ fontSize: '13px', color: '#999', cursor: 'pointer' }} onClick={goManageTeams}>管理 ›</Text>
+          <Text style={{ fontSize: '13px', color: 'var(--color-text-placeholder)', cursor: 'pointer' }} onClick={goManageTeams}>管理 ›</Text>
         </View>
         {loading ? null : teams.length > 0 ? (
           teams.map((t) => (
@@ -175,7 +175,7 @@ export default function ProfilePage() {
                   <Text style={{ fontSize: '15px', fontWeight: '600' }}>{t.name}</Text>
                   <Tag type="primary" plain>{t.role_label}</Tag>
                 </View>
-                <View style={{ fontSize: '12px', color: '#999', marginTop: '3px' }}>
+                <View style={{ fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '3px' }}>
                   {t.member_count} 位成员 · {t.chef ? `厨师：${t.chef}` : <Text style={{ color: '#FF9800' }}>厨师待认领</Text>}
                 </View>
               </View>
@@ -191,7 +191,7 @@ export default function ProfilePage() {
       </View>
 
       {/* 功能宫格 */}
-      <View style={{ background: '#fff', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
+      <View style={{ background: 'var(--color-bg-card)', margin: '12px', borderRadius: '12px', padding: '14px 16px' }}>
         <Text style={{ fontSize: '16px', fontWeight: 'bold' }}>我的厨房</Text>
         <View style={{ display: 'flex', flexWrap: 'wrap', marginTop: '14px' }}>
           {FEATURES.map((f) => (
@@ -201,7 +201,7 @@ export default function ProfilePage() {
                 width: '46px', height: '46px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px',
                 background: f.color + '1F', color: f.color
               }}>{f.icon}</View>
-              <Text style={{ fontSize: '12px', color: '#555', marginTop: '6px' }}>{f.name}</Text>
+              <Text style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '6px' }}>{f.name}</Text>
             </View>
           ))}
         </View>
@@ -230,7 +230,7 @@ export default function ProfilePage() {
 
       {/* 底部声明 */}
       <View style={{ padding: '20px 20px 40px', textAlign: 'center' }}>
-        <Text style={{ fontSize: '11px', color: '#bbb' }}>本平台面向家庭、情侣等用户，是美食记录与烹饪工具，不涉及订单支付，也不是商家收款工具。</Text>
+        <Text style={{ fontSize: '11px', color: 'var(--color-text-placeholder)' }}>本平台面向家庭、情侣等用户，是美食记录与烹饪工具，不涉及订单支付，也不是商家收款工具。</Text>
         <Text style={{ display: 'block', fontSize: '11px', color: '#d7a626', marginTop: '6px' }}>⚠ 如需转账，请自行核实对方身份，切勿轻信网络陌生人。</Text>
       </View>
     </View>

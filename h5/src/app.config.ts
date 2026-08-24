@@ -20,7 +20,9 @@ export default defineAppConfig({
     'pages/chef-board/index',
     'pages/team-list/index',
     'pages/team-detail/index',
-    'pages/auth/index'
+    'pages/auth/index',
+    'pages/guide/index',
+    'pages/theme/index'
   ],
   window: {
     backgroundTextStyle: 'light',

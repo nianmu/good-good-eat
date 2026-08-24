@@ -7,7 +7,7 @@ from app.models.fridge import FridgeItem
 from app.models.message import Message
 from app.models.order import Order, OrderItem
 from app.models.plan import Plan, PlanItem
-from app.models.recipe import Recipe
+from app.models.recipe import Recipe, RecipeFavorite
 from app.models.user import Team, TeamMember, User, UserIdentity
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "Plan",
     "PlanItem",
     "Recipe",
+    "RecipeFavorite",
     "Team",
     "TeamMember",
     "User",

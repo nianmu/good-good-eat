@@ -20,15 +20,15 @@ def test_categories(client, seeded):
 def test_dishes_pagination(client, seeded):
     r = client.get("/api/v1/dishes", params={"page": 1, "page_size": 5})
     d = r.json()["data"]
-    assert d["total"] == 16
+    assert d["total"] == 50
     assert d["page"] == 1
     assert d["page_size"] == 5
     assert len(d["items"]) == 5
 
-    r2 = client.get("/api/v1/dishes", params={"page": 4, "page_size": 5})
-    assert len(r2.json()["data"]["items"]) == 1  # 16 = 3*5 + 1
+    r2 = client.get("/api/v1/dishes", params={"page": 10, "page_size": 5})
+    assert len(r2.json()["data"]["items"]) == 5  # 50 = 10 * 5
 
-    r3 = client.get("/api/v1/dishes", params={"page": 5, "page_size": 5})
+    r3 = client.get("/api/v1/dishes", params={"page": 11, "page_size": 5})
     assert r3.json()["data"]["items"] == []
 
 
@@ -37,7 +37,7 @@ def test_dishes_filter_by_category(client, seeded):
     meat = next(c for c in r.json()["data"] if c["name"] == "荤菜")
     r2 = client.get("/api/v1/dishes", params={"category_id": meat["id"]})
     d = r2.json()["data"]
-    assert d["total"] == 4
+    assert d["total"] == 12
     assert all(it["category_id"] == meat["id"] for it in d["items"])
 
 
