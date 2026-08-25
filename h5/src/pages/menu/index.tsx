@@ -31,8 +31,16 @@ export default function MenuPage() {
   const [recommendLoading, setRecommendLoading] = useState(false)
   const [recommend, setRecommend] = useState<any>(null)
   const [peopleText, setPeopleText] = useState('3')
-  const [teamPickerVisible, setTeamPickerVisible] = useState(false)
+  const [createVisible, setCreateVisible] = useState(false)
+  const [createTeamId, setCreateTeamId] = useState('')
+  const [createType, setCreateType] = useState<'daily' | 'party' | ''>('')
+  const [createTeamSearch, setCreateTeamSearch] = useState('')
   const [joining, setJoining] = useState(false)
+  const [pendingName, setPendingName] = useState('')
+
+  const isPendingMode = () => {
+    try { return !!(Taro.getStorageSync('pendingActivityId')) } catch { return false }
+  }
 
   const syncCart = () => {
     const c = store.get('cart') || {}
@@ -72,27 +80,27 @@ export default function MenuPage() {
     const k = (kw || '').trim()
     let list = all
     if (k) {
-      // 搜索模式：全局匹配，忽略分类
       list = all.filter((d: any) =>
         (d.name || '').indexOf(k) >= 0 ||
         (d.description || '').indexOf(k) >= 0 ||
         ((d.ingredients || []) as string[]).some((i) => i.indexOf(k) >= 0)
       )
     } else if (catId) {
-      // 分类模式
       list = all.filter((d: any) => String(d.category_id) === String(catId))
     }
     setDishes(list)
   }
 
   useLoad(async () => {
+    // 恢复 pending 饭局名
+    try {
+      const pn = Taro.getStorageSync('pendingActivityName') || ''
+      setPendingName(pn)
+    } catch {}
     try {
       await guestLogin().catch(() => null)
       loadUser()
-      const [catRes, dishRes] = await Promise.all([
-        catApi.list(),
-        dishApi.list()
-      ])
+      const [catRes, dishRes] = await Promise.all([catApi.list(), dishApi.list()])
       const cats = catRes || []
       const all = (dishRes as any)?.items || []
       cats.forEach((c: any) => {
@@ -113,10 +121,10 @@ export default function MenuPage() {
   useDidShow(() => {
     syncCart()
     loadFavorites()
-    loadUser() // 从团队页返回时刷新团队/当前团队
+    loadUser()
+    try { setPendingName(Taro.getStorageSync('pendingActivityName') || '') } catch {}
   })
 
-  // 小程序：右上角分享给好友，携带邀请码
   useShareAppMessage(() => {
     const team = teams.find((t: any) => String(t.id) === String(currentTeamId))
     const code = team?.invite_code
@@ -130,15 +138,12 @@ export default function MenuPage() {
     setKeyword(v)
     const k = (v || '').trim()
     if (k) {
-      // 有搜索词：全局搜索，不受分类限制
       applyFilter(categories, allDishes, '', v)
     } else {
-      // 清空搜索：回到当前分类视图
       applyFilter(categories, allDishes, activeCategoryId, '')
     }
   }
 
-  /** 清空搜索并恢复分类视图 */
   const clearSearch = () => {
     setKeyword('')
     applyFilter(categories, allDishes, activeCategoryId, '')
@@ -167,7 +172,6 @@ export default function MenuPage() {
   const addCart = (id: number) => setQty(id, (cart[id] || 0) + 1)
   const minusCart = (id: number) => setQty(id, (cart[id] || 0) - 1)
 
-  /** 一组菜品替换购物车（随机/推荐场景：清空旧数据，重新生成） */
   const replaceCart = (picks: any[]) => {
     const c: Record<string, number> = {}
     picks.forEach((d: any) => { c[d.id] = (c[d.id] || 0) + 1 })
@@ -189,7 +193,6 @@ export default function MenuPage() {
       .catch((e: any) => showToast({ title: (e as any)?.message || '操作失败', icon: 'none' }))
   }
 
-  /** 惊喜推荐 */
   const onSurprise = () => {
     if (randomLoading) return
     setRandomLoading(true)
@@ -207,7 +210,6 @@ export default function MenuPage() {
       .finally(() => setRandomLoading(false))
   }
 
-  /** 今天吃什么：按人数推荐 */
   const onRecommendLoad = () => {
     const people = parseInt(peopleText, 10) || 3
     setRecommendLoading(true)
@@ -231,7 +233,6 @@ export default function MenuPage() {
     const plan = (recommend && recommend.plan) || []
     if (!plan.length) return
     const reason = recommend?.reason || ''
-    // 调用后端 plans API 持久化
     plans.create({
       name: reason || '今天吃什么',
       note: reason,
@@ -245,65 +246,86 @@ export default function MenuPage() {
     setRecommend(null)
   }
 
-  /** 邀请下单：H5 复制邀请码，小程序转发分享 */
-  const onInvite = () => {
-    if (!requireLogin('邀请下单需要登录')) return
-    // 未选择团队 → 引导先创建/选择团队
-    if (!currentTeamId) {
+  // ---- 底部按钮逻辑 ----
+  const onSubmit = () => {
+    if (!requireLogin('操作需要登录')) return
+    if (isPendingMode()) {
+      doAddToExisting()
+      return
+    }
+    if (!teams.length) {
+      showToast({ title: '请先创建或加入团队', icon: 'none' })
       Taro.navigateTo({ url: '/pages/team-list/index' })
       return
     }
-    const team = teams.find((t: any) => String(t.id) === String(currentTeamId))
-    const inviteCode = team?.invite_code
-    if (!inviteCode) {
-      showToast({ title: '该团队暂无邀请码', icon: 'none' })
-      return
-    }
-    if (process.env.TARO_ENV === 'weapp') {
-      // 小程序：提示用户点击右上角转发
-      showToast({ title: '请点击右上角「转发」分享给好友', icon: 'none' })
-    } else {
-      // H5 / 其他端：复制邀请码
-      Taro.setClipboardData({
-        data: inviteCode,
-        success: () => {
-          showToast({ title: '邀请码已复制，发给伙伴一起点菜吧', icon: 'none' })
-        }
-      })
-    }
+    setCreateTeamId(currentTeamId || '')
+    setCreateType('')
+    setCreateVisible(true)
   }
 
-  const onSubmit = async () => {
-    if (!cartCount) {
-      showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
-      return
-    }
-    if (!requireLogin('加入活动需要登录')) return
-    if (!currentTeamId) {
-      showToast({ title: '请先选择团队', icon: 'none' })
-      Taro.navigateTo({ url: '/pages/team-list/index' })
-      return
-    }
-    if (joining) return
+  /** 为已有饭局加菜（跳转自饭局详情"去加菜"） */
+  const doAddToExisting = async () => {
+    const pendingId = Taro.getStorageSync('pendingActivityId') || ''
+    const pname = Taro.getStorageSync('pendingActivityName') || '饭局'
+    if (!pendingId) return
     const cartData = store.get('cart') || {}
     const entries = Object.entries(cartData).filter(([, qty]) => Number(qty) > 0)
     if (!entries.length) {
-      showToast({ title: '购物车是空的，先点几道菜吧', icon: 'none' })
+      showToast({ title: '先选几道菜再确认加入', icon: 'none' })
       return
     }
+    if (joining) return
+    setJoining(true)
+    try {
+      for (const [dishId, qty] of entries) {
+        await activities.addItem(pendingId, dishId, Number(qty))
+      }
+      store.set('cart', {})
+      setCart({})
+      setCartCount(0)
+      try {
+        Taro.removeStorageSync('pendingActivityId')
+        Taro.removeStorageSync('pendingActivityTeamId')
+        Taro.removeStorageSync('pendingActivityType')
+        Taro.removeStorageSync('pendingActivityName')
+      } catch {}
+      showToast({ title: '已加入「' + pname + '」', icon: 'success' })
+      setTimeout(() => {
+        Taro.redirectTo({ url: '/pages/activity-detail/index?id=' + pendingId })
+      }, 600)
+    } catch (e: any) {
+      showToast({ title: e?.message || '加入饭局失败', icon: 'none' })
+    } finally {
+      setJoining(false)
+    }
+  }
+
+  /** 创建新饭局 */
+  const confirmJoin = async () => {
+    if (!createTeamId) { showToast({ title: '请选择团队', icon: 'none' }); return }
+    if (!createType) { showToast({ title: '请选择饭局类型', icon: 'none' }); return }
+    if (joining) return
+    const cartData = store.get('cart') || {}
+    const entries = Object.entries(cartData).filter(([, qty]) => Number(qty) > 0)
     setJoining(true)
     try {
       let activityId: string | number = ''
       try {
-        const listRes: any = await activities.list({ team_id: currentTeamId, status: 'ordering' })
+        const listRes: any = await activities.list({ team_id: createTeamId, status: 'ordering' })
         const first = (listRes?.items?.[0]) ?? null
-        if (first?.id) activityId = first.id
+        if (first?.id && first?.type === createType) activityId = first.id
       } catch {}
+      const isReuse = !!activityId
       if (!activityId) {
-        const name = currentTeamName ? currentTeamName + '·日常' : '日常活动'
-        const created: any = await activities.create({ team_id: currentTeamId, type: 'daily', name })
+        const selTeam = teams.find((t: any) => String(t.id) === String(createTeamId))
+        const typeLabel = createType === 'party' ? '聚餐饭局' : '日常饭局'
+        const name = selTeam ? `${selTeam.name}·${typeLabel}` : typeLabel
+        const created: any = await activities.create({ team_id: createTeamId, type: createType, name })
         activityId = created?.id ?? ''
-        if (!activityId) throw new Error('创建活动失败')
+        if (!activityId) throw new Error('创建饭局失败')
+        store.set('currentTeamId', String(createTeamId))
+        setCurrentTeamId(String(createTeamId))
+        if (selTeam) setCurrentTeamName(selTeam.name)
       }
       for (const [dishId, qty] of entries) {
         await activities.addItem(activityId, dishId, Number(qty))
@@ -311,31 +333,22 @@ export default function MenuPage() {
       store.set('cart', {})
       setCart({})
       setCartCount(0)
-      showToast({ title: '已加入活动', icon: 'success' })
+      setCreateVisible(false)
+      try {
+        Taro.removeStorageSync('pendingActivityId')
+        Taro.removeStorageSync('pendingActivityTeamId')
+        Taro.removeStorageSync('pendingActivityType')
+        Taro.removeStorageSync('pendingActivityName')
+      } catch {}
+      showToast({ title: isReuse ? '已加入饭局' : '饭局已创建', icon: 'success' })
       setTimeout(() => {
         Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
       }, 600)
     } catch (e: any) {
-      showToast({ title: e?.message || '加入活动失败', icon: 'none' })
+      showToast({ title: e?.message || '创建饭局失败', icon: 'none' })
     } finally {
       setJoining(false)
     }
-  }
-
-  const onTeamPickerSelect = (_item: any, index: number) => {
-    // 最后一项为“管理团队…”
-    if (index === teams.length) {
-      setTeamPickerVisible(false)
-      Taro.navigateTo({ url: '/pages/team-list/index' })
-      return
-    }
-    const t = teams[index]
-    if (!t) return
-    store.set('currentTeamId', String(t.id))
-    setCurrentTeamId(String(t.id))
-    setCurrentTeamName(t.name)
-    setTeamPickerVisible(false)
-    showToast({ title: `已切换到「${t.name}」`, icon: 'none' })
   }
 
   const dishesTitle = keyword
@@ -344,7 +357,7 @@ export default function MenuPage() {
 
   return (
     <View className="ggc-page ggc-tabbar-page" style={{ position: 'relative' }}>
-      {/* 顶部用户区 + 团队 */}
+      {/* 顶部用户区 */}
       <View style={{ background: 'linear-gradient(135deg,#4CAF50,#388E3C)', padding: '18px 16px 24px', color: '#fff', flexShrink: 0 }}>
         <View style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <View style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', border: '1px solid rgba(255,255,255,.3)' }}>
@@ -354,21 +367,26 @@ export default function MenuPage() {
             <View style={{ fontWeight: 600, fontSize: '16px' }}>{user.nickname || '好好吃饭'}</View>
             <View style={{ fontSize: '12px', opacity: .9 }}>只为好好吃饭</View>
           </View>
-          <View style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(255,255,255,.2)', borderRadius: '999px', fontSize: '13px', cursor: 'pointer' }}
-            onClick={() => {
-              if (!teams.length) { Taro.navigateTo({ url: '/pages/team-list/index' }); return }
-              setTeamPickerVisible(true)
-            }}>
-            <Text>🏠</Text>
-            <Text>{currentTeamName || '选择团队'}</Text>
-            <Text style={{ fontSize: '10px', opacity: .8 }}>▾</Text>
-          </View>
         </View>
       </View>
 
-      {/* 搜索栏 + 点单 */}
-      <View style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'var(--color-bg-card)', flexShrink: 0 }}>
-        {/* 搜索输入框 */}
+      {/* 为已有饭局加菜横幅 */}
+      {pendingName ? (
+        <View style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#FFF8E1', borderBottom: '1px solid #FFE082' }}>
+          <Text style={{ fontSize: '13px', color: '#FF9800', fontWeight: 600 }}>🍳 正在为「{pendingName}」加菜</Text>
+          <Text style={{ flex: 1 }} />
+          <Text onClick={() => {
+            Taro.removeStorageSync('pendingActivityId')
+            Taro.removeStorageSync('pendingActivityTeamId')
+            Taro.removeStorageSync('pendingActivityType')
+            Taro.removeStorageSync('pendingActivityName')
+            setPendingName('')
+          }} style={{ fontSize: '12px', color: '#F44336', cursor: 'pointer' }}>取消</Text>
+        </View>
+      ) : null}
+
+      {/* 搜索栏 */}
+      <View style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', background: 'var(--color-bg-card)', flexShrink: 0 }}>
         <View style={{
           flex: 1, display: 'flex', alignItems: 'center',
           height: '40px', padding: '0 14px', borderRadius: '10px',
@@ -383,24 +401,6 @@ export default function MenuPage() {
           />
           {!!keyword && (
             <Text onClick={clearSearch} style={{ fontSize: '16px', color: '#BDBDBD', padding: '0 2px', cursor: 'pointer', flexShrink: 0 }}>✕</Text>
-          )}
-        </View>
-        {/* 点单入口 */}
-        <View style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          padding: '0 6px', height: '40px', flexShrink: 0, cursor: 'pointer',
-        }}
-          onClick={() => Taro.navigateTo({ url: '/pages/cart/index' })}>
-          <Text style={{ fontSize: '15px', color: GREENS.primary, fontWeight: 600 }}>🛒</Text>
-          {cartCount > 0 && (
-            <View style={{
-              minWidth: '18px', height: '18px', padding: '0 5px',
-              borderRadius: '999px', background: GREENS.primary, color: '#fff',
-              fontSize: '11px', fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {cartCount}
-            </View>
           )}
         </View>
       </View>
@@ -419,7 +419,6 @@ export default function MenuPage() {
 
       {/* 主体：左侧分类 + 右侧菜品 */}
       <View style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        {/* 左侧分类（搜索态下弱化但可点击，点击即退出搜索） */}
         <ScrollView scrollY style={{ width: '88px', background: 'var(--color-bg-page)', flexShrink: 0, height: '100%', opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s' }}>
           {categories.map((c: any) => {
             const active = !keyword && String(c.id) === String(activeCategoryId)
@@ -439,7 +438,6 @@ export default function MenuPage() {
           })}
         </ScrollView>
 
-        {/* 右侧菜品列表 */}
         <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px', background: 'var(--color-bg-card)' }}>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
             <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{dishesTitle}</Text>
@@ -493,26 +491,75 @@ export default function MenuPage() {
         </ScrollView>
       </View>
 
-      {/* 底部操作栏（预留 tabbar 50px 空间） */}
+      {/* 底部操作栏 */}
       <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
-        <Button fill="none" size="small" style={{ flex: 1, fontSize: '13px', color: '#FF9800', background: '#FFF3E0' }} onClick={onInvite}>
-          📨 邀请下单
-        </Button>
-        <Button type="primary" size="small" style={{ flex: 1.5, fontSize: '13px' }} loading={joining} onClick={onSubmit}>
-          {joining ? '加入中…' : `加入活动${cartCount > 0 ? '（' + cartCount + '）' : ''}`}
-        </Button>
+        {isPendingMode() ? (
+          <Button type="primary" size="small" style={{ flex: 1, fontSize: '14px' }} loading={joining} onClick={onSubmit}>
+            确认加入「{pendingName || '饭局'}」（{cartCount}）
+          </Button>
+        ) : cartCount > 0 ? (
+          <Button type="primary" size="small" style={{ flex: 1, fontSize: '14px' }} onClick={() => Taro.navigateTo({ url: '/pages/cart/index' })}>
+            购物车（{cartCount}）
+          </Button>
+        ) : (
+          <Button type="primary" size="small" style={{ flex: 1, fontSize: '14px' }} loading={joining} onClick={onSubmit}>
+            创建饭局
+          </Button>
+        )}
       </View>
 
-      {/* 团队切换下拉 */}
-      <ActionSheet
-        visible={teamPickerVisible}
-        title="切换团队"
-        cancelText="取消"
-        options={[...teams.map((t: any) => ({ name: `${t.name}${String(t.id)===String(currentTeamId)?' ✓':''}` })), { name: '⚙️ 管理团队…' }]}
-        optionKey={{ name: 'name' }}
-        onSelect={onTeamPickerSelect}
-        onCancel={() => setTeamPickerVisible(false)}
-      />
+      {/* 发起饭局弹窗（团队+类型必选） */}
+      <Popup visible={createVisible} position="bottom" round onClose={() => setCreateVisible(false)} title="发起饭局" style={{ maxHeight: '80vh', overflow: 'auto' }}>
+        <View style={{ padding: '16px 16px 24px' }}>
+          <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 8 }}>选择团队 *</View>
+          <View style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 8, padding: '6px 10px', background: 'var(--color-bg-card)' }}>
+            <Text style={{ color: 'var(--color-text-placeholder)', fontSize: 13 }}>🔍</Text>
+            <Input placeholder="搜索团队" value={createTeamSearch} onChange={(v:string)=>setCreateTeamSearch(String(v||''))} style={{ flex: 1, fontSize: 13 }} />
+            {!!createTeamSearch && <Text onClick={() => setCreateTeamSearch('')} style={{ color: 'var(--color-text-placeholder)', padding: '0 4px', cursor: 'pointer' }}>✕</Text>}
+          </View>
+          <View style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16, maxHeight: '180px', overflow: 'auto' }}>
+            {teams
+              .filter((t:any) => !createTeamSearch || String(t.name).toLowerCase().includes(createTeamSearch.toLowerCase()))
+              .map((t:any) => {
+              const selected = String(t.id)===String(createTeamId)
+              return (
+                <View key={t.id} onClick={() => setCreateTeamId(String(t.id))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 8, cursor: 'pointer', border: selected ? '2px solid #4CAF50' : '1px solid var(--color-border)', background: selected ? 'var(--color-primary-bg)' : 'var(--color-bg-card)' }}>
+                  <Text style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? '#388E3C' : 'var(--color-text-primary)' }}>{t.name}</Text>
+                  {selected && <Text style={{ color: '#4CAF50' }}>✓</Text>}
+                </View>
+              )
+            })}
+            {teams.filter((t:any) => !createTeamSearch || String(t.name).toLowerCase().includes(createTeamSearch.toLowerCase())).length===0 && (
+              <View style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text-placeholder)', fontSize: 12 }}>无匹配团队</View>
+            )}
+            <View onClick={() => { setCreateVisible(false); Taro.navigateTo({ url: '/pages/team-list/index' }) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 14px', borderRadius: 8, border: '1px dashed var(--color-border)', color: '#4CAF50', fontSize: 13, cursor: 'pointer' }}>
+              ＋ 去管理团队
+            </View>
+          </View>
+          <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 8 }}>饭局类型 *</View>
+          <View style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {[
+              { key: 'daily', label: '日常饭局', desc: '联动冰箱' },
+              { key: 'party', label: '聚餐饭局', desc: '独立食材' },
+            ].map((o) => (
+              <View
+                key={o.key}
+                onClick={() => setCreateType(o.key as any)}
+                style={{
+                  flex: 1, padding: '14px 12px', borderRadius: 10, textAlign: 'center', cursor: 'pointer',
+                  border: createType === o.key ? '2px solid #4CAF50' : '1px solid var(--color-border)',
+                  background: createType === o.key ? 'var(--color-primary-bg)' : 'var(--color-bg-card)',
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: 600, color: createType === o.key ? '#388E3C' : 'var(--color-text-primary)' }}>{o.label}</Text>
+                <Text style={{ display: 'block', fontSize: 11, color: 'var(--color-text-placeholder)', marginTop: 4 }}>{o.desc}</Text>
+              </View>
+            ))}
+          </View>
+          <Button type="primary" block loading={joining} onClick={confirmJoin}>创建饭局</Button>
+          <View style={{ fontSize: 11, color: 'var(--color-text-placeholder)', textAlign: 'center', marginTop: 8 }}>团队与类型均为必选</View>
+        </View>
+      </Popup>
 
       {/* 今天吃什么 推荐弹层 */}
       <Popup
@@ -576,4 +623,3 @@ export default function MenuPage() {
 
 const greyd = 'var(--color-text-placeholder)'
 const qtyBtn = { width: '26px', height: '26px', borderRadius: '50%', background: 'var(--color-bg-page)', color: 'var(--color-text-primary)', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '15px' }
-

@@ -1,16 +1,14 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { InputNumber, Button, Empty } from '@nutui/nutui-react-taro'
+import { Input, InputNumber, Button, Empty, Popup } from '@nutui/nutui-react-taro'
 
 import { auth, dishes as dishApi, teams as teamApi, activities } from '../../api'
 import { store } from '../../store'
 import { TeamCartSocket } from '../../utils/team_ws'
 import { requireLogin } from '../../utils/auth'
 
-// 购物车/下单页——好好吃饭
-// 列表（qty 调整/删除）+ 团队选择 + 团队多人合计 + 提交下单 → order-detail
 export default function CartPage() {
   const [items, setItems] = useState<any[]>([])
   const [totalAmount, setTotalAmount] = useState(0)
@@ -21,6 +19,15 @@ export default function CartPage() {
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [dishMap, setDishMap] = useState<Record<string, any>>({})
+  const [createVisible, setCreateVisible] = useState(false)
+  const [createTeamId, setCreateTeamId] = useState('')
+  const [createType, setCreateType] = useState<'daily' | 'party' | ''>('')
+  const [createTeamSearch, setCreateTeamSearch] = useState('')
+  const [pendingName, setPendingName] = useState('')
+
+  const isPendingMode = () => {
+    try { return !!(Taro.getStorageSync('pendingActivityId')) } catch { return false }
+  }
 
   const fmt = (n: number) => Number(n || 0).toFixed(2)
 
@@ -35,15 +42,8 @@ export default function CartPage() {
       const d = map[k] || {}
       const price = Number(d.price) || 0
       list.push({
-        dish_id: k,
-        name: d.name || k,
-        emoji: d.emoji || '🍽',
-        color: d.color || '#E0E0E0',
-        price,
-        price_text: fmt(price),
-        quantity: qty,
-        total: price * qty,
-        total_text: fmt(price * qty)
+        dish_id: k, name: d.name || k, emoji: d.emoji || '🍽', color: d.color || '#E0E0E0',
+        price, price_text: fmt(price), quantity: qty, total: price * qty, total_text: fmt(price * qty)
       })
       amount += price * qty
       count += qty
@@ -54,6 +54,10 @@ export default function CartPage() {
   }
 
   useLoad(async () => {
+    try {
+      const pn = Taro.getStorageSync('pendingActivityName') || ''
+      setPendingName(pn)
+    } catch {}
     try {
       loadTeams()
       const dishRes: any = await dishApi.list()
@@ -71,10 +75,10 @@ export default function CartPage() {
 
   useDidShow(() => {
     rebuild(dishMap)
-    loadTeams() // 从团队页创建/加入后返回时刷新团队列表
+    loadTeams()
+    try { setPendingName(Taro.getStorageSync('pendingActivityName') || '') } catch {}
   })
 
-  /** 拉取用户团队并同步当前选中团队（无选中则默认第一个） */
   const loadTeams = () => {
     return auth.me()
       .then((res: any) => {
@@ -106,12 +110,11 @@ export default function CartPage() {
         const p = Object.keys(userSet).length
         setTeamCart(p > 0 ? '团队共 ' + p + ' 人已点 ' + q + ' 份' : '')
       })
-            .catch(() => setTeamCart(''))
+      .catch(() => setTeamCart(''))
   }
 
   const wsRef = useRef<TeamCartSocket | null>(null)
 
-  // 三期：加入团队 WS 房间，同行加菜/清空时刷新汇总（实时防重复提示）
   useEffect(() => {
     const tid = teamId
     const token = auth.token()
@@ -131,12 +134,6 @@ export default function CartPage() {
     return () => ws.close()
   }, [teamId])
 
-  const onTeamSelect = (id: string) => {
-    setTeamId(id)
-    store.set('currentTeamId', id)
-    loadTeamCart(id)
-  }
-
   const onQty = (dishId: string, v: any) => {
     store.setCartQuantity(dishId, Math.max(1, Number(v) || 1))
     rebuild(dishMap)
@@ -149,170 +146,147 @@ export default function CartPage() {
   }
 
   const goMenu = () => Taro.switchTab({ url: '/pages/menu/index' })
-  const goTeamList = () => Taro.navigateTo({ url: '/pages/team-list/index' })
 
-  const [teamDropdownVisible, setTeamDropdownVisible] = useState(false)
-
-  const onSubmit = async () => {
-    if (!requireLogin('加入活动需要登录')) return
-    if (submitting) return
-    if (!totalCount) {
-      showToast({ title: '购物车是空的', icon: 'none' })
+  const onSubmit = () => {
+    if (!requireLogin('创建饭局需要登录')) return
+    if (isPendingMode()) {
+      doAddToExisting()
       return
     }
-    if (!teamId) {
-      showToast({ title: '请先选择下单团队', icon: 'none' })
+    if (!teams.length) {
+      showToast({ title: '请先创建或加入团队', icon: 'none' })
+      Taro.navigateTo({ url: '/pages/team-list/index' })
       return
     }
+    setCreateTeamId(teamId || '')
+    setCreateType('')
+    setCreateVisible(true)
+  }
+
+  /** 为已有饭局加菜 */
+  const doAddToExisting = async () => {
+    const pendingId = Taro.getStorageSync('pendingActivityId') || ''
+    const pname = Taro.getStorageSync('pendingActivityName') || '饭局'
+    if (!pendingId) return
     if (!items.length) {
-      showToast({ title: '购物车是空的', icon: 'none' })
+      showToast({ title: '购物车为空，先加几道菜', icon: 'none' })
       return
     }
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      for (const it of items) {
+        await activities.addItem(pendingId, it.dish_id, Number(it.quantity))
+      }
+      store.set('cart', {})
+      try {
+        Taro.removeStorageSync('pendingActivityId')
+        Taro.removeStorageSync('pendingActivityTeamId')
+        Taro.removeStorageSync('pendingActivityType')
+        Taro.removeStorageSync('pendingActivityName')
+      } catch {}
+      showToast({ title: '已加入「' + pname + '」', icon: 'success' })
+      setTimeout(() => {
+        Taro.redirectTo({ url: '/pages/activity-detail/index?id=' + pendingId })
+      }, 600)
+    } catch (e: any) {
+      showToast({ title: e?.message || '加入饭局失败', icon: 'none' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  /** 创建新饭局 */
+  const confirmJoin = async () => {
+    if (!createTeamId) { showToast({ title: '请选择团队', icon: 'none' }); return }
+    if (!createType) { showToast({ title: '请选择饭局类型', icon: 'none' }); return }
+    if (submitting) return
     setSubmitting(true)
     try {
       let activityId: string | number = ''
       try {
-        const listRes: any = await activities.list({ team_id: teamId, status: 'ordering' })
-        const first = listRes?.items?.[0] ?? null
+        const listRes: any = await activities.list({ team_id: createTeamId, status: 'ordering' })
+        const first = (listRes?.items || []).find((a: any) => String(a.type) === String(createType))
         if (first?.id) activityId = first.id
       } catch {}
+      const isReuse = !!activityId
       if (!activityId) {
-        const teamName = teams.find((t: any) => String(t.id) === String(teamId))?.name || ''
-        const name = teamName ? teamName + '·日常' : '日常活动'
-        const created: any = await activities.create({ team_id: teamId, type: 'daily', name })
+        const selTeam = teams.find((t: any) => String(t.id) === String(createTeamId))
+        const typeLabel = createType === 'party' ? '聚餐饭局' : '日常饭局'
+        const name = selTeam ? `${selTeam.name}·${typeLabel}` : typeLabel
+        const created: any = await activities.create({ team_id: createTeamId, type: createType, name })
         activityId = created?.id ?? ''
-        if (!activityId) throw new Error('创建活动失败')
+        if (!activityId) throw new Error('创建饭局失败')
+        store.set('currentTeamId', String(createTeamId))
       }
       for (const it of items) {
         await activities.addItem(activityId, it.dish_id, Number(it.quantity))
       }
       store.set('cart', {})
-      showToast({ title: '已加入活动', icon: 'success' })
+      setCreateVisible(false)
+      try {
+        Taro.removeStorageSync('pendingActivityId')
+        Taro.removeStorageSync('pendingActivityTeamId')
+        Taro.removeStorageSync('pendingActivityType')
+        Taro.removeStorageSync('pendingActivityName')
+      } catch {}
+      showToast({ title: isReuse ? '已加入饭局' : '饭局已创建', icon: 'success' })
       setTimeout(() => {
         Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
       }, 600)
     } catch (e: any) {
-      showToast({ title: e?.message || '加入活动失败', icon: 'none' })
+      showToast({ title: e?.message || '创建饭局失败', icon: 'none' })
+    } finally {
       setSubmitting(false)
     }
   }
 
   return (
     <View className="ggc-page" style={{ position: 'relative' }}>
+      {/* 为已有饭局加菜横幅 */}
+      {pendingName ? (
+        <View style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: '#FFF8E1', borderBottom: '1px solid #FFE082' }}>
+          <Text style={{ fontSize: '13px', color: '#FF9800', fontWeight: 600 }}>🍳 正在为「{pendingName}」加菜</Text>
+          <Text style={{ flex: 1 }} />
+          <Text onClick={() => {
+            Taro.removeStorageSync('pendingActivityId')
+            Taro.removeStorageSync('pendingActivityTeamId')
+            Taro.removeStorageSync('pendingActivityType')
+            Taro.removeStorageSync('pendingActivityName')
+            setPendingName('')
+          }} style={{ fontSize: '12px', color: '#F44336', cursor: 'pointer' }}>取消</Text>
+        </View>
+      ) : null}
+
       <View style={{ flex: 1, overflow: 'auto' }}>
         {items.length > 0 && (
-          <>
-            <View style={{ margin: '12px', padding: '14px', background: 'var(--color-bg-card)', borderRadius: '10px' }}>
-              <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>下单团队</Text>
-
-                {/* 无团队 → 右上角新增按钮 */}
-                {teams.length === 0 && (
-                  <View onClick={goTeamList}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer', background: 'var(--color-primary-bg)', color: '#4CAF50', fontWeight: 600 }}>
-                    ＋ 新增团队
-                  </View>
-                )}
-
-                {/* 有团队 → 下拉选择器 */}
-                {teams.length > 0 && (
-                  <View style={{ position: 'relative' }}>
-                    <View
-                      onClick={() => setTeamDropdownVisible(!teamDropdownVisible)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '6px 14px', borderRadius: '10px', fontSize: '13px',
-                        cursor: 'pointer', background: 'var(--color-bg-page)', border: '1px solid var(--color-border)',
-                        minWidth: '120px', justifyContent: 'space-between',
-                      }}
-                    >
-                      <Text style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                        {teams.find((t: any) => String(t.id) === String(teamId))?.name || '选择团队'}
-                      </Text>
-                      <Text style={{ fontSize: '10px', color: 'var(--color-text-placeholder)', transform: teamDropdownVisible ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</Text>
-                    </View>
-
-                    {/* 下拉面板 */}
-                    {teamDropdownVisible && (
-                      <>
-                        {/* 遮罩 */}
-                        <View onClick={() => setTeamDropdownVisible(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} />
-                        <View style={{
-                          position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                          background: 'var(--color-bg-card)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                          minWidth: '180px', zIndex: 100, overflow: 'hidden',
-                          border: '1px solid #E8E8E8',
-                        }}>
-                          {/* 团队列表 */}
-                          <View style={{ maxHeight: '200px', overflow: 'auto' }}>
-                            {teams.map((t: any) => {
-                              const active = String(t.id) === String(teamId)
-                              return (
-                                <View key={t.id}
-                                  onClick={() => { onTeamSelect(String(t.id)); setTeamDropdownVisible(false) }}
-                                  style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '10px 14px', cursor: 'pointer',
-                                    background: active ? '#E8F5E9' : '#fff',
-                                    borderBottom: '1px solid #F5F5F5',
-                                  }}
-                                >
-                                  <Text style={{ fontSize: '13px', fontWeight: active ? 600 : 400, color: active ? '#4CAF50' : '#333' }}>
-                                    {t.name}
-                                  </Text>
-                                  {active && <Text style={{ color: '#4CAF50', fontSize: '14px' }}>✓</Text>}
-                                </View>
-                              )
-                            })}
-                          </View>
-                          {/* 底部固定新增团队按钮 */}
-                          <View
-                            onClick={() => { setTeamDropdownVisible(false); goTeamList() }}
-                            style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                              padding: '10px 14px', cursor: 'pointer',
-                              borderTop: '1px solid #E8E8E8', background: '#FAFAFA',
-                            }}
-                          >
-                            <Text style={{ fontSize: '13px', color: '#4CAF50', fontWeight: 600 }}>＋ 新增团队</Text>
-                          </View>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                )}
-              </View>
-              {teamCart ? <View style={{ color: '#FF9800', fontSize: '12px', marginTop: '8px' }}>{teamCart}</View> : null}
-            </View>
-
-            <View style={{ margin: '0 12px' }}>
-              {items.map((it) => (
-                <View key={it.dish_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
-                  <View style={{ width: '48px', height: '48px', borderRadius: '8px', background: it.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                    {it.emoji}
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ fontSize: '15px', fontWeight: 600, display: 'block' }}>{it.name}</Text>
-                    <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>¥{it.price_text} / 份</Text>
-                  </View>
-                  <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                    <InputNumber value={it.quantity} min={1} onChange={(v: any) => onQty(it.dish_id, v)} />
-                    <View style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <Text style={{ color: '#F44336', fontWeight: 600, fontSize: '14px' }}>¥{it.total_text}</Text>
-                      <Text onClick={() => onRemove(it.dish_id)} style={{ color: 'var(--color-text-placeholder)', fontSize: '12px', textDecoration: 'underline' }}>删除</Text>
-                    </View>
+          <View style={{ margin: '0 12px' }}>
+            {items.map((it) => (
+              <View key={it.dish_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <View style={{ width: '48px', height: '48px', borderRadius: '8px', background: it.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                  {it.emoji}
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ fontSize: '15px', fontWeight: 600, display: 'block' }}>{it.name}</Text>
+                  <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>¥{it.price_text} / 份</Text>
+                </View>
+                <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                  <InputNumber value={it.quantity} min={1} onChange={(v: any) => onQty(it.dish_id, v)} />
+                  <View style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <Text style={{ color: '#F44336', fontWeight: 600, fontSize: '14px' }}>¥{it.total_text}</Text>
+                    <Text onClick={() => onRemove(it.dish_id)} style={{ color: 'var(--color-text-placeholder)', fontSize: '12px', textDecoration: 'underline' }}>删除</Text>
                   </View>
                 </View>
-              ))}
-            </View>
-          </>
+              </View>
+            ))}
+          </View>
         )}
 
         {items.length === 0 && !loading && (
           <View style={{ padding: '40px 0' }}>
             <Empty
               image={<Text style={{ fontSize: '48px' }}>🛒</Text>}
-              description="购物车空空如也，去菜谱页挑几道菜吧"
+              description={pendingName ? '购物车空空的，去菜谱页挑几道菜加入饭局吧' : '购物车空空如也，去菜谱页挑几道菜吧'}
               actions={[{ text: '去点菜', type: 'primary', onClick: goMenu }]}
             />
           </View>
@@ -328,10 +302,63 @@ export default function CartPage() {
           <View style={{ flex: 1 }} />
           <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>共 {totalCount} 道</Text>
           <Button type="primary" size="small" style={{ fontSize: '14px' }} loading={submitting} onClick={onSubmit}>
-            {submitting ? '加入中…' : '加入活动'}
+            {pendingName ? '确认加入「' + pendingName + '」' : '创建饭局'}
           </Button>
         </View>
       )}
+
+      {/* 发起饭局弹窗（团队+类型必选） */}
+      <Popup visible={createVisible} position="bottom" round onClose={() => setCreateVisible(false)} title="发起饭局" style={{ maxHeight: '80vh', overflow: 'auto' }}>
+        <View style={{ padding: '16px 16px 24px' }}>
+          <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 8 }}>选择团队 *</View>
+          <View style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 8, padding: '6px 10px', background: 'var(--color-bg-card)' }}>
+            <Text style={{ color: 'var(--color-text-placeholder)', fontSize: 13 }}>🔍</Text>
+            <Input placeholder="搜索团队" value={createTeamSearch} onChange={(v:string)=>setCreateTeamSearch(String(v||''))} style={{ flex: 1, fontSize: 13 }} />
+            {!!createTeamSearch && <Text onClick={() => setCreateTeamSearch('')} style={{ color: 'var(--color-text-placeholder)', padding: '0 4px', cursor: 'pointer' }}>✕</Text>}
+          </View>
+          <View style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16, maxHeight: '180px', overflow: 'auto' }}>
+            {teams
+              .filter((t:any) => !createTeamSearch || String(t.name).toLowerCase().includes(createTeamSearch.toLowerCase()))
+              .map((t:any) => {
+              const selected = String(t.id)===String(createTeamId)
+              return (
+                <View key={t.id} onClick={() => setCreateTeamId(String(t.id))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 8, cursor: 'pointer', border: selected ? '2px solid #4CAF50' : '1px solid var(--color-border)', background: selected ? 'var(--color-primary-bg)' : 'var(--color-bg-card)' }}>
+                  <Text style={{ fontSize: 14, fontWeight: selected ? 600 : 400, color: selected ? '#388E3C' : 'var(--color-text-primary)' }}>{t.name}</Text>
+                  {selected && <Text style={{ color: '#4CAF50' }}>✓</Text>}
+                </View>
+              )
+            })}
+            {teams.filter((t:any) => !createTeamSearch || String(t.name).toLowerCase().includes(createTeamSearch.toLowerCase())).length===0 && (
+              <View style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text-placeholder)', fontSize: 12 }}>无匹配团队</View>
+            )}
+            <View onClick={() => { setCreateVisible(false); Taro.navigateTo({ url: '/pages/team-list/index' }) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 14px', borderRadius: 8, border: '1px dashed var(--color-border)', color: '#4CAF50', fontSize: 13, cursor: 'pointer' }}>
+              ＋ 去管理团队
+            </View>
+          </View>
+          <View style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 8 }}>饭局类型 *</View>
+          <View style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {[
+              { key: 'daily', label: '日常饭局', desc: '联动冰箱' },
+              { key: 'party', label: '聚餐饭局', desc: '独立食材' },
+            ].map((o) => (
+              <View
+                key={o.key}
+                onClick={() => setCreateType(o.key as any)}
+                style={{
+                  flex: 1, padding: '14px 12px', borderRadius: 10, textAlign: 'center', cursor: 'pointer',
+                  border: createType === o.key ? '2px solid #4CAF50' : '1px solid var(--color-border)',
+                  background: createType === o.key ? 'var(--color-primary-bg)' : 'var(--color-bg-card)',
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: 600, color: createType === o.key ? '#388E3C' : 'var(--color-text-primary)' }}>{o.label}</Text>
+                <Text style={{ display: 'block', fontSize: 11, color: 'var(--color-text-placeholder)', marginTop: 4 }}>{o.desc}</Text>
+              </View>
+            ))}
+          </View>
+          <Button type="primary" block loading={submitting} onClick={confirmJoin}>创建饭局</Button>
+          <View style={{ fontSize: 11, color: 'var(--color-text-placeholder)', textAlign: 'center', marginTop: 8 }}>团队与类型均为必选</View>
+        </View>
+      </Popup>
     </View>
   )
 }

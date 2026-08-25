@@ -1,5 +1,5 @@
 /**
- * 活动列表页（TabBar·活动）——好好吃饭 跨端 H5
+ * 饭局列表页（TabBar·饭局）——好好吃饭 跨端 H5
  * 替代原订单 Tab，对齐 Spec 第 5 节
  * - 顶部状态筛选（全部/点菜中/备菜中/烹饪中/已完成）
  * - 团队筛：当前团队来自 store.currentTeamId
@@ -27,8 +27,8 @@ const STATUS_TABS: Array<{ key: string; label: string }> = [
 ]
 
 const TYPE_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  daily: { label: '日常', color: '#4CAF50', bg: '#E8F5E9' },
-  party: { label: '聚餐', color: '#FF9800', bg: '#FFF3E0' },
+  daily: { label: '日常饭局', color: '#4CAF50', bg: '#E8F5E9' },
+  party: { label: '聚餐饭局', color: '#FF9800', bg: '#FFF3E0' },
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -53,7 +53,7 @@ function normalize(a: any) {
   const prog = PROGRESS_PERCENT[st] ?? 0
   return {
     id: a.id,
-    name: a.name || '未命名活动',
+    name: a.name || '未命名饭局',
     type: tp,
     typeLabel: TYPE_MAP[tp]?.label || tp,
     status: st,
@@ -269,7 +269,7 @@ export default function ActivitiesPage() {
         ) : activities.length === 0 ? (
           <View style={{ paddingTop: 40 }}>
             <Empty
-              description="暂无活动，去创建一个吧"
+              description="暂无饭局，去创建一个吧"
               status="order"
               actions={[{ text: '去看看菜谱', type: 'primary', onClick: () => goMenu() }]}
             />
@@ -348,7 +348,7 @@ export default function ActivitiesPage() {
             })}
 
             <View style={{ padding: '12px 0 40px', textAlign: 'center', fontSize: 12, color: 'var(--color-text-placeholder)' }}>
-              {loadingMore ? '加载中…' : !hasMore ? '—— 没有更多活动了 ——' : '上拉加载更多'}
+              {loadingMore ? '加载中…' : !hasMore ? '—— 没有更多饭局了 ——' : '上拉加载更多'}
             </View>
           </View>
         )}

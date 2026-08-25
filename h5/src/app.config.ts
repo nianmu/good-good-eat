@@ -46,7 +46,7 @@ export default defineAppConfig({
       },
       {
         pagePath: 'pages/activities/index',
-        text: '活动',
+        text: '饭局',
         iconPath: 'assets/tabbar/orders.png',
         selectedIconPath: 'assets/tabbar/orders-active.png'
       },
