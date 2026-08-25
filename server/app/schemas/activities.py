@@ -38,3 +38,9 @@ class ActivityItemStatusIn(BaseModel):
     """单菜进度目标。"""
 
     target: str = Field(min_length=1, max_length=16, description="目标状态 pending|prepared|cooking|done")
+
+
+class IngredientReadyIn(BaseModel):
+    """食材备齐状态切换。"""
+
+    is_ready: bool = Field(description="是否备齐")

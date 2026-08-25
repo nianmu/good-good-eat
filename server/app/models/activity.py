@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -40,6 +40,9 @@ class Activity(Base):
     items: Mapped[list[ActivityItem]] = relationship(
         back_populates="activity", cascade="all, delete-orphan"
     )
+    ingredients: Mapped[list["ActivityIngredient"]] = relationship(
+        back_populates="activity", cascade="all, delete-orphan"
+    )
 
 
 class ActivityItem(Base):
@@ -69,3 +72,23 @@ class ActivityItem(Base):
     dish: Mapped["Dish"] = relationship()
     added_user: Mapped["User"] = relationship(foreign_keys=[added_by])
     chef: Mapped["User | None"] = relationship(foreign_keys=[chef_id])
+
+
+class ActivityIngredient(Base):
+    """活动食材备齐状态；同一活动内 ingredient_name 唯一。"""
+
+    __tablename__ = "activity_ingredients"
+    __table_args__ = (
+        UniqueConstraint("activity_id", "ingredient_name", name="uq_activity_ingredient"),
+        {"mysql_charset": "utf8mb4"},
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    activity_id: Mapped[int] = mapped_column(ForeignKey("activities.id"), nullable=False, index=True)
+    ingredient_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_ready: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    activity: Mapped[Activity] = relationship(back_populates="ingredients")

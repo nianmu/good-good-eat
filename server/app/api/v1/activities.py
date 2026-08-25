@@ -19,7 +19,7 @@ from app.core.db import get_db
 from app.core.exceptions import ApiError
 from app.core.responses import ok
 from app.core.security import get_current_user
-from app.models.activity import Activity, ActivityItem
+from app.models.activity import Activity, ActivityIngredient, ActivityItem
 from app.models.dish import Dish
 from app.models.fridge import FridgeItem
 from app.models.user import Team, TeamMember, User
@@ -29,6 +29,7 @@ from app.schemas.activities import (
     ActivityItemCreateIn,
     ActivityItemStatusIn,
     ActivityStatusIn,
+    IngredientReadyIn,
 )
 
 router = APIRouter(prefix="/activities", tags=["activities"])
@@ -41,7 +42,35 @@ _STATUS_FLOW: dict[str, set[str]] = {
     "completed": set(),
 }
 _ALL_STATUSES = set(_STATUS_FLOW) | {s for vals in _STATUS_FLOW.values() for s in vals}
-_PROGRESS_PERCENT = {"ordering": 0, "preparing": 33, "cooking": 66, "completed": 100}
+
+
+def _compute_progress(status: str, items: list[dict], ingredients: list[dict]) -> dict:
+    """总进度由真实数据推导（与活动状态同源，而非查表写死）：
+    - ordering: 0%
+    - preparing: 5%→40%，由 食材备齐率 填充
+    - cooking: 45%→90%，由 已完成菜品占比 填充
+    - completed: 100%
+    """
+    total = len(items)
+    done = sum(1 for it in items if it["status"] == "done")
+    ing_total = len(ingredients)
+    ing_ready = sum(1 for g in ingredients if g.get("is_ready"))
+    if status == "completed":
+        pct = 100
+    elif status == "cooking":
+        pct = 45 + round(45 * (done / total if total else 1))
+    elif status == "preparing":
+        pct = 5 + round(35 * (ing_ready / ing_total if ing_total else 1))
+    else:
+        pct = 0
+    return {
+        "status": status,
+        "percent": pct,
+        "total": total,
+        "done": done,
+        "ingredients_total": ing_total,
+        "ingredients_ready": ing_ready,
+    }
 
 _ITEM_STATUS_FLOW: dict[str, set[str]] = {
     "pending": {"prepared"},
@@ -76,13 +105,18 @@ def _activity_to_dict(a: Activity) -> dict:
 
 
 def _ingredients_for_activity(db: Session, activity: Activity, current_user: User) -> list[dict]:
-    """聚合 activity_items -> dishes.ingredients -> 去重，daily 时按当前用户 fridge 判定 has。"""
+    """从 activity_ingredients 表读取食材状态（has 字段保留向后兼容）。"""
+    ai_rows = db.scalars(
+        select(ActivityIngredient).where(ActivityIngredient.activity_id == activity.id)
+    ).all()
+    if ai_rows:
+        return [{"name": r.ingredient_name, "has": r.is_ready, "is_ready": r.is_ready} for r in ai_rows]
+    # 兜底：如果 activity_ingredients 表没有记录（旧数据兼容），回退到 dish ingredients 聚合
     items = db.scalars(select(ActivityItem).where(ActivityItem.activity_id == activity.id)).all()
     if not items:
         return []
     dish_ids = list({it.dish_id for it in items})
     dishes = db.scalars(select(Dish).where(Dish.id.in_(dish_ids))).all()
-    # 去重食材名
     names: list[str] = []
     seen: set[str] = set()
     for d in dishes:
@@ -103,10 +137,8 @@ def _ingredients_for_activity(db: Session, activity: Activity, current_user: Use
             names.append(n)
     if not names:
         return []
-    # daily: has 取决于当前用户 fridge；party: 全 true；若无 fridge 表兼容恒 true
     if activity.type == "party":
-        return [{"name": n, "has": True} for n in names]
-    # daily
+        return [{"name": n, "has": True, "is_ready": True} for n in names]
     try:
         owned = {
             row[0]
@@ -115,8 +147,53 @@ def _ingredients_for_activity(db: Session, activity: Activity, current_user: Use
             ).all()
         }
     except Exception:
-        owned = set(names)  # 兼容无 fridge 表
-    return [{"name": n, "has": n in owned} for n in names]
+        owned = set(names)
+    return [{"name": n, "has": n in owned, "is_ready": n in owned} for n in names]
+
+
+def _collect_dish_ingredients(db: Session, activity_id: int) -> list[str]:
+    """聚合活动当前所有菜品的 ingredients，去重返回名称列表。"""
+    items = db.scalars(select(ActivityItem).where(ActivityItem.activity_id == activity_id)).all()
+    if not items:
+        return []
+    dish_ids = list({it.dish_id for it in items})
+    dishes = db.scalars(select(Dish).where(Dish.id.in_(dish_ids))).all()
+    names: list[str] = []
+    seen: set[str] = set()
+    for d in dishes:
+        raw = d.ingredients or "[]"
+        try:
+            arr = json.loads(raw)
+        except Exception:
+            arr = []
+        if not isinstance(arr, list):
+            continue
+        for n in arr:
+            if not isinstance(n, str):
+                continue
+            n = n.strip()
+            if not n or n in seen:
+                continue
+            seen.add(n)
+            names.append(n)
+    return names
+
+
+def _sync_activity_ingredients(db: Session, activity_id: int) -> None:
+    """同步 activity_ingredients 表：新增菜品中尚未记录的食材自动补充（is_ready=false），已有的不动。"""
+    names = _collect_dish_ingredients(db, activity_id)
+    if not names:
+        return
+    existing = {
+        row[0]
+        for row in db.execute(
+            select(ActivityIngredient.ingredient_name).where(ActivityIngredient.activity_id == activity_id)
+        ).all()
+    }
+    for n in names:
+        if n not in existing:
+            db.add(ActivityIngredient(activity_id=activity_id, ingredient_name=n, is_ready=False))
+    db.flush()
 
 
 @router.post("")
@@ -148,6 +225,9 @@ def create_activity(
     db.add(activity)
     db.commit()
     db.refresh(activity)
+    # 创建活动后同步菜品食材到 activity_ingredients 表
+    _sync_activity_ingredients(db, activity.id)
+    db.commit()
     try:
         from app.ws.handlers import manager
 
@@ -271,14 +351,7 @@ def get_activity(
 
     ingredients = _ingredients_for_activity(db, activity, user)
 
-    total_items = len(items_payload)
-    done_items = sum(1 for it in items_payload if it["status"] == "done")
-    progress = {
-        "status": activity.status,
-        "percent": _PROGRESS_PERCENT.get(activity.status, 0),
-        "total": total_items,
-        "done": done_items,
-    }
+    progress = _compute_progress(activity.status, items_payload, ingredients)
 
     return ok(
         {
@@ -317,6 +390,26 @@ def update_activity_status(
     allowed = _STATUS_FLOW.get(current, set())
     if target not in allowed:
         raise ApiError(400, 40003, f"活动状态不能从 {current} 流转到 {target}")
+
+    # ── 关联闸门：活动阶段与菜品/食材进度联动 ──
+    if target == "preparing":
+        item_count = (
+            db.scalar(select(func.count(ActivityItem.id)).where(ActivityItem.activity_id == activity.id)) or 0
+        )
+        if item_count == 0:
+            raise ApiError(400, 40003, "还没有点任何菜，先去点菜再进入备菜")
+    elif target == "cooking":
+        team = db.get(Team, activity.team_id)
+        team_chef = team.chef_id if team else None
+        items = db.scalars(select(ActivityItem).where(ActivityItem.activity_id == activity.id)).all()
+        no_chef = [it for it in items if it.chef_id is None and team_chef is None]
+        if no_chef:
+            raise ApiError(400, 40003, f"还有 {len(no_chef)} 道菜未指派厨师，无法开始制作")
+    elif target == "completed":
+        items = db.scalars(select(ActivityItem).where(ActivityItem.activity_id == activity.id)).all()
+        undone = [it for it in items if it.status != "done"]
+        if undone:
+            raise ApiError(400, 40003, f"还有 {len(undone)} 道菜未完成，无法完成饭局")
 
     activity.status = target
     db.commit()
@@ -387,6 +480,9 @@ def add_activity_item(
         db.refresh(existing)
         chef_user = db.get(User, existing.chef_id) if existing.chef_id else None
         payload = _item_to_dict(existing, dish, user, chef_user)
+        # 同步食材备齐状态
+        _sync_activity_ingredients(db, activity_id)
+        db.commit()
         try:
             from app.ws.handlers import manager
 
@@ -407,6 +503,9 @@ def add_activity_item(
     db.commit()
     db.refresh(item)
     payload = _item_to_dict(item, dish, user, None)
+    # 同步食材备齐状态：新增菜品的 ingredients 自动补充到 activity_ingredients
+    _sync_activity_ingredients(db, activity_id)
+    db.commit()
     try:
         from app.ws.handlers import manager
 
@@ -511,7 +610,8 @@ def update_item_status(
     if target not in _ALL_ITEM_STATUSES:
         raise ApiError(400, 40003, f"未知菜品状态：{target}")
 
-    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    # 活动行锁：既作为阶段判断的稳定读，也串行化"最后一菜 done → 自动完成"的判断
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id).with_for_update())
     if activity is None:
         raise ApiError(404, 40401, "活动不存在")
     _ensure_member(db, activity.team_id, user.id)
@@ -538,7 +638,33 @@ def update_item_status(
     if target not in allowed:
         raise ApiError(400, 40003, f"菜品状态不能从 {current} 流转到 {target}")
 
+    # ── 阶段解锁：单菜推进必须处于对应活动阶段 ──
+    phase = activity.status
+    if target == "prepared" and phase not in ("preparing", "cooking", "completed"):
+        raise ApiError(400, 40003, "活动还在点菜阶段，进入备菜后才能标记备好")
+    if target in ("cooking", "done") and phase not in ("cooking", "completed"):
+        raise ApiError(400, 40003, "活动还未开始制作，无法推进到该状态")
+
     item.status = target
+    db.flush()
+
+    # ── 自动完成：cooking 阶段最后一菜 done → 活动直接 completed（活动行已加锁串行化）──
+    auto_completed = False
+    if target == "done" and phase == "cooking":
+        undone = (
+            db.scalar(
+                select(func.count(ActivityItem.id)).where(
+                    ActivityItem.activity_id == activity.id,
+                    ActivityItem.id != item.id,
+                    ActivityItem.status != "done",
+                )
+            )
+            or 0
+        )
+        if undone == 0:
+            activity.status = "completed"
+            auto_completed = True
+
     db.commit()
     db.refresh(item)
     dish = db.get(Dish, item.dish_id)
@@ -549,6 +675,69 @@ def update_item_status(
         from app.ws.handlers import manager
 
         manager.broadcast_sync(activity.team_id, "activity.item_status_changed", {"item": payload, "activity_id": activity_id})
+        if auto_completed:
+            manager.broadcast_sync(activity.team_id, "activity.status_changed", {"activity": _activity_to_dict(activity)})
+    except Exception:
+        pass
+    return ok(payload)
+
+
+# ─────────────────────── 食材备齐状态 ───────────────────────
+
+
+@router.get("/{activity_id}/ingredients")
+def list_activity_ingredients(
+    activity_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """返回该活动的食材列表 [{name, is_ready}]。"""
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    rows = db.scalars(
+        select(ActivityIngredient)
+        .where(ActivityIngredient.activity_id == activity_id)
+        .order_by(ActivityIngredient.id)
+    ).all()
+    items = [{"name": r.ingredient_name, "is_ready": r.is_ready} for r in rows]
+    return ok(items)
+
+
+@router.put("/{activity_id}/ingredients/{ingredient_name}/ready")
+def toggle_ingredient_ready(
+    activity_id: int,
+    ingredient_name: str,
+    body: IngredientReadyIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """切换单个食材的备齐状态，成功后 WS 广播 activity.ingredient_changed。"""
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id))
+    if activity is None:
+        raise ApiError(404, 40401, "活动不存在")
+    _ensure_member(db, activity.team_id, user.id)
+
+    row = db.scalar(
+        select(ActivityIngredient).where(
+            ActivityIngredient.activity_id == activity_id,
+            ActivityIngredient.ingredient_name == ingredient_name,
+        )
+    )
+    if row is None:
+        raise ApiError(404, 40401, "食材不存在")
+
+    row.is_ready = body.is_ready
+    db.commit()
+    db.refresh(row)
+
+    payload = {"name": row.ingredient_name, "is_ready": row.is_ready, "activity_id": activity_id}
+    try:
+        from app.ws.handlers import manager
+
+        manager.broadcast_sync(activity.team_id, "activity.ingredient_changed", payload)
     except Exception:
         pass
     return ok(payload)
