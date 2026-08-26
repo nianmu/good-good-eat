@@ -18,6 +18,21 @@ export const auth = {
 
 export const dishes = {
   list: (params?: any) => request({ url: '/dishes', data: params }),
+  /** 循环翻页拉取全量菜品（菜单/购物车/计划选菜用，避免只取到第一页 page_size 条） */
+  listAll: async (params?: any): Promise<any[]> => {
+    const out: any[] = []
+    const pageSize = 100
+    let page = 1
+    for (;;) {
+      const res: any = await request({ url: '/dishes', data: { ...(params || {}), page, page_size: pageSize } })
+      const items = res?.items || []
+      out.push(...items)
+      const total = Number(res?.total || 0)
+      if (!items.length || out.length >= total || items.length < pageSize) break
+      page += 1
+    }
+    return out
+  },
   detail: (id: number | string) => request({ url: `/dishes/${id}` }),
   random: (n = 3, type = 'balanced') => request({ url: `/dishes/random?n=${n}&type=${type}` }),
   recommend: (people = 3) => request({ url: `/dishes/recommend?people=${people}` }),

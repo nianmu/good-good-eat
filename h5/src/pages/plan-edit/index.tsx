@@ -1,4 +1,4 @@
-﻿import { View, Text, ScrollView } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -22,10 +22,10 @@ export default function PlanEditPage() {
   const [loaded, setLoaded] = useState(false)
 
   useLoad((p) => {
-    Promise.all([categories.list(), dishes.list({ page_size: 100 })])
+    Promise.all([categories.list(), dishes.listAll()])
       .then((res: any[]) => {
         const cats = res[0] || []
-        const all = (res[1] && res[1].items) || []
+        const all = res[1] || []
         const g = cats.map((c: any) => ({ id: c.id, name: c.name, dishes: all.filter((d: any) => String(d.category_id) === String(c.id)) }))
         setGroups(g)
         setActiveCatId(cats.length ? cats[0].id : '')
@@ -107,7 +107,9 @@ export default function PlanEditPage() {
               <View style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: it.dish.color || '#E8F5E9' }}>{it.dish.emoji}</View>
               <View style={{ flex: 1, marginLeft: '10px' }}>
                 <View style={{ fontSize: '15px', fontWeight: 600 }}>{it.dish.name}</View>
+                {/* 价格暂不展示
                 <View style={{ fontSize: '12px', color: '#F44336' }}>¥{it.dish.price}</View>
+                */}
               </View>
               <View style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <View onClick={() => dec(idx)} style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>−</View>
@@ -140,7 +142,9 @@ export default function PlanEditPage() {
               <View style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', background: dish.color || '#E8F5E9' }}>{dish.emoji}</View>
               <View style={{ flex: 1, marginLeft: '10px' }}>
                 <View style={{ fontSize: '14px' }}>{dish.name}</View>
+                {/* 价格暂不展示
                 <View style={{ fontSize: '12px', color: '#F44336' }}>¥{dish.price}</View>
+                */}
               </View>
               <Text style={{ color: '#4CAF50', fontSize: '20px' }}>＋</Text>
             </View>

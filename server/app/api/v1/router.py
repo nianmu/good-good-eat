@@ -11,6 +11,7 @@ from app.api.v1 import (
     dishes,
     favorites,
     fridge,
+    media,
     plans,
     recipes,
     teams,
@@ -26,3 +27,4 @@ api_router.include_router(fridge.router)
 api_router.include_router(basket.router)
 api_router.include_router(plans.router)
 api_router.include_router(activities.router)
+api_router.include_router(media.router)

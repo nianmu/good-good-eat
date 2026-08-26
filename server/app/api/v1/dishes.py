@@ -31,8 +31,8 @@ from app.schemas.serializers import category_to_dict, dish_to_dict
 
 router = APIRouter()
 
-# 分类名 → 营养类型映射（对齐种子 6 类）。
-# 营养类型：meat 荤菜(蛋白质) / veg 素菜(纤维) / energy 能量补给(碳水) / soup 汤 / staple 主食 / cold 凉菜
+# 分类名 → 营养类型映射（对齐种子 6 类 + HowToCook 导入新分类）。
+# 营养类型：meat 荤菜(蛋白质) / veg 素菜(纤维) / energy 能量补给(碳水) / soup 汤 / staple 主食 / cold 凉菜 / other 其余
 _CATEGORY_ROLE = {
     "荤菜": "meat",
     "蔬菜也要吃呀": "veg",
@@ -40,6 +40,13 @@ _CATEGORY_ROLE = {
     "饭后最后一口汤": "soup",
     "主食": "staple",
     "凉菜": "cold",
+    # HowToCook 导入分类（import_howtocook.py）
+    "水产": "meat",
+    "早餐": "energy",
+    "甜品": "energy",
+    "饮品": "other",
+    "半成品": "other",
+    "调料": "other",
 }
 _ROLE_LABEL = {"meat": "荤菜", "veg": "素菜", "energy": "能量", "soup": "汤", "staple": "主食", "cold": "凉菜"}
 

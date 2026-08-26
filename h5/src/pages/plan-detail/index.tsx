@@ -1,4 +1,4 @@
-﻿import { View, Text } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -78,7 +78,9 @@ export default function PlanDetailPage() {
             ) : <View style={{ width: '42px', height: '42px', borderRadius: '8px', background: 'var(--color-bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🍽</View>}
             <View style={{ flex: 1, marginLeft: '10px' }}>
               <View style={{ fontSize: '15px' }}>{it.dish ? it.dish.name : '菜品已下架'}</View>
+              {/* 价格暂不展示
               {it.dish && <View style={{ fontSize: '12px', color: '#F44336' }}>¥{it.dish.price}</View>}
+              */}
             </View>
             <Text style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>×{it.quantity}</Text>
           </View>

@@ -20,6 +20,30 @@ const VISIBILITY_OPTIONS = [
   { key: 'team', label: '团队公开', desc: '我加入的团队成员都能看到' },
   { key: 'private', label: '仅自己', desc: '只有我能看到、点这道菜' },
 ]
+// 分类 → 默认 emoji/色块（与后端 seed/import_howtocook.py 的分类预设一致；选分类时自动带出，可手动改）
+const CATEGORY_PRESET: Record<string, { emoji: string; color: string }> = {
+  '荤菜': { emoji: '🥩', color: '#FFAB91' },
+  '蔬菜也要吃呀': { emoji: '🥬', color: '#A5D6A7' },
+  '美味能量补给': { emoji: '🍳', color: '#FFE082' },
+  '饭后最后一口汤': { emoji: '🍲', color: '#FFF59D' },
+  '主食': { emoji: '🍚', color: '#FFE0B2' },
+  '凉菜': { emoji: '🥒', color: '#C5E1A5' },
+  '水产': { emoji: '🐟', color: '#90CAF9' },
+  '早餐': { emoji: '🥣', color: '#FFE082' },
+  '甜品': { emoji: '🍰', color: '#F8BBD0' },
+  '饮品': { emoji: '🧃', color: '#B3E5FC' },
+  '半成品': { emoji: '🥫', color: '#D7CCC8' },
+  '调料': { emoji: '🧂', color: '#CE93D8' },
+}
+// 选分类时自动带出该分类的默认 emoji/色块
+const pickCategory = (set: (k: string, v: any) => void, cat: any) => {
+  set('category_id', cat.id)
+  const preset = CATEGORY_PRESET[cat.name]
+  if (preset) {
+    set('emoji', preset.emoji)
+    set('color', preset.color)
+  }
+}
 
 export default function DishEditPage() {
   const [form, setForm] = useState<any>({
@@ -106,7 +130,7 @@ export default function DishEditPage() {
           <ScrollView scrollX style={{ whiteSpace: 'nowrap' }}>
             <View style={{ display: 'inline-flex', gap: '8px', paddingTop: 2 }}>
               {categories.map((c: any) => (
-                <View key={c.id} onClick={() => set('category_id', c.id)} style={{
+                <View key={c.id} onClick={() => pickCategory(set, c)} style={{
                   padding: '6px 14px', borderRadius: '16px', fontSize: '13px',
                   background: String(form.category_id) === String(c.id) ? '#4CAF50' : '#f0f0f0',
                   color: String(form.category_id) === String(c.id) ? '#fff' : '#555', cursor: 'pointer'

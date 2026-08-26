@@ -67,7 +67,7 @@ export default function RecipeDetailPage() {
   }
 
   return (
-    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: isOwner ? '80px' : '0' }}>
+    <View style={{ minHeight: '100vh', background: 'var(--color-bg-page)', paddingBottom: '110px' }}>
       {/* 大图 */}
       <View style={{ height: '180px', background: recipe.color || 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '90px' }}>
         {recipe.emoji || '🍽'}

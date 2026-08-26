@@ -22,8 +22,19 @@ page {
   font-size: 28px;
 }
 
+html,
 body {
+  height: 100%;
   margin: 0;
+}
+
+// Taro H5 挂载根节点：补齐高度链后 .ggc-page 的 height:100% 才真正生效，
+// 页面级 flex 布局（头部 + 滚动区）才能在所有设备/视口自适应。
+#app {
+  height: 100%;
+}
+
+body {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
   background: var(--color-bg-page);
   color: var(--color-text-primary);

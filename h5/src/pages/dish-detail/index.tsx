@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import Taro, { useRouter, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { InputNumber, Button } from '@nutui/nutui-react-taro'
 
 import { dishes as dishApi, favorites as favApi } from '../../api'
+import { mediaUrl } from '../../api/config'
 import { store } from '../../store'
 
 // 菜品详情页——好好吃饭（emoji 大图 / 食材 / 做法 / 评分 / 价格 / 数量 / 加购 / 收藏 / 公开菜谱跳转）
@@ -73,10 +74,14 @@ export default function DishDetailPage() {
   return (
     <View className="ggc-page" style={{ position: 'relative' }}>
       <View style={{ flex: 1, overflow: 'auto' }}>
-        {/* 大图：emoji 色块 */}
-        <View style={{ height: '220px', background: dish.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '96px' }}>
-          {dish.emoji || '🍽'}
-        </View>
+        {/* 大图：有图用图（导入菜），无图回落 emoji 色块 */}
+        {dish.image_url ? (
+          <Image src={mediaUrl(dish.image_url)} mode="aspectFill" style={{ width: '100%', height: '220px', display: 'block', background: dish.color || '#E0E0E0' }} />
+        ) : (
+          <View style={{ height: '220px', background: dish.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '96px' }}>
+            {dish.emoji || '🍽'}
+          </View>
+        )}
 
         <View style={{ padding: '16px', background: 'var(--color-bg-card)' }}>
           <View style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -130,9 +135,11 @@ export default function DishDetailPage() {
 
       {/* 底部操作栏 */}
       <View style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
+        {/* 价格暂不展示
         <View style={{ display: 'flex', alignItems: 'baseline' }}>
           <Text style={{ color: '#F44336', fontSize: '26px', fontWeight: 700 }}>¥{Number(dish.price || 0).toFixed(2)}</Text>
         </View>
+        */}
         <View style={{ flex: 1 }} />
         <InputNumber value={qty} min={1} onChange={(v: any) => setQty(Math.max(1, Number(v) || 1))} />
         <Button type="primary" size="small" style={{ fontSize: '14px' }} onClick={onAddToCart}>加入购物车</Button>

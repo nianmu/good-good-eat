@@ -60,9 +60,9 @@ export default function CartPage() {
     } catch {}
     try {
       loadTeams()
-      const dishRes: any = await dishApi.list()
+      const dishRes: any = await dishApi.listAll()
       const map: Record<string, any> = {}
-      ;(dishRes as any)?.items?.forEach((d: any) => { map[d.id] = d })
+      ;(dishRes || []).forEach((d: any) => { map[d.id] = d })
       setDishMap(map)
       setLoading(false)
       rebuild(map)
@@ -277,12 +277,16 @@ export default function CartPage() {
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={{ fontSize: '15px', fontWeight: 600, display: 'block' }}>{it.name}</Text>
+                  {/* 价格暂不展示
                   <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>¥{it.price_text} / 份</Text>
+                  */}
                 </View>
                 <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                   <InputNumber value={it.quantity} min={1} onChange={(v: any) => onQty(it.dish_id, v)} />
                   <View style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    {/* 价格暂不展示
                     <Text style={{ color: '#F44336', fontWeight: 600, fontSize: '14px' }}>¥{it.total_text}</Text>
+                    */}
                     <Text onClick={() => onRemove(it.dish_id)} style={{ color: 'var(--color-text-placeholder)', fontSize: '12px', textDecoration: 'underline' }}>删除</Text>
                   </View>
                 </View>
@@ -304,10 +308,12 @@ export default function CartPage() {
 
       {items.length > 0 && (
         <View style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
+          {/* 价格暂不展示
           <View>
             <Text style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>合计</Text>
             <Text style={{ color: '#F44336', fontSize: '20px', fontWeight: 700 }}>¥{fmt(totalAmount)}</Text>
           </View>
+          */}
           <View style={{ flex: 1 }} />
           <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '12px' }}>共 {totalCount} 道</Text>
           <Button type="primary" size="small" style={{ fontSize: '14px' }} loading={submitting} onClick={onSubmit}>

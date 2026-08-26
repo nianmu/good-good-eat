@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { View, Text, ScrollView } from '@tarojs/components'
+import { View, Text, ScrollView, Image } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
 
 import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans, activities } from '../../api'
+import { mediaUrl } from '../../api/config'
 import { store } from '../../store'
 import { requireLogin } from '../../utils/auth'
 
@@ -98,9 +99,9 @@ export default function MenuPage() {
     try {
       await guestLogin().catch(() => null)
       loadUser()
-      const [catRes, dishRes] = await Promise.all([catApi.list(), dishApi.list()])
+      const [catRes, dishRes] = await Promise.all([catApi.list(), dishApi.listAll()])
       const cats = catRes || []
-      const all = (dishRes as any)?.items || []
+      const all = dishRes || []
       cats.forEach((c: any) => {
         c.count = all.filter((d: any) => String(d.category_id) === String(c.id)).length
       })
@@ -413,9 +414,11 @@ export default function MenuPage() {
         </View>
       </View>
 
-      {/* 主体：左侧分类 + 右侧菜品 */}
-      <View style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <ScrollView scrollY style={{ width: '88px', background: 'var(--color-bg-page)', flexShrink: 0, height: '100%', opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s' }}>
+      {/* 主体：左侧分类 + 右侧菜品（固定 px 高度，各自独立滚动；内联 px 不被 Taro rem 转换）。
+        高度 400：顶部三块约 205px + 滚动区 400 + 底部操作栏/TabBar 区约 148px，常见视口下操作栏不盖内容；
+        右侧保留 200px 底部留白，小屏（如 640 高）滚到底也不会被底部操作栏遮挡。 */}
+      <View style={{ height: '70vh', display: 'flex', overflow: 'hidden', paddingBottom: '90px' }}>
+        <ScrollView scrollY style={{ width: '88px', height: '100%', background: 'var(--color-bg-page)', flexShrink: 0, opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s', paddingBottom: '90px' }}>
           {categories.map((c: any) => {
             const active = !keyword && String(c.id) === String(activeCategoryId)
             return (
@@ -434,7 +437,7 @@ export default function MenuPage() {
           })}
         </ScrollView>
 
-        <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px', background: 'var(--color-bg-card)' }}>
+        <ScrollView scrollY style={{ flex: 1, minWidth: 0, height: '100%', padding: '12px 12px 200px', background: 'var(--color-bg-card)' }}>
           <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingLeft: '4px' }}>
             <Text style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{dishesTitle}</Text>
             {!!keyword && (
@@ -451,9 +454,7 @@ export default function MenuPage() {
             return (
               <View key={d.id} onClick={() => onDishTap(d)}
                 style={{ display: 'flex', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
-                <View style={{ width: '56px', height: '56px', borderRadius: '10px', background: d.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>
-                  {d.emoji || '🍽'}
-                </View>
+                {dishThumb(d, 56, 28)}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <View style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Text style={{ fontWeight: 600, fontSize: '15px' }}>{d.name}</Text>
@@ -462,7 +463,11 @@ export default function MenuPage() {
                       <Text>{fav ? '❤️' : '🤍'}</Text>
                     </View>
                   </View>
-                  <View style={{ color: 'var(--color-text-placeholder)', fontSize: '11px', marginTop: '2px' }}>{d.description}</View>
+                  <View style={{
+                      color: 'var(--color-text-placeholder)', fontSize: '11px', marginTop: '2px',
+                      display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+                      overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '16px',
+                    }}>{d.description}</View>
                   <View style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                     <Text style={{ color: '#FF9800', fontSize: '12px' }}>★ {d.rating || '-'}
                       {d.rating_count ? <Text style={{ color: 'var(--color-text-placeholder)', fontSize: '10px' }}>（{d.rating_count}人评）</Text> : null}
@@ -470,7 +475,9 @@ export default function MenuPage() {
                     <Text style={{ color: greyd }}>·</Text>
                     <Text style={{ color: GREENS.primaryDark, fontSize: '12px' }}>{d.category_name || ''}</Text>
                   </View>
+                  {/* 价格暂不展示（HowToCook 导入菜无定价）
                   <View style={{ color: '#F44336', fontWeight: 700, fontSize: '15px', marginTop: '2px' }}>¥{d.price}</View>
+                  */}
                 </View>
                 <View style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {qty > 0 && (
@@ -598,12 +605,12 @@ export default function MenuPage() {
               <View>
                 {(recommend.plan || []).map((item: any) => (
                   <View key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 4px' }}>
-                    <View style={{ width: '36px', height: '36px', borderRadius: '8px', background: item.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
-                      {item.emoji}
-                    </View>
+                    {dishThumb(item, 36, 20)}
                     <View style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Text style={{ fontSize: '14px', fontWeight: 500 }}>{item.name}</Text>
-                      <Text style={{ fontSize: '13px', color: '#F44336', fontWeight: 600 }}>¥{item.price}</Text>
+                      {/* 价格暂不展示
+                    <Text style={{ fontSize: '13px', color: '#F44336', fontWeight: 600 }}>¥{item.price}</Text>
+                    */}
                     </View>
                   </View>
                 ))}
@@ -622,3 +629,17 @@ export default function MenuPage() {
 
 const greyd = 'var(--color-text-placeholder)'
 const qtyBtn = { width: '26px', height: '26px', borderRadius: '50%', background: 'var(--color-bg-page)', color: 'var(--color-text-primary)', display: 'flex' as const, alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '15px' }
+
+/** 菜品缩略图：有图用图，无图回落 emoji 色块（导入菜自动带图，自建菜走 emoji） */
+const dishThumb = (d: any, size: number, fontSize: number) =>
+  d.image_url ? (
+    <Image
+      src={mediaUrl(d.image_url)}
+      mode="aspectFill"
+      style={{ width: `${size}px`, height: `${size}px`, borderRadius: '10px', flexShrink: 0, background: '#f5f5f5' }}
+    />
+  ) : (
+    <View style={{ width: `${size}px`, height: `${size}px`, borderRadius: '10px', background: d.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: `${fontSize}px`, flexShrink: 0 }}>
+      {d.emoji || '🍽'}
+    </View>
+  )
