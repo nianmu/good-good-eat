@@ -12,10 +12,6 @@ interface StoreData {
 
 const listeners: Record<string, Array<() => void>> = {}
 
-const cache: StoreData = {
-  cart: {}
-}
-
 function readStore(): StoreData {
   try {
     const u = Taro.getStorageSync('ggc_user')

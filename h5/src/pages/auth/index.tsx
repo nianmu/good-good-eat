@@ -104,7 +104,7 @@ export default function AuthPage() {
           {mode === 'login' ? '欢迎回来' : '注册账号'}
         </Text>
         <Text style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', display: 'block' }}>
-          {mode === 'login' ? '登录后同步团队、订单和菜谱' : '创建账号，开启你的美食之旅'}
+          {mode === 'login' ? '登录后同步团队、饭局和菜谱' : '创建账号，开启你的美食之旅'}
         </Text>
       </View>
 
@@ -238,7 +238,7 @@ export default function AuthPage() {
       {/* 底部提示 */}
       <View style={{ padding: '28px 24px', textAlign: 'center' }}>
         <Text style={{ fontSize: '11px', color: 'var(--color-text-placeholder)', lineHeight: '1.8' }}>
-          登录后自动绑定当前游客数据{'\n'}订单和菜谱不会丢失
+          登录后自动绑定当前游客数据{'\n'}饭局和菜谱不会丢失
         </Text>
       </View>
     </View>

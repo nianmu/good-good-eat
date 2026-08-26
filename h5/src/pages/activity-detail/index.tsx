@@ -5,11 +5,11 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro, { useLoad, useDidShow, useDidHide } from '@tarojs/taro'
+import Taro, { useLoad, useDidShow } from '@tarojs/taro'
 import { Button, Empty, Skeleton, ActionSheet } from '@nutui/nutui-react-taro'
 import { showToast } from '../../components/app-toast'
 import { showModal } from '../../components/app-modal'
-import { activities as activityApi, teams as teamApi } from '../../api'
+import { activities as activityApi, teams as teamApi, recipes } from '../../api'
 import { loadToken, request } from '../../api/request'
 import { TeamCartSocket } from '../../utils/team_ws'
 import { formatTime } from '../../utils/format'
@@ -97,8 +97,6 @@ export default function ActivityDetailPage() {
     return () => { try { ws.close() } catch {} }
   }, [activity?.team_id])
 
-  useDidHide(() => {})
-
   // 进度
   const handleNextStatus = () => {
     if (!activity || updating) return
@@ -181,7 +179,35 @@ export default function ActivityDetailPage() {
     showModal({ title: '再来一餐', confirmText: '创建', content: `将以"${activity.name}"为模板，确定继续吗？`,
       onConfirm: async () => { setUpdating(true); try { const c: any = await activityApi.create({ team_id: activity.team_id, type: activity.type || 'daily', name: activity.name + '·再来一餐' }); showToast({ title: '已创建', icon: 'success' }); if (c?.id) setTimeout(() => Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + c.id }), 600); else await load(true) } catch (e: any) { showToast({ title: e?.message || '创建失败', icon: 'none' }) } finally { setUpdating(false) } } })
   }
-  const handleSaveRecipe = () => { showModal({ title: '存为菜谱', confirmText: '去看看', content: '将把本次饭局的菜品汇总存为菜谱草稿', onConfirm: () => Taro.navigateTo({ url: '/pages/recipe-list/index' }) }) }
+  const handleSaveRecipe = () => {
+    if (!activity || updating) return
+    const dishLines = (items || []).map((it: any) => `${it.dish_name || '菜品#' + it.dish_id}${it.quantity > 1 ? ` ×${it.quantity}` : ''}`)
+    const descParts: string[] = []
+    if (activity.people) descParts.push(`人数：${activity.people}`)
+    if (activity.remark) descParts.push(`备注：${activity.remark}`)
+    showModal({
+      title: '存为菜谱', confirmText: '保存',
+      content: `将本次饭局「${activity.name}」的 ${dishLines.length} 道菜保存为菜谱草稿，之后可在菜谱里查看/编辑，确定吗？`,
+      onConfirm: async () => {
+        setUpdating(true)
+        try {
+          const r: any = await recipes.create({
+            name: activity.name + '·饭局',
+            emoji: '🍽',
+            color: '#4CAF50',
+            description: descParts.join('\n'),
+            ingredients: dishLines,
+            steps: [],
+            is_public: false,
+          })
+          const rid = r && r.id
+          showToast({ title: '已存为菜谱', icon: 'success' })
+          if (rid) setTimeout(() => Taro.redirectTo({ url: '/pages/recipe-detail/index?id=' + rid }), 600)
+        } catch (e: any) { showToast({ title: e?.message || '保存失败', icon: 'none' }) }
+        finally { setUpdating(false) }
+      }
+    })
+  }
   const chefDisplayFor = (it: any) => {
     if (it.chef_id != null) { return it.chef_nickname ? (String(it.chef_id) === currentUserId ? '我' : it.chef_nickname) : '我' }
     return teamInfo?.chef_nickname ? '默认·' + teamInfo.chef_nickname : ''

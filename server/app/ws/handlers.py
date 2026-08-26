@@ -3,7 +3,6 @@
 协议（与小程序端契约一致）：
   客户端 → 服务端：join / cart.upsert / cart.clear / pong
   服务端 → 客户端：joined / member.joined / cart.snapshot / cart.upsert / cart.clear / ping
-                    / order.created / order.accepted / order.claimed / order.status_changed
                     / activity.created / activity.status_changed / activity.item_added
                     / activity.item_removed / activity.item_chef_changed / activity.item_status_changed
   活动事件通过 app.api.v1.activities 中各变更点调用 manager.broadcast_sync(team_id, event, data) 推送，

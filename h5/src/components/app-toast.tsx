@@ -4,7 +4,6 @@
  */
 import { useEffect, useState } from 'react'
 import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
 
 let _show: (opts: { title: string; icon?: string; duration?: number }) => void = () => {}
 

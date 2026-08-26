@@ -1,12 +1,12 @@
-﻿import { View, Text } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
-import { Button, Empty, Skeleton, Tag } from '@nutui/nutui-react-taro'
-import { recipes } from '../../api'
+import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'
+import { recipes, categories as catApi } from '../../api'
 
 //
-// 菜谱库列表页——公开菜谱（最终版）+ 我的菜谱
+// 菜谱库列表页——公开菜谱（最终版）+ 我的菜谱 + 分类筛选
 //
 
 const PAGE_SIZE = 10
@@ -14,6 +14,8 @@ type Owner = 'public' | 'me'
 
 export default function RecipeListPage() {
   const [owner, setOwner] = useState<Owner>('public')
+  const [cats, setCats] = useState<any[]>([])
+  const [catId, setCatId] = useState<string>('')
   const [list, setList] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -21,8 +23,9 @@ export default function RecipeListPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
 
-  const load = (reset: boolean, ownerValue?: Owner) => {
+  const load = (reset: boolean, ownerValue?: Owner, catValue?: string) => {
     const o = ownerValue ?? owner
+    const c = catValue ?? catId
     const p = reset ? 1 : page
     if (!reset) {
       if (loadingMore || !hasMore) return
@@ -30,7 +33,7 @@ export default function RecipeListPage() {
     } else {
       setLoading(true)
     }
-    recipes.list({ owner: o, page: p, page_size: PAGE_SIZE })
+    recipes.list({ owner: o, category_id: c || undefined, page: p, page_size: PAGE_SIZE })
       .then((res: any) => {
         const items = res.items || []
         setList(reset ? items : (prev: any[]) => prev.concat(items))
@@ -42,7 +45,13 @@ export default function RecipeListPage() {
       .finally(() => { setLoading(false); setLoadingMore(false) })
   }
 
-  useLoad(() => load(true))
+  useLoad(() => {
+    catApi.list().then((cs: any) => {
+      setCats(cs || [])
+      return cs || []
+    }).catch(() => setCats([]))
+    load(true)
+  })
   useDidShow(() => load(true))
   useReachBottom(() => load(false))
 
@@ -54,6 +63,15 @@ export default function RecipeListPage() {
     setLoading(true)
     setLoadingMore(false)
     load(true, o)
+  }
+
+  const switchCat = (id: string) => {
+    setCatId(id)
+    setList([])
+    setPage(1)
+    setLoading(true)
+    setLoadingMore(false)
+    load(true, owner, id)
   }
 
   const goDetail = (id: any) => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${id}` })
@@ -78,6 +96,25 @@ export default function RecipeListPage() {
           background: owner === 'me' ? '#4CAF50' : '#f0f0f0', color: owner === 'me' ? '#fff' : '#555'
         }}>我的菜谱</View>
       </View>
+
+      {/* 分类筛选 */}
+      {cats.length > 0 && (
+        <ScrollView scrollX showScrollbar={false} style={{ whiteSpace: 'nowrap', padding: '2px 16px 10px' }}>
+          <View style={{ display: 'inline-flex', gap: 8 }}>
+            <View onClick={() => switchCat('')} style={{
+              padding: '5px 14px', borderRadius: 16, fontSize: 12,
+              background: !catId ? '#4CAF50' : '#f0f0f0', color: !catId ? '#fff' : '#555', cursor: 'pointer'
+            }}>全部</View>
+            {cats.map((c: any) => (
+              <View key={c.id} onClick={() => switchCat(String(c.id))} style={{
+                padding: '5px 14px', borderRadius: 16, fontSize: 12,
+                background: String(catId) === String(c.id) ? '#4CAF50' : '#f0f0f0',
+                color: String(catId) === String(c.id) ? '#fff' : '#555', cursor: 'pointer'
+              }}>{c.icon} {c.name}</View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
 
       {loading ? (
         <View style={{ padding: '16px' }}><Skeleton rows={4} animated /></View>

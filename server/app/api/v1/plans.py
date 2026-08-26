@@ -56,10 +56,12 @@ def create_plan(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """保存我的饮食计划；items 菜品需存在且在售，重复 dish_id 合并数量。"""
+    """保存我的饮食计划；items 菜品需对当前用户可见且在售，重复 dish_id 合并数量。"""
+    from app.api.v1.dishes import visible_dish
+
     merged: dict[int, int] = {}
     for it in body.items:
-        dish = db.get(Dish, it.dish_id)
+        dish = visible_dish(db, it.dish_id, user)
         if dish is None or not dish.is_active:
             raise ApiError(404, 40401, "菜品不存在或已下架")
         merged[it.dish_id] = merged.get(it.dish_id, 0) + it.quantity

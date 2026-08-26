@@ -26,7 +26,6 @@ function initTheme() {
 
 function App({ children }: PropsWithChildren<any>) {
   useLaunch(() => {
-    console.log('App launched.')
     initTheme()
     if (auth.token()) {
       auth.me().then((res: any) => {

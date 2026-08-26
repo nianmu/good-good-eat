@@ -88,8 +88,10 @@ def fridge_suggest(
 
     results: list[dict] = []
 
-    # 平台菜品（is_active）
-    dishes = db.scalars(select(Dish).where(Dish.is_active.is_(True))).all()
+    # 平台/可见菜品（is_active + 当前用户可见性）
+    from app.api.v1.dishes import visible_dish_conds
+
+    dishes = db.scalars(select(Dish).where(*visible_dish_conds(db, user)).order_by(Dish.id)).all()
     for d in dishes:
         ingredients = _parse_json_arr(d.ingredients)
         matched = [i for i in ingredients if i in owned]

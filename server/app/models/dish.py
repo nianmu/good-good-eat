@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, Numeric, String, Text, func, text
+from sqlalchemy import BigInteger, Boolean, Enum, ForeignKey, Integer, Numeric, String, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -44,5 +44,15 @@ class Dish(Base):
     cook_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(String(8), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("1"))
+
+    # 自建菜品可见性（存量平台菜：created_by=NULL, visibility=public, team_id=NULL）
+    created_by: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    visibility: Mapped[str] = mapped_column(
+        Enum("public", "team", "private", name="dish_visibility"),
+        nullable=False,
+        default="public",
+        server_default="public",
+    )
+    team_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
 
     category: Mapped[Category] = relationship(back_populates="dishes")

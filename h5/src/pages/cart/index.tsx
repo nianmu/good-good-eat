@@ -258,6 +258,15 @@ export default function CartPage() {
         </View>
       ) : null}
 
+      {/* 团队点菜统计 */}
+      {teamCart && (
+        <View style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--color-primary-bg)', borderBottom: '1px solid #C8E6C9' }}>
+          <Text style={{ fontSize: '12px', color: '#388E3C', fontWeight: 600 }}>👥 {teamCart}</Text>
+          <Text style={{ flex: 1 }} />
+          <Text style={{ fontSize: 11, color: 'var(--color-text-placeholder)' }}>当前团队已点，可继续加</Text>
+        </View>
+      )}
+
       <View style={{ flex: 1, overflow: 'auto' }}>
         {items.length > 0 && (
           <View style={{ margin: '0 12px' }}>

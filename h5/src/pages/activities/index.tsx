@@ -6,9 +6,9 @@
  * - 分页加载：useReachBottom + total 判定；下拉刷新
  * - WS 订阅 activity.* 自动刷新
  * - 卡片：name + type + status + progress（百分比进度条），点击跳 activity-detail
- * 参考 h5/src/pages/orders/index.tsx 列表+分页+WS 模式
+ * 参考 h5/src/pages/activities/ 列表+分页+WS 模式
  */
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow, useDidHide, useLoad, useReachBottom } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
@@ -131,11 +131,6 @@ export default function ActivitiesPage() {
     loadActivities(true)
   })
 
-  useEffect(() => {
-    // status 变更兜底（主要由 onStatusTap 驱动）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   useDidShow(() => {
     busy.current = false
     loadActivities(true, true)
@@ -203,10 +198,6 @@ export default function ActivitiesPage() {
     Taro.switchTab({ url: '/pages/menu/index' })
   }
 
-  function goOrdersArchive() {
-    Taro.navigateTo({ url: '/pages/orders/index' })
-  }
-
   return (
     <View className="ggc-page ggc-tabbar-page" style={{ minHeight: '100vh', background: 'var(--color-bg-page)' }}>
       {/* 顶部状态 Tab */}
@@ -243,13 +234,6 @@ export default function ActivitiesPage() {
           ))}
         </View>
       </ScrollView>
-
-      {/* 归档入口：旧订单保留为普通页面，非 Tab */}
-      <View style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 12px 0' }}>
-        <Text onClick={goOrdersArchive} style={{ fontSize: 12, color: '#999' }}>
-          查看历史订单 ›
-        </Text>
-      </View>
 
       {/* 列表主体 */}
       <ScrollView

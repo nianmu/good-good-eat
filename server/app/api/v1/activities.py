@@ -451,13 +451,15 @@ def add_activity_item(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """点菜：校验 dish 存在且 active，quantity 1-999，防同人同菜重复累加。"""
+    """点菜：校验 dish 存在且 active（且对当前用户可见），quantity 1-999，防同人同菜重复累加。"""
     activity = db.scalar(select(Activity).where(Activity.id == activity_id))
     if activity is None:
         raise ApiError(404, 40401, "活动不存在")
     _ensure_member(db, activity.team_id, user.id)
 
-    dish = db.get(Dish, body.dish_id)
+    from app.api.v1.dishes import visible_dish
+
+    dish = visible_dish(db, body.dish_id, user)
     if dish is None or not dish.is_active:
         raise ApiError(404, 40401, "菜品不存在或已下架")
 

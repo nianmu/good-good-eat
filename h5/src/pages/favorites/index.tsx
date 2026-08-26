@@ -1,5 +1,5 @@
 import { View, Text } from '@tarojs/components'
-import Taro, { useDidShow, useLoad, useReachBottom } from '@tarojs/taro'
+import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Empty, Skeleton } from '@nutui/nutui-react-taro'

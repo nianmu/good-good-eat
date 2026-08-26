@@ -1,9 +1,9 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
 import { Button, Input, TextArea, Switch } from '@nutui/nutui-react-taro'
-import { recipes } from '../../api'
+import { recipes, categories as catApi } from '../../api'
 
 //
 // 新建 / 编辑菜谱页——对齐原生 miniprogram/pages/recipe-edit
@@ -17,13 +17,15 @@ const DIFFICULTY_OPTIONS = ['简单', '中等', '较难']
 export default function RecipeEditPage() {
   const [id, setId] = useState<any>(null)
   const [form, setForm] = useState<any>({
-    name: '', emoji: '🍽', color: '#FFAB91', description: '',
+    name: '', emoji: '🍽', color: '#FFAB91', description: '', category_id: '',
     ingredientsText: '', stepsText: '', cookTime: '', difficulty: '',
     isPublic: false
   })
+  const [cats, setCats] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
 
   useLoad((p) => {
+    catApi.list().then((cs: any) => setCats(cs || [])).catch(() => setCats([]))
     const rid = p && p.id
     if (rid) {
       setId(rid)
@@ -31,6 +33,7 @@ export default function RecipeEditPage() {
       recipes.detail(rid)
         .then((r: any) => setForm({
           name: r.name || '', emoji: r.emoji || '🍽', color: r.color || '#FFAB91', description: r.description || '',
+          category_id: r.category_id != null ? String(r.category_id) : '',
           ingredientsText: (r.ingredients || []).join('，'), stepsText: (r.steps || []).join('\n'),
           cookTime: r.cook_time ? String(r.cook_time) : '', difficulty: r.difficulty || '',
           isPublic: !!r.is_public
@@ -54,6 +57,7 @@ export default function RecipeEditPage() {
     return {
       name: form.name, emoji: form.emoji, color: form.color, description: form.description,
       ingredients, steps,
+      category_id: form.category_id ? Number(form.category_id) : null,
       cook_time: cookTime && cookTime > 0 ? cookTime : null,
       difficulty: form.difficulty || null,
       is_public: !!form.isPublic
@@ -84,6 +88,24 @@ export default function RecipeEditPage() {
       <View style={{ background: 'var(--color-bg-card)', padding: '4px 16px 16px' }}>
         <Text style={label}>菜谱名称</Text>
         <Input value={form.name} placeholder="例如：妈妈的糖醋里脊" onChange={(v) => set('name', v)} style={inputStyle} />
+
+        <Text style={label}>分类（可选）</Text>
+        <ScrollView scrollX style={{ whiteSpace: 'nowrap' }}>
+          <View style={{ display: 'inline-flex', gap: 8 }}>
+            <View onClick={() => set('category_id', '')} style={{
+              padding: '5px 14px', borderRadius: 16, fontSize: 12,
+              background: !form.category_id ? '#4CAF50' : '#f0f0f0',
+              color: !form.category_id ? '#fff' : '#555', cursor: 'pointer'
+            }}>不分类</View>
+            {cats.map((c: any) => (
+              <View key={c.id} onClick={() => set('category_id', String(c.id))} style={{
+                padding: '5px 14px', borderRadius: 16, fontSize: 12,
+                background: String(form.category_id) === String(c.id) ? '#4CAF50' : '#f0f0f0',
+                color: String(form.category_id) === String(c.id) ? '#fff' : '#555', cursor: 'pointer'
+              }}>{c.icon} {c.name}</View>
+            ))}
+          </View>
+        </ScrollView>
 
         <Text style={label}>图标（emoji）</Text>
         <View style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -140,7 +162,7 @@ export default function RecipeEditPage() {
           <Text style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>公开到菜谱库</Text>
           <Text style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '2px' }}>所有人可见此菜谱</Text>
         </View>
-        <Switch checked={form.isPublic} onChange={(v: boolean) => set('isPublic', v)} color="#4CAF50" />
+        <Switch checked={!!form.isPublic} onChange={(v: boolean) => set('isPublic', v)} color="#4CAF50" />
       </View>
 
       {/* 保存栏 */}

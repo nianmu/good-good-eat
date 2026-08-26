@@ -21,7 +21,9 @@ export const dishes = {
   detail: (id: number | string) => request({ url: `/dishes/${id}` }),
   random: (n = 3, type = 'balanced') => request({ url: `/dishes/random?n=${n}&type=${type}` }),
   recommend: (people = 3) => request({ url: `/dishes/recommend?people=${people}` }),
-  recipe: (id: number | string) => request({ url: `/recipes/by-dish/${id}` })
+  recipe: (id: number | string) => request({ url: `/recipes/by-dish/${id}` }),
+  create: (data: any) => request({ url: '/dishes', method: 'POST', data }),
+  update: (id: number | string, data: any) => request({ url: `/dishes/${id}`, method: 'PUT', data })
 }
 
 export const categories = {
@@ -67,27 +69,6 @@ export const activities = {
     request({ url: `/activities/${id}/items/${itemId}/chef`, method: 'PUT', data: { user_id } }),
   updateItemStatus: (id: number | string, itemId: number | string, target: string) =>
     request({ url: `/activities/${id}/items/${itemId}/status`, method: 'PUT', data: { target } })
-}
-
-export const orders = {
-  create: (teamId: number | string, items: Array<{ dish_id: number; quantity: number }>) =>
-    request({ url: '/orders', method: 'POST', data: { team_id: teamId, items } }),
-  list: (params?: any) => request({ url: '/orders', data: params }),
-  detail: (id: number | string) => request({ url: `/orders/${id}` }),
-  accept: (id: number | string) => request({ url: `/orders/${id}/accept`, method: 'POST' }),
-  claim: (id: number | string) => request({ url: `/orders/${id}/claim`, method: 'POST' }),
-  status: (id: number | string, status: string) =>
-    request({ url: `/orders/${id}/status`, method: 'POST', data: { status } })
-}
-
-export const chef = {
-  orders: () => request({ url: '/chef/orders' }),
-  aggregated: () => request({ url: '/chef/orders/aggregated' })
-}
-
-export const messages = {
-  list: (page = 1, pageSize = 15) => request({ url: `/messages?page=${page}&page_size=${pageSize}` }),
-  read: (id: number | string) => request({ url: `/messages/${id}/read`, method: 'POST' })
 }
 
 export const plans = {

@@ -156,20 +156,20 @@ def _build_me_response(db: Session, current_user: User) -> dict:
 
 
 def _user_stats(db: Session, user_id: int) -> dict:
-    """个人统计：总订单 / 点过的菜（数量合计）/ 收藏菜品数。"""
+    """个人统计：总饭局 / 点过的菜（数量合计）/ 收藏菜品数。"""
     from sqlalchemy import func
 
+    from app.models.activity import Activity, ActivityItem
     from app.models.favorite import Favorite
-    from app.models.order import Order, OrderItem
 
-    total_orders = db.scalar(
-        select(func.count(Order.id)).where(Order.user_id == user_id)
+    total_activities = db.scalar(
+        select(func.count(Activity.id)).where(Activity.created_by == user_id)
     ) or 0
     total_dishes = (
         db.scalar(
-            select(func.coalesce(func.sum(OrderItem.quantity), 0))
-            .join(Order, Order.id == OrderItem.order_id)
-            .where(Order.user_id == user_id)
+            select(func.coalesce(func.sum(ActivityItem.quantity), 0))
+            .join(Activity, Activity.id == ActivityItem.activity_id)
+            .where(ActivityItem.added_by == user_id)
         )
         or 0
     )
@@ -177,7 +177,7 @@ def _user_stats(db: Session, user_id: int) -> dict:
         select(func.count(Favorite.id)).where(Favorite.user_id == user_id)
     ) or 0
     return {
-        "total_orders": int(total_orders),
+        "total_activities": int(total_activities),
         "total_dishes": int(total_dishes),
         "favorite_dishes": int(favorite_dishes),
     }

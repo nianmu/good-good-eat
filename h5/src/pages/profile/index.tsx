@@ -1,4 +1,4 @@
-﻿import { View, Text } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
 import { useState } from 'react'
@@ -20,8 +20,7 @@ const FEATURES = [
   { id: 'favorite', name: '我的收藏', icon: '❤️', color: '#E91E63', url: '/pages/favorites/index' },
   { id: 'diet', name: '饮食计划', icon: '📅', color: '#9C27B0', url: '/pages/plans/index' },
   { id: 'tutorial', name: '使用指南', icon: '📖', color: '#607D8B', url: '/pages/guide/index' },
-  { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722', url: '/pages/theme/index' },
-  { id: 'feedback', name: '提点意见', icon: '💬', color: '#00BCD4', url: '' }
+  { id: 'theme', name: '系统主题', icon: '🎨', color: '#FF5722', url: '/pages/theme/index' }
 ]
 
 export default function ProfilePage() {
@@ -44,7 +43,7 @@ export default function ProfilePage() {
     }))
     const raw = u.stats || {}
     const s = {
-      totalOrders: raw.total_orders != null ? raw.total_orders : (raw.totalOrders || 0),
+      totalActivities: raw.total_activities != null ? raw.total_activities : (raw.totalActivities || 0),
       totalDishes: raw.total_dishes != null ? raw.total_dishes : (raw.totalDishes || 0),
       favoriteDishes: raw.favorite_dishes != null ? raw.favorite_dishes : (raw.favoriteDishes || 0)
     }
@@ -103,7 +102,6 @@ export default function ProfilePage() {
 
   const onFeature = (f: any) => {
     if (f.url) Taro.navigateTo({ url: f.url })
-    else showToast({ title: `「${f.name}」开发中，敬请期待`, icon: 'none' })
   }
 
   return (
@@ -141,13 +139,12 @@ export default function ProfilePage() {
                 onClick={() => Taro.navigateTo({ url: '/pages/auth/index' })}
                 style={{ color: '#fff', height: '28px' }}>登录/升级</Button>
             )}
-            <Text style={{ fontSize: '22px' }}>⋮</Text>
           </View>
         </View>
         {/* 统计三格 */}
         <View style={{ display: 'flex', alignItems: 'center', marginTop: '22px', background: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '14px 0' }}>
           {[
-            { num: stats.totalOrders, label: '总订单' },
+            { num: stats.totalActivities ?? 0, label: '总饭局' },
             { num: stats.totalDishes, label: '点过的菜' },
             { num: stats.favoriteDishes, label: '收藏', onClick: () => Taro.navigateTo({ url: '/pages/favorites/index' }) }
           ].map((item, i) => (
@@ -230,7 +227,7 @@ export default function ProfilePage() {
 
       {/* 底部声明 */}
       <View style={{ padding: '20px 20px 40px', textAlign: 'center' }}>
-        <Text style={{ fontSize: '11px', color: 'var(--color-text-placeholder)' }}>本平台面向家庭、情侣等用户，是美食记录与烹饪工具，不涉及订单支付，也不是商家收款工具。</Text>
+        <Text style={{ fontSize: '11px', color: 'var(--color-text-placeholder)' }}>本平台面向家庭、情侣等用户，是美食记录与烹饪协作工具，不涉及交易与支付。</Text>
         <Text style={{ display: 'block', fontSize: '11px', color: '#d7a626', marginTop: '6px' }}>⚠ 如需转账，请自行核实对方身份，切勿轻信网络陌生人。</Text>
       </View>
     </View>

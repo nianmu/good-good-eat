@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter, useLoad } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
@@ -31,7 +31,7 @@ export default function DishDetailPage() {
       })
       .catch((e: any) => showToast({ title: (e as any)?.message || '加载失败', icon: 'none' }))
       .finally(() => setLoading(false))
-  }, [dishId])
+  })
 
   const onAddToCart = () => {
     if (!dish) return
@@ -69,7 +69,6 @@ export default function DishDetailPage() {
   }
 
   const ingredients = dish.ingredients || []
-  const ingredientsText = ingredients.join('、')
 
   return (
     <View className="ggc-page" style={{ position: 'relative' }}>
@@ -82,6 +81,8 @@ export default function DishDetailPage() {
         <View style={{ padding: '16px', background: 'var(--color-bg-card)' }}>
           <View style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Text style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text-primary)' }}>{dish.name}</Text>
+            {dish.visibility === 'private' && <Text style={{ fontSize: '10px', color: '#9C27B0', background: '#F3E5F5', padding: '2px 8px', borderRadius: 999 }}>仅自己可见</Text>}
+            {dish.visibility === 'team' && <Text style={{ fontSize: '10px', color: '#2196F3', background: '#E3F2FD', padding: '2px 8px', borderRadius: 999 }}>团队可见</Text>}
             <View onClick={onFavorite} style={{ fontSize: '24px', cursor: 'pointer' }}>
               <Text>{favorited ? '❤️' : '🤍'}</Text>
             </View>
@@ -121,7 +122,7 @@ export default function DishDetailPage() {
             </View>
           ) : (
             <View style={{ color: 'var(--color-text-placeholder)', fontSize: '13px', lineHeight: 1.7 }}>
-              精选 {dish.name}，以「{ingredientsText}」为主料，火候到位、调味均衡，家常味十足。完整菜谱将在「厨房菜谱」持续补充。
+              {dish.description ? `「${dish.name}」暂未收录图文菜谱，可参考食材清单与简介自行烹制。` : '「' + dish.name + '」暂未收录图文菜谱，可参考食材清单自行烹制。'}
             </View>
           )}
         </View>

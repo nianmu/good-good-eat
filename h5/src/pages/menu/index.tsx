@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useLoad, useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { showToast } from '../../components/app-toast'
-import { Input, Button, Popup, Empty, ActionSheet } from '@nutui/nutui-react-taro'
+import { Input, Button, Popup, Empty } from '@nutui/nutui-react-taro'
 
 import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as favApi, plans, activities } from '../../api'
 import { store } from '../../store'
@@ -15,7 +15,6 @@ const GREENS = { primary: '#4CAF50', primaryDark: '#388E3C', primaryBg: '#E8F5E9
 export default function MenuPage() {
   const [user, setUser] = useState<any>({ avatar: '👤', nickname: '好好吃饭' })
   const [teams, setTeams] = useState<any[]>([])
-  const [currentTeamName, setCurrentTeamName] = useState('')
   const [currentTeamId, setCurrentTeamId] = useState('')
   const [categories, setCategories] = useState<any[]>([])
   const [activeCategoryId, setActiveCategoryId] = useState('')
@@ -70,13 +69,12 @@ export default function MenuPage() {
         const cur = ts.find((t: any) => String(t.id) === String(storedId)) || ts[0] || null
         if (cur && String(cur.id) !== String(storedId)) store.set('currentTeamId', cur.id)
         setTeams(ts)
-        setCurrentTeamName(cur ? cur.name : '')
         setCurrentTeamId(cur ? cur.id : '')
       })
       .catch(() => {})
   }
 
-  const applyFilter = (cats: any[], all: any[], catId: string, kw: string) => {
+  const applyFilter = (all: any[], catId: string, kw: string) => {
     const k = (kw || '').trim()
     let list = all
     if (k) {
@@ -111,9 +109,9 @@ export default function MenuPage() {
       const first = cats[0] || null
       setActiveCategoryId(first ? first.id : '')
       setLoading(false)
-      applyFilter(cats, all, first ? first.id : '', keyword)
+      applyFilter(all, first ? first.id : '', keyword)
     } catch (e: any) {
-      console.log('menu load err', e)
+      showToast({ title: e?.message || '加载失败', icon: 'none' })
       setLoading(false)
     }
   })
@@ -138,21 +136,21 @@ export default function MenuPage() {
     setKeyword(v)
     const k = (v || '').trim()
     if (k) {
-      applyFilter(categories, allDishes, '', v)
+      applyFilter(allDishes, '', v)
     } else {
-      applyFilter(categories, allDishes, activeCategoryId, '')
+      applyFilter(allDishes, activeCategoryId, '')
     }
   }
 
   const clearSearch = () => {
     setKeyword('')
-    applyFilter(categories, allDishes, activeCategoryId, '')
+    applyFilter(allDishes, activeCategoryId, '')
   }
 
   const onCategoryTap = (id: string) => {
     setActiveCategoryId(id)
     setKeyword('')
-    applyFilter(categories, allDishes, id, '')
+    applyFilter(allDishes, id, '')
   }
 
   const onDishTap = (d: any) => {
@@ -160,7 +158,6 @@ export default function MenuPage() {
   }
 
   const setQty = (id: number, qty: number) => {
-    const cur = cart[id] || 0
     const next = Math.max(0, qty)
     store.setCartQuantity(id, next)
     const c = { ...cart, [id]: next }
@@ -325,7 +322,6 @@ export default function MenuPage() {
         if (!activityId) throw new Error('创建饭局失败')
         store.set('currentTeamId', String(createTeamId))
         setCurrentTeamId(String(createTeamId))
-        if (selTeam) setCurrentTeamName(selTeam.name)
       }
       for (const [dishId, qty] of entries) {
         await activities.addItem(activityId, dishId, Number(qty))
@@ -493,6 +489,9 @@ export default function MenuPage() {
 
       {/* 底部操作栏 */}
       <View className="ggc-bottom-bar" style={{ display: 'flex', gap: '8px', padding: '10px 16px', background: 'var(--color-bg-card)', borderTop: '1px solid var(--color-divider)', flexShrink: 0 }}>
+        <View onClick={() => requireLogin('发新菜谱需要登录') && Taro.navigateTo({ url: '/pages/dish-edit/index' })} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 10px', color: '#4CAF50', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <Text style={{ fontSize: 16 }}>＋</Text><Text>新菜品</Text>
+        </View>
         {isPendingMode() ? (
           <Button type="primary" size="small" style={{ flex: 1, fontSize: '14px' }} loading={joining} onClick={onSubmit}>
             确认加入「{pendingName || '饭局'}」（{cartCount}）

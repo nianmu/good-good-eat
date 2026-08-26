@@ -30,9 +30,6 @@ from app import models  # noqa: E402,F401
 
 # 清表顺序：子表 → 父表（外键依赖）
 _TABLES_IN_DELETE_ORDER = (
-    "messages",
-    "order_items",
-    "orders",
     "activity_ingredients",
     "activity_items",
     "activities",

@@ -68,6 +68,7 @@ def _can_view(recipe: Recipe, user: User | None) -> bool:
 @router.get("/recipes")
 def list_recipes(
     owner: str = "me",
+    category_id: int | None = None,
     page: int = 1,
     page_size: int = 20,
     user: User | None = Depends(get_optional_user),
@@ -78,6 +79,7 @@ def list_recipes(
     - owner=public：公开菜谱（is_public=1），游客可浏览
     - owner=me：当前用户自己的菜谱（需登录）
     - owner=all：自己的 + 公开的（需登录）
+    - category_id：按分类筛选（可空；NULL 表示不筛）
     """
     if owner not in ("me", "public", "all"):
         raise ApiError(400, 40000, "owner 仅支持 me|public|all")
@@ -95,6 +97,8 @@ def list_recipes(
         if user is None:
             raise ApiError(401, 40140, "请先登录")
         conds = [Recipe.user_id == user.id]
+    if category_id is not None:
+        conds.append(Recipe.category_id == category_id)
 
     total = db.scalar(select(func.count(Recipe.id)).where(*conds)) or 0
     recipes = db.scalars(
@@ -182,10 +186,12 @@ def recipe_by_dish(
     user: User | None = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """菜品的公开菜谱（菜单菜品 → 菜谱库跳转）；无公开菜谱返回 data=null。"""
-    dish = db.get(Dish, dish_id)
+    """菜品的公开菜谱（菜单菜品 → 菜谱库跳转）；菜品对当前用户不可见或该菜无公开菜谱返回 data=null。"""
+    from app.api.v1.dishes import visible_dish
+
+    dish = visible_dish(db, dish_id, user)
     if dish is None or not dish.is_active:
-        raise ApiError(404, 40401, "菜品不存在或已下架")
+        return ok(None)
     recipe = db.scalar(
         select(Recipe).where(Recipe.dish_id == dish_id, Recipe.is_public.is_(True)).limit(1)
     )
@@ -294,6 +300,7 @@ def create_recipe(
         cook_time=body.cook_time,
         difficulty=body.difficulty,
         image_url=body.image_url,
+        category_id=body.category_id,
         is_public=body.is_public,
     )
     db.add(recipe)
@@ -322,6 +329,7 @@ def update_recipe(
     recipe.cook_time = body.cook_time
     recipe.difficulty = body.difficulty
     recipe.image_url = body.image_url
+    recipe.category_id = body.category_id
     recipe.is_public = body.is_public
     db.commit()
     db.refresh(recipe)

@@ -10,6 +10,7 @@ from app.core.db import get_db
 from app.core.exceptions import ApiError
 from app.core.responses import ok
 from app.core.security import get_current_user
+from app.api.v1.dishes import visible_dish
 from app.models.dish import Dish
 from app.models.favorite import Favorite
 from app.models.user import User
@@ -18,10 +19,10 @@ from app.schemas.serializers import dish_to_dict
 router = APIRouter()
 
 
-def _get_active_dish(db: Session, dish_id: int) -> Dish:
-    """加载在售菜品；不存在/下架抛 40401（收藏复用此接口时也校验）。"""
-    dish = db.get(Dish, dish_id)
-    if dish is None or not dish.is_active:
+def _get_active_dish(db: Session, dish_id: int, user: User) -> Dish:
+    """加载当前用户可见的在售菜品；不存在/下架/不可见抛 40401（收藏复用此接口时也校验）。"""
+    dish = visible_dish(db, dish_id, user)
+    if dish is None:
         raise ApiError(404, 40401, "菜品不存在或已下架")
     return dish
 
@@ -32,8 +33,8 @@ def favorite_dish(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """收藏菜品；已收藏则幂等返回当前态。"""
-    _get_active_dish(db, dish_id)
+    """收藏菜品；已收藏则幂等返回当前态。仅当前用户可见的菜可收藏。"""
+    _get_active_dish(db, dish_id, user)
     exists = db.scalar(
         select(Favorite).where(Favorite.user_id == user.id, Favorite.dish_id == dish_id).limit(1)
     )
@@ -67,7 +68,7 @@ def list_favorites(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """我收藏的菜品分页列表（含菜品完整信息，created_at 倒序）。"""
+    """我收藏的菜品分页列表（含菜品完整信息，created_at 倒序；按当前用户可见性过滤）。"""
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
 
@@ -86,6 +87,10 @@ def list_favorites(
     for f in favors:
         dish = f.dish
         if dish is None or not dish.is_active:
+            continue
+        # 可见性：他人收藏对你不可见的菜（如已转 private）不展示
+        from app.api.v1.dishes import visible_dish
+        if visible_dish(db, dish.id, user) is None:
             continue
         items.append(dish_to_dict(dish))
 
