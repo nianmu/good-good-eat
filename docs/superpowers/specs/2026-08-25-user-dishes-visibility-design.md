@@ -72,7 +72,7 @@ def visible_dish_conds(db, user):
 ### 写侧校验
 - `POST /activities/{id}/items` 加菜：`_visible_dish_or_404`（同查询侧规则，不可见 40401），并保持"仅厨师/成员"等既有校验。
 - `POST /dishes/{id}/favorite`：收藏先过可见性（不可见 40401）；私有菜仅本人可藏。
-- `POST /plans`、`orders create`：沿用可见性过滤（加同一 conds）。
+- `POST /plans`：沿用可见性过滤（加同一 conds）。
 - `recipes/by-dish/{dish_id}`：关联菜品不可见时返回 null（不泄漏）。
 
 ---

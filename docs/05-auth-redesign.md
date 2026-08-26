@@ -77,7 +77,7 @@ POST /auth/wx-login{code}（小程序）→ code2session → 微信绑定
 | JWT | 仍以 `user.id` 签发，"登录仅换 token，业务逻辑不动" |
 | 新增端点 | `/auth/register`、`/auth/login`（H5 用户名密码） |
 | 模型 | `users` 去掉 `openid` 列；新增 `user_identities` |
-| 测试 | 新增 4 项认证用例；全量 62 项通过 |
+| 测试 | 新增 4 项认证用例；此后全量测试持续增长（当前 78 项通过） |
 
 ---
 
