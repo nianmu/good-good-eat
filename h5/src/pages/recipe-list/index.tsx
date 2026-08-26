@@ -33,7 +33,9 @@ export default function RecipeListPage() {
     } else {
       setLoading(true)
     }
-    recipes.list({ owner: o, category_id: c || undefined, page: p, page_size: PAGE_SIZE })
+    const params: any = { owner: o, page: p, page_size: PAGE_SIZE }
+    if (c) params.category_id = c
+    recipes.list(params)
       .then((res: any) => {
         const items = res.items || []
         setList(reset ? items : (prev: any[]) => prev.concat(items))
