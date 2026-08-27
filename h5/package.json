@@ -63,6 +63,7 @@
     "@tarojs/runtime": "4.2.1",
     "@tarojs/shared": "4.2.1",
     "@tarojs/taro": "4.2.1",
+    "marked": "^18.0.11",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

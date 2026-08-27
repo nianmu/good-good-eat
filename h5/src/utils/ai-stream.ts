@@ -19,7 +19,6 @@ export interface AiDishItem {
   dish_id: number
   name: string
   emoji?: string
-  price?: number
   quantity: number
 }
 

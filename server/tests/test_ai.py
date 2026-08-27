@@ -165,6 +165,9 @@ def test_build_context_contains_visible_dishes_and_fridge(seeded) -> None:
         assert "【可选菜品清单】" in context
         assert dish_name in context
         assert "id=" in context
+        # 价格已从上下文移除（产品不展示价格）
+        assert "¥" not in context
+        assert "price" not in context
         assert "【用户冰箱现有食材】" in context
         assert "鸡蛋" in context
         assert "番茄" in context
@@ -210,6 +213,7 @@ def test_ai_chat_streams_text_and_filters_hallucinated_dishes(client: TestClient
     assert [it["dish_id"] for it in items] == [real_id]
     assert items[0]["name"] == real["name"]
     assert items[0]["quantity"] == 1
+    assert "price" not in items[0]  # 多选卡不展示价格
 
     assert kinds[-1] == "done"
     # 上游请求体：system 上下文 + 用户历史 + 工具 schema

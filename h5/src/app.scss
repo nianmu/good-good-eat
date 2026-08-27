@@ -213,3 +213,88 @@ taro-input-core {
 
   --nutui-brand-color: #66BB6A;
 }
+
+// ===== AI 对话 Markdown 渲染（.md-body，H5 dangerouslySetInnerHTML）=====
+// marked 输出真实 HTML 标签，此处定义展示规范；变量随全局明/暗主题切换。
+.md-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+  word-break: break-word;
+  // 相邻块间距
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+  p { margin: 0 0 6px; }
+  h1, h2, h3, h4 {
+    margin: 10px 0 6px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+  }
+  h1 { font-size: 17px; }
+  h2 { font-size: 16px; }
+  h3, h4 { font-size: 15px; }
+  ul, ol {
+    margin: 0 0 6px;
+    padding-left: 20px;
+  }
+  li { margin: 2px 0; }
+  blockquote {
+    margin: 0 0 8px;
+    padding: 6px 10px;
+    border-left: 3px solid #81C784;
+    background: var(--color-primary-bg);
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+    > :last-child { margin-bottom: 0; }
+  }
+  code {
+    font-family: Consolas, Menlo, monospace;
+    font-size: 13px;
+    background: var(--color-bg-page);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    margin: 0 0 8px;
+    padding: 10px;
+    background: var(--color-bg-page);
+    border-radius: 8px;
+    overflow-x: auto;
+    code {
+      background: transparent;
+      padding: 0;
+      font-size: 13px;
+      color: var(--color-text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  }
+  a {
+    color: #1E88E5;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+  table {
+    margin: 0 0 8px;
+    border-collapse: collapse;
+    border: 1px solid var(--color-divider);
+    width: 100%;
+    th, td {
+      border: 1px solid var(--color-divider);
+      padding: 6px 8px;
+      font-size: 13px;
+      text-align: left;
+    }
+    th { background: var(--color-bg-page); font-weight: 700; }
+  }
+  hr {
+    border: none;
+    border-top: 1px solid var(--color-divider);
+    margin: 10px 0;
+  }
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+}

@@ -81,7 +81,6 @@ async def _event_stream(db: Session, user: User, body: ChatRequestIn) -> AsyncIt
                             "dish_id": dish.id,
                             "name": dish.name,
                             "emoji": dish.emoji,
-                            "price": float(dish.price),
                             "quantity": 1,
                         }
                     )

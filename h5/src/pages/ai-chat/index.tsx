@@ -226,7 +226,6 @@ export default function AiChatPage() {
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontSize: 14, fontWeight: 500, display: 'block' }}>{it.name}</Text>
-                {!!it.price && <Text style={{ fontSize: 12, color: '#F44336' }}>¥{it.price}</Text>}
               </View>
               {/* 数量步进器 */}
               <View style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

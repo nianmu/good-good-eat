@@ -57,18 +57,18 @@ _HTTPX_TIMEOUT = httpx.Timeout(connect=10, read=180, write=30, pool=10)
 
 
 def build_context(db: Session, user: User) -> str:
-    """拼接上下文：可见菜品（轻量列）+ 用户冰箱食材（全量注入）。"""
-    # 可见菜品：只取轻量列，不拉 ingredients/description 大字段
+    """拼接上下文：可见菜品（轻量列，不含价格）+ 用户冰箱食材（全量注入）。"""
+    # 可见菜品：只取轻量列（id/name/emoji），不拉价格与 ingredients/description 大字段
     rows = db.execute(
-        select(Dish.id, Dish.name, Dish.category_id, Dish.emoji, Dish.price)
+        select(Dish.id, Dish.name, Dish.emoji)
         .where(*_visible_conds(db, user))
         .order_by(Dish.id)
     ).all()
 
     lines = ["【可选菜品清单】"]
     for d in rows:
-        name, emoji, price = d[1], d[3] or "🍽", d[4]
-        lines.append(f"- id={d[0]}：{emoji}{name}（¥{price}）")
+        name, emoji = d[1], d[2] or "🍽"
+        lines.append(f"- id={d[0]}：{emoji}{name}")
     if not rows:
         lines.append("（当前无可见菜品）")
 
@@ -93,14 +93,15 @@ def _visible_conds(db: Session, user: User) -> list:
 
 
 def build_system_prompt(context: str) -> str:
-    """系统提示：规定输出方式、只推荐菜单里的菜、dish_id 必须真实。"""
+    """系统提示：规定输出方式、只推荐菜单里的菜、dish_id 必须真实、不提及价格。"""
     return (
         "你是「好好吃饭」的 AI 点菜助手，负责帮用户搭配一桌菜。\n"
         "规则：\n"
         "1. 只能推荐【可选菜品清单】中出现的菜；dish_id 必须是清单里的真实 id，禁止编造。\n"
         "2. 推荐一桌菜时先输出简短搭配说明（自然语言文本），再调用 recommend_dishes 工具给出 dish_ids。\n"
-        "3. 结合用户描述的人数、口味、预算与冰箱食材给出合理搭配；冰箱食材不足时在文本里说明。\n"
+        "3. 结合用户描述的人数、口味与冰箱食材给出合理搭配；冰箱食材不足时在文本里说明。\n"
         "4. 全部用中文回答。\n"
+        "5. 不要提及任何价格、金额或费用信息（平台不展示价格）。\n"
         "\n"
         "当前上下文：\n"
         f"{context}"

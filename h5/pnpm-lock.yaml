@@ -65,6 +65,9 @@ importers:
       '@tarojs/taro':
         specifier: 4.2.1
         version: 4.2.1(@tarojs/components@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23))(@types/react@18.3.31)(postcss@8.5.26)(rollup@3.30.0))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23))(@tarojs/shared@4.2.1)(@types/react@18.3.31)(postcss@8.5.26)(rollup@3.30.0)
+      marked:
+        specifier: ^18.0.11
+        version: 18.0.11
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -4292,6 +4295,11 @@ packages:
 
   make-fetch-happen@2.6.0:
     resolution: {integrity: sha512-FFq0lNI0ax+n9IWzWpH8A4JdgYiAp2DDYIZ3rsaav8JDe8I+72CzK6PQW/oom15YDZpV5bYW/9INd6nIJ2ZfZw==}
+
+  marked@18.0.11:
+    resolution: {integrity: sha512-HnslJfsZkRPBDJRHvVtAaWlZHEpSu7u8LgQuJCELjRKuWR+hpq4A7sLq3p8HaI9ypVoXDXxV34CsQJEe1+J5Aw==}
+    engines: {node: '>= 20'}
+    hasBin: true
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -10731,6 +10739,8 @@ snapshots:
       ssri: 5.3.0
     transitivePeerDependencies:
       - supports-color
+
+  marked@18.0.11: {}
 
   math-intrinsics@1.1.0: {}
 
