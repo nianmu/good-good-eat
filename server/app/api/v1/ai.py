@@ -93,12 +93,16 @@ async def _event_stream(db: Session, user: User, body: ChatRequestIn) -> AsyncIt
 
 
 @router.post("/ai/chat")
-def ai_chat(
+async def ai_chat(
     body: ChatRequestIn,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> StreamingResponse:
-    """AI 对话（SSE）。需登录；未配置 AI 密钥时返回 error 事件而非 500。"""
+    """AI 对话（SSE）。需登录；未配置 AI 密钥时返回 error 事件而非 500。
+
+    注意：SSE/流式端点必须声明 async def —— sync def 返回 StreamingResponse 时，
+    真实 uvicorn 下 async generator 不会被消费（HTTP 200 但响应体为空，TestClient 测不出此差异）。
+    """
     settings = get_settings()
     headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 

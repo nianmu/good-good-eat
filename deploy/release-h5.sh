@@ -20,7 +20,7 @@ echo "已备份 -> h5_dist_bak_$TS"
 
 echo "== 2/4 解压新包 =="
 rm -rf /tmp/ggc-h5 && mkdir -p /tmp/ggc-h5
-unzip -o "$ZIP" -d /tmp/ggc-h5 > /dev/null
+unzip -o "$ZIP" -d /tmp/ggc-h5 > /dev/null 2>&1 || echo "⚠️ unzip 返回非零（多为 Windows 历史打包 zip 的反斜杠警告），文件应已解压"
 [ -d /tmp/ggc-h5/h5/dist ] || { echo "❌ zip 结构不符合约定（缺少 h5/dist/）" >&2; exit 1; }
 
 echo "== 3/4 替换 h5_dist =="

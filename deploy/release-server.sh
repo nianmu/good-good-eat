@@ -19,7 +19,7 @@ tar czf "server_code_bak_${TS}.tgz" -C server app seed alembic pyproject.toml 2>
 ls -la "server_code_bak_${TS}.tgz"
 
 echo "== 2/4 解压覆盖 server/ =="
-unzip -o "$ZIP" -d server/ > /dev/null
+unzip -o "$ZIP" -d server/ > /dev/null 2>&1 || echo "⚠️ unzip 返回非零（多为 Windows 历史打包 zip 的反斜杠警告），文件应已解压"
 
 echo "== 3/4 幂等补齐 .env 缺失键 =="
 # pydantic-settings 大小写不敏感；已有键不覆盖（保护既有密钥）

@@ -1,4 +1,4 @@
-# 好好吃饭 · 本机打包脚本（Windows PowerShell）
+﻿# 好好吃饭 · 本机打包脚本（Windows PowerShell）
 # 用法：在仓库根目录执行  powershell -ExecutionPolicy Bypass -File deploy\package.ps1
 # 产物：
 #   h5-deploy.zip      —— H5 前端产物（zip 内为 h5/dist/... 布局，与服务器端 release-h5.sh 约定一致）
@@ -6,8 +6,13 @@
 #                          排除 .venv/.env/tests/本地调试产物），与 release-server.sh 约定一致
 # 两个 zip 均被 .gitignore 忽略（*.deploy.zip），打包后经 scp/ssh 工具上传到 /opt/good-good-eat/ 即可。
 # 依赖：h5 工程已 pnpm install（node_modules 就绪）；无需额外安装。
+#
+# 注意：用 .NET ZipFile.CreateFromDirectory 而非 Compress-Archive ——
+# Compress-Archive 在 Windows 上写反斜杠 entry，服务器 unzip 会报
+# "appears to use backslashes as path separators" 并以非零码退出（set -e 下发布脚本被掐断）。
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $root = Split-Path -Parent $PSScriptRoot   # 仓库根目录
 Set-Location $root
@@ -25,7 +30,7 @@ New-Item -ItemType Directory -Path (Join-Path $h5Stage 'h5') | Out-Null
 Copy-Item -Path "$root\h5\dist" -Destination (Join-Path $h5Stage 'h5\dist') -Recurse -Force
 $h5Zip = Join-Path $root 'h5-deploy.zip'
 if (Test-Path $h5Zip) { Remove-Item $h5Zip }
-Compress-Archive -Path (Join-Path $h5Stage 'h5') -DestinationPath $h5Zip -Force
+[System.IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $h5Stage 'h5'), $h5Zip)
 
 Write-Host "== 3/3 打包 server-deploy.zip =" -ForegroundColor Cyan
 $serverStage = Join-Path $env:TEMP 'ggc-deploy-stage'
@@ -45,7 +50,7 @@ Copy-Item -Path $items.FullName -Destination $serverStage -Recurse -Force
 Get-ChildItem $serverStage -Recurse -Include '__pycache__', '*.pyc' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 $serverZip = Join-Path $root 'server-deploy.zip'
 if (Test-Path $serverZip) { Remove-Item $serverZip }
-Compress-Archive -Path (Join-Path $serverStage '*') -DestinationPath $serverZip -Force
+[System.IO.Compression.ZipFile]::CreateFromDirectory($serverStage, $serverZip)
 
 Write-Host ''
 Write-Host ('✅ 打包完成：h5-deploy.zip {0:N2} MB / server-deploy.zip {1:N2} MB' -f `
