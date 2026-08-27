@@ -48,7 +48,7 @@ export default function MdRenderer({ source, cursor }: MdRendererProps) {
         </View>
       ) : (
         // weapp 降级：纯文本（无 raw HTML 渲染能力）
-        <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 15, lineHeight: 1.65 }}>
           {source}
           {cursor ? '▌' : ''}
         </Text>

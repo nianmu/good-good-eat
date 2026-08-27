@@ -217,7 +217,7 @@ taro-input-core {
 // ===== AI 对话 Markdown 渲染（.md-body，H5 dangerouslySetInnerHTML）=====
 // marked 输出真实 HTML 标签，此处定义展示规范；变量随全局明/暗主题切换。
 .md-body {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.65;
   color: var(--color-text-primary);
   word-break: break-word;
@@ -231,9 +231,9 @@ taro-input-core {
     color: var(--color-text-primary);
     line-height: 1.4;
   }
-  h1 { font-size: 17px; }
-  h2 { font-size: 16px; }
-  h3, h4 { font-size: 15px; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 17px; }
+  h3, h4 { font-size: 16px; }
   ul, ol {
     margin: 0 0 6px;
     padding-left: 20px;
@@ -250,7 +250,7 @@ taro-input-core {
   }
   code {
     font-family: Consolas, Menlo, monospace;
-    font-size: 13px;
+    font-size: 14px;
     background: var(--color-bg-page);
     padding: 1px 5px;
     border-radius: 4px;
@@ -264,7 +264,7 @@ taro-input-core {
     code {
       background: transparent;
       padding: 0;
-      font-size: 13px;
+      font-size: 14px;
       color: var(--color-text-primary);
       white-space: pre-wrap;
       word-break: break-all;
@@ -283,7 +283,7 @@ taro-input-core {
     th, td {
       border: 1px solid var(--color-divider);
       padding: 6px 8px;
-      font-size: 13px;
+      font-size: 14px;
       text-align: left;
     }
     th { background: var(--color-bg-page); font-weight: 700; }
