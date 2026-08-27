@@ -14,6 +14,7 @@ import Taro, { useLoad } from '@tarojs/taro'
 import { Button } from '@nutui/nutui-react-taro'
 
 import { showToast } from '../../components/app-toast'
+import MdRenderer from '../../components/md-renderer'
 import { guestLogin } from '../../api'
 import { store } from '../../store'
 import { streamChat } from '../../utils/ai-stream'
@@ -293,10 +294,11 @@ export default function AiChatPage() {
             boxShadow: '0 1px 3px rgba(0,0,0,.06)',
           }}
         >
-          <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {msg.text}
-            {msg.streaming && <Text style={{ color: isUser ? 'rgba(255,255,255,.8)' : '#999' }}>▌</Text>}
-          </Text>
+          {isUser ? (
+            <Text style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.text}</Text>
+          ) : (
+            <MdRenderer source={msg.text} cursor={msg.streaming} />
+          )}
           {msg.error && (
             <Text style={{ display: 'block', marginTop: 6, fontSize: 12, color: '#F44336' }}>⚠️ {msg.error}</Text>
           )}
