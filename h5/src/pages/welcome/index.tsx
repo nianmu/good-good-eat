@@ -28,12 +28,13 @@ export default function WelcomePage() {
   }, [inviteCode])
 
   const goHome = () => Taro.switchTab({ url: '/pages/menu/index' })
+  // 邀请码以 & 追加（url 已带 ?mode=...），并做 URL 编码防特殊字符破坏路由
   const goLogin = () => {
-    const qs = inviteCode ? `?invite_code=${inviteCode}` : ''
+    const qs = inviteCode ? `&invite_code=${encodeURIComponent(inviteCode)}` : ''
     Taro.navigateTo({ url: '/pages/auth/index?mode=login' + qs })
   }
   const goRegister = () => {
-    const qs = inviteCode ? `?invite_code=${inviteCode}` : ''
+    const qs = inviteCode ? `&invite_code=${encodeURIComponent(inviteCode)}` : ''
     Taro.navigateTo({ url: '/pages/auth/index?mode=register' + qs })
   }
 

@@ -58,9 +58,9 @@ export async function webRegister(username: string, password: string, nickname?:
 /** 清除本地登录态（退出，回到游客） */
 export function logout(): void {
   token = ''
-  setToken('')
-  Taro.setStorageSync('ggc_user', '')
-  Taro.setStorageSync('ggc_team', '')
+  Taro.removeStorageSync('ggc_token')
+  Taro.removeStorageSync('ggc_user')
+  Taro.removeStorageSync('ggc_team')
 }
 
 export async function request<T = any>(opts: RequestOpts): Promise<T> {
@@ -74,7 +74,8 @@ export async function request<T = any>(opts: RequestOpts): Promise<T> {
     const res = await Taro.request({
       url: config.apiBase + opts.url,
       method: opts.method || 'GET',
-      data: opts.data || {},
+      // GET 不携带 body（Taro 会把 data 序列化为 query，空对象会产生多余 "?"）
+      data: opts.method && opts.method !== 'GET' ? opts.data ?? {} : opts.data,
       header
     })
 
@@ -85,13 +86,21 @@ export async function request<T = any>(opts: RequestOpts): Promise<T> {
     if (res.statusCode === 401 && opts.auth !== false && !opts._retried) {
       // token 失效 → 清除旧 token，重新游客登录后重试一次
       token = ''
-      Taro.setStorageSync('ggc_token', '')
+      Taro.removeStorageSync('ggc_token')
       await guestLogin()
       return request<T>({ ...opts, _retried: true })
     }
     throw new Error(body.message || `请求失败（${res.statusCode}）`)
   } catch (e: any) {
-    if (e.message && e.message === 'NetworkError') {
+    // 网络层错误判定：Taro 各端抛错形态不一（errMsg/message），
+    // 统一按 request:fail / 超时 / 断网关键字识别，业务错误不弹网络提示
+    const msg = String(e?.errMsg || e?.message || '')
+    const isNetworkError = !e?.statusCode && (
+      msg === 'NetworkError' ||
+      msg.includes('request:fail') ||
+      /timeout|abort|network|Failed to fetch/i.test(msg)
+    )
+    if (isNetworkError) {
       Taro.showToast({ title: '网络异常，请检查', icon: 'none' })
     }
     throw e

@@ -13,6 +13,7 @@ import secrets
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.db import get_db
@@ -183,9 +184,14 @@ def leave_team(
 
         # 最后一人（组织者独留）— 解散团队
         # 先清固定厨师引用避免外键约束（若 chef_id 指向自己）
-        # 团队的 members 通过 cascade 删除，团队本身删除
-        db.delete(team)
-        db.commit()
+        # 团队的 members 通过 cascade 删除，团队本身删除；
+        # 若团队下仍有活动/计划等关联数据，FK 会阻止删除，转为友好提示而非 500
+        try:
+            db.delete(team)
+            db.commit()
+        except IntegrityError as exc:
+            db.rollback()
+            raise ApiError(400, 40008, "团队下还有活动等关联数据，暂无法解散") from exc
         return ok({"team_id": team_id})
 
     # 普通成员自退

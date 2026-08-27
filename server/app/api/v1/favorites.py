@@ -68,15 +68,31 @@ def list_favorites(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """我收藏的菜品分页列表（含菜品完整信息，created_at 倒序；按当前用户可见性过滤）。"""
+    """我收藏的菜品分页列表（含菜品完整信息，created_at 倒序；按当前用户可见性过滤）。
+
+    total 与 items 同源：可见性过滤在 SQL 中完成（join Dish），
+    避免先 count 全量再逐条过滤导致 total 与实际条数不一致。
+    """
+    from app.api.v1.dishes import visible_dish_conds
+
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
 
-    conds = [Favorite.user_id == user.id]
-    total = db.scalar(select(func.count(Favorite.id)).where(*conds)) or 0
+    vis_conds = visible_dish_conds(db, user)
+    base_conds = [Favorite.user_id == user.id, *vis_conds]
+
+    total = (
+        db.scalar(
+            select(func.count(Favorite.id))
+            .join(Dish, Favorite.dish_id == Dish.id)
+            .where(*base_conds)
+        )
+        or 0
+    )
     favors = db.scalars(
         select(Favorite)
-        .where(*conds)
+        .join(Dish, Favorite.dish_id == Dish.id)
+        .where(*base_conds)
         .options(joinedload(Favorite.dish))
         .order_by(Favorite.created_at.desc(), Favorite.id.desc())
         .offset((page - 1) * page_size)
@@ -87,10 +103,6 @@ def list_favorites(
     for f in favors:
         dish = f.dish
         if dish is None or not dish.is_active:
-            continue
-        # 可见性：他人收藏对你不可见的菜（如已转 private）不展示
-        from app.api.v1.dishes import visible_dish
-        if visible_dish(db, dish.id, user) is None:
             continue
         items.append(dish_to_dict(dish))
 

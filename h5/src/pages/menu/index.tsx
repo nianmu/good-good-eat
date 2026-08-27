@@ -8,6 +8,7 @@ import { auth, guestLogin, dishes as dishApi, categories as catApi, favorites as
 import { mediaUrl } from '../../api/config'
 import { store } from '../../store'
 import { requireLogin } from '../../utils/auth'
+import { clearPendingActivity, getPendingActivity, getPendingActivityName } from '../../utils/pending-activity'
 
 // 菜谱主页——好好吃饭（跨端 H5）
 // 分类 + 搜索 + 菜品（emoji 色块/评分/价格/加购）+ 收藏 + 随机点菜 + 惊喜推荐 + 今天吃什么弹层
@@ -38,9 +39,7 @@ export default function MenuPage() {
   const [joining, setJoining] = useState(false)
   const [pendingName, setPendingName] = useState('')
 
-  const isPendingMode = () => {
-    try { return !!(Taro.getStorageSync('pendingActivityId')) } catch { return false }
-  }
+  const isPendingMode = () => getPendingActivity() !== null
 
   const syncCart = () => {
     const c = store.get('cart') || {}
@@ -92,10 +91,7 @@ export default function MenuPage() {
 
   useLoad(async () => {
     // 恢复 pending 饭局名
-    try {
-      const pn = Taro.getStorageSync('pendingActivityName') || ''
-      setPendingName(pn)
-    } catch {}
+    setPendingName(getPendingActivityName())
     try {
       await guestLogin().catch(() => null)
       loadUser()
@@ -121,7 +117,7 @@ export default function MenuPage() {
     syncCart()
     loadFavorites()
     loadUser()
-    try { setPendingName(Taro.getStorageSync('pendingActivityName') || '') } catch {}
+    setPendingName(getPendingActivityName())
   })
 
   useShareAppMessage(() => {
@@ -263,8 +259,9 @@ export default function MenuPage() {
 
   /** 为已有饭局加菜（跳转自饭局详情"去加菜"） */
   const doAddToExisting = async () => {
-    const pendingId = Taro.getStorageSync('pendingActivityId') || ''
-    const pname = Taro.getStorageSync('pendingActivityName') || '饭局'
+    const pending = getPendingActivity()
+    const pendingId = pending?.id || ''
+    const pname = pending?.name || '饭局'
     if (!pendingId) return
     const cartData = store.get('cart') || {}
     const entries = Object.entries(cartData).filter(([, qty]) => Number(qty) > 0)
@@ -281,12 +278,7 @@ export default function MenuPage() {
       store.set('cart', {})
       setCart({})
       setCartCount(0)
-      try {
-        Taro.removeStorageSync('pendingActivityId')
-        Taro.removeStorageSync('pendingActivityTeamId')
-        Taro.removeStorageSync('pendingActivityType')
-        Taro.removeStorageSync('pendingActivityName')
-      } catch {}
+      clearPendingActivity()
       showToast({ title: '已加入「' + pname + '」', icon: 'success' })
       setTimeout(() => {
         Taro.redirectTo({ url: '/pages/activity-detail/index?id=' + pendingId })
@@ -331,12 +323,7 @@ export default function MenuPage() {
       setCart({})
       setCartCount(0)
       setCreateVisible(false)
-      try {
-        Taro.removeStorageSync('pendingActivityId')
-        Taro.removeStorageSync('pendingActivityTeamId')
-        Taro.removeStorageSync('pendingActivityType')
-        Taro.removeStorageSync('pendingActivityName')
-      } catch {}
+      clearPendingActivity()
       showToast({ title: isReuse ? '已加入饭局' : '饭局已创建', icon: 'success' })
       setTimeout(() => {
         Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
@@ -373,10 +360,7 @@ export default function MenuPage() {
           <Text style={{ fontSize: '13px', color: '#FF9800', fontWeight: 600 }}>🍳 正在为「{pendingName}」加菜</Text>
           <Text style={{ flex: 1 }} />
           <Text onClick={() => {
-            Taro.removeStorageSync('pendingActivityId')
-            Taro.removeStorageSync('pendingActivityTeamId')
-            Taro.removeStorageSync('pendingActivityType')
-            Taro.removeStorageSync('pendingActivityName')
+            clearPendingActivity()
             setPendingName('')
           }} style={{ fontSize: '12px', color: '#F44336', cursor: 'pointer' }}>取消</Text>
         </View>
@@ -402,7 +386,6 @@ export default function MenuPage() {
         </View>
       </View>
 
-      {/* 五期：今天吃什么 / 惊喜推荐 快捷区 */}
       <View style={{ display: 'flex', gap: '10px', padding: '10px 16px', background: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-divider)', flexShrink: 0 }}>
         <View onClick={() => { setRecommendVisible(true); setPeopleText('3'); setRecommend(null) }}
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '36px', borderRadius: '8px', background: '#FFF3E0', color: '#FF9800', fontWeight: 500, fontSize: '14px' }}>
@@ -414,9 +397,6 @@ export default function MenuPage() {
         </View>
       </View>
 
-      {/* 主体：左侧分类 + 右侧菜品（固定 px 高度，各自独立滚动；内联 px 不被 Taro rem 转换）。
-        高度 400：顶部三块约 205px + 滚动区 400 + 底部操作栏/TabBar 区约 148px，常见视口下操作栏不盖内容；
-        右侧保留 200px 底部留白，小屏（如 640 高）滚到底也不会被底部操作栏遮挡。 */}
       <View style={{ height: '70vh', display: 'flex', overflow: 'hidden', paddingBottom: '90px' }}>
         <ScrollView scrollY style={{ width: '88px', height: '100%', background: 'var(--color-bg-page)', flexShrink: 0, opacity: keyword ? 0.45 : 1, transition: 'opacity 0.2s', paddingBottom: '90px' }}>
           {categories.map((c: any) => {
@@ -634,7 +614,7 @@ const qtyBtn = { width: '26px', height: '26px', borderRadius: '50%', background:
 const dishThumb = (d: any, size: number, fontSize: number) =>
   d.image_url ? (
     <Image
-      src={mediaUrl(d.image_url)}
+      src={mediaUrl(d.image_url) ?? d.image_url}
       mode="aspectFill"
       style={{ width: `${size}px`, height: `${size}px`, borderRadius: '10px', flexShrink: 0, background: '#f5f5f5' }}
     />

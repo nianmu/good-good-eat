@@ -43,9 +43,11 @@ h5-backup.bundle
 *.deploy.zip
 /h5-deploy.zip
 /server-deploy.zip
-/h5/pnpm-lock.yaml
-/h5/pnpm-workspace.yaml
+# 锁文件统一：实际安装走 pnpm（node_modules/.pnpm），跟踪 pnpm-lock.yaml；
+# npm 的 package-lock.json 不再入库
+/h5/package-lock.json
 
 # 本地调试/一次性脚本
 /server/_debug_*.py
 /server/_sync_*.py
+/HowToCook/

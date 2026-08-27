@@ -12,6 +12,8 @@
   "scripts": {
     "prepare": "husky",
     "new": "taro new",
+    "lint": "eslint src --ext .ts,.tsx",
+    "type-check": "tsc --noEmit",
     "build:weapp": "taro build --type weapp",
     "build:swan": "taro build --type swan",
     "build:alipay": "taro build --type alipay",
@@ -36,6 +38,10 @@
     "Android >= 4.1",
     "ios >= 8"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@11.9.0",
   "author": "",
   "dependencies": {
     "@babel/runtime": "^7.24.4",

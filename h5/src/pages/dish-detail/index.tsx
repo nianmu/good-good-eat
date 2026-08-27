@@ -76,7 +76,7 @@ export default function DishDetailPage() {
       <View style={{ flex: 1, overflow: 'auto' }}>
         {/* 大图：有图用图（导入菜），无图回落 emoji 色块 */}
         {dish.image_url ? (
-          <Image src={mediaUrl(dish.image_url)} mode="aspectFill" style={{ width: '100%', height: '220px', display: 'block', background: dish.color || '#E0E0E0' }} />
+          <Image src={mediaUrl(dish.image_url) ?? dish.image_url} mode="aspectFill" style={{ width: '100%', height: '220px', display: 'block', background: dish.color || '#E0E0E0' }} />
         ) : (
           <View style={{ height: '220px', background: dish.color || '#E0E0E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '96px' }}>
             {dish.emoji || '🍽'}

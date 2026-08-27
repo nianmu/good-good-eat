@@ -8,10 +8,11 @@ import { auth, dishes as dishApi, teams as teamApi, activities } from '../../api
 import { store } from '../../store'
 import { TeamCartSocket } from '../../utils/team_ws'
 import { requireLogin } from '../../utils/auth'
+import { clearPendingActivity, getPendingActivity, getPendingActivityName } from '../../utils/pending-activity'
 
 export default function CartPage() {
   const [items, setItems] = useState<any[]>([])
-  const [totalAmount, setTotalAmount] = useState(0)
+  const [, setTotalAmount] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [teams, setTeams] = useState<any[]>([])
   const [teamId, setTeamId] = useState('')
@@ -25,9 +26,7 @@ export default function CartPage() {
   const [createTeamSearch, setCreateTeamSearch] = useState('')
   const [pendingName, setPendingName] = useState('')
 
-  const isPendingMode = () => {
-    try { return !!(Taro.getStorageSync('pendingActivityId')) } catch { return false }
-  }
+  const isPendingMode = () => getPendingActivity() !== null
 
   const fmt = (n: number) => Number(n || 0).toFixed(2)
 
@@ -54,10 +53,7 @@ export default function CartPage() {
   }
 
   useLoad(async () => {
-    try {
-      const pn = Taro.getStorageSync('pendingActivityName') || ''
-      setPendingName(pn)
-    } catch {}
+    setPendingName(getPendingActivityName())
     try {
       loadTeams()
       const dishRes: any = await dishApi.listAll()
@@ -76,7 +72,7 @@ export default function CartPage() {
   useDidShow(() => {
     rebuild(dishMap)
     loadTeams()
-    try { setPendingName(Taro.getStorageSync('pendingActivityName') || '') } catch {}
+    setPendingName(getPendingActivityName())
   })
 
   const loadTeams = () => {
@@ -165,8 +161,9 @@ export default function CartPage() {
 
   /** 为已有饭局加菜 */
   const doAddToExisting = async () => {
-    const pendingId = Taro.getStorageSync('pendingActivityId') || ''
-    const pname = Taro.getStorageSync('pendingActivityName') || '饭局'
+    const pending = getPendingActivity()
+    const pendingId = pending?.id || ''
+    const pname = pending?.name || '饭局'
     if (!pendingId) return
     if (!items.length) {
       showToast({ title: '购物车为空，先加几道菜', icon: 'none' })
@@ -179,12 +176,7 @@ export default function CartPage() {
         await activities.addItem(pendingId, it.dish_id, Number(it.quantity))
       }
       store.set('cart', {})
-      try {
-        Taro.removeStorageSync('pendingActivityId')
-        Taro.removeStorageSync('pendingActivityTeamId')
-        Taro.removeStorageSync('pendingActivityType')
-        Taro.removeStorageSync('pendingActivityName')
-      } catch {}
+      clearPendingActivity()
       showToast({ title: '已加入「' + pname + '」', icon: 'success' })
       setTimeout(() => {
         Taro.redirectTo({ url: '/pages/activity-detail/index?id=' + pendingId })
@@ -224,12 +216,7 @@ export default function CartPage() {
       }
       store.set('cart', {})
       setCreateVisible(false)
-      try {
-        Taro.removeStorageSync('pendingActivityId')
-        Taro.removeStorageSync('pendingActivityTeamId')
-        Taro.removeStorageSync('pendingActivityType')
-        Taro.removeStorageSync('pendingActivityName')
-      } catch {}
+      clearPendingActivity()
       showToast({ title: isReuse ? '已加入饭局' : '饭局已创建', icon: 'success' })
       setTimeout(() => {
         Taro.navigateTo({ url: '/pages/activity-detail/index?id=' + activityId })
@@ -249,10 +236,7 @@ export default function CartPage() {
           <Text style={{ fontSize: '13px', color: '#FF9800', fontWeight: 600 }}>🍳 正在为「{pendingName}」加菜</Text>
           <Text style={{ flex: 1 }} />
           <Text onClick={() => {
-            Taro.removeStorageSync('pendingActivityId')
-            Taro.removeStorageSync('pendingActivityTeamId')
-            Taro.removeStorageSync('pendingActivityType')
-            Taro.removeStorageSync('pendingActivityName')
+            clearPendingActivity()
             setPendingName('')
           }} style={{ fontSize: '12px', color: '#F44336', cursor: 'pointer' }}>取消</Text>
         </View>

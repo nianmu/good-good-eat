@@ -130,9 +130,20 @@ def list_dishes(
     if category_id is not None:
         conds.append(Dish.category_id == category_id)
     if keyword:
-        kw = f"%{keyword.strip()}%"
+        # LIKE 通配符转义：防止用户输入 % / _ / \ 造成全表命中或语义错乱
+        escaped = (
+            keyword.strip()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        kw = f"%{escaped}%"
         conds.append(
-            or_(Dish.name.like(kw), Dish.description.like(kw), Dish.ingredients.like(kw))
+            or_(
+                Dish.name.like(kw, escape="\\"),
+                Dish.description.like(kw, escape="\\"),
+                Dish.ingredients.like(kw, escape="\\"),
+            )
         )
 
     total = db.scalar(select(func.count(Dish.id)).where(*conds)) or 0
@@ -246,7 +257,13 @@ def edit_dish(
         dish.visibility = visibility
         dish.team_id = team_id if visibility == "team" else None
     elif team_id is not None:
-        dish.team_id = team_id
+        # 仅 team 可见性的菜品允许改挂载团队；其余可见性忽略 team_id，避免写入脏数据
+        if dish.visibility == "team" and team_id != dish.team_id:
+            if db.scalar(
+                select(TeamMember.id).where(TeamMember.team_id == team_id, TeamMember.user_id == user.id)
+            ) is None:
+                raise ApiError(400, 40002, "只能发布到自己所在的团队")
+            dish.team_id = team_id
 
     if "name" in data and data["name"] is not None:
         dish.name = data["name"].strip()

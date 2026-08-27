@@ -27,6 +27,20 @@ manager = ConnectionManager()
 
 _HEARTBEAT_SECONDS = 60
 
+# WS 鉴权子协议：客户端通过 protocols: ["ggc-token", <jwt>] 携带 token，
+# 服务端 accept 时回显该子协议（浏览器要求响应必须命中请求列表之一）。
+# 兼容旧客户端：仍支持 ?token= 查询参数（逐步废弃）。
+WS_AUTH_PROTOCOL = "ggc-token"
+
+
+def _extract_token(websocket: WebSocket) -> tuple[str, bool]:
+    """从 Sec-WebSocket-Protocol 头或查询参数提取 token；返回 (token, 是否走子协议)。"""
+    proto_header = websocket.headers.get("sec-websocket-protocol", "")
+    parts = [p.strip() for p in proto_header.split(",") if p.strip()]
+    if len(parts) >= 2 and parts[0] == WS_AUTH_PROTOCOL:
+        return parts[1], True
+    return websocket.query_params.get("token", ""), False
+
 
 def _auth_user(token: str) -> User:
     """token → 用户；失败抛 40101。"""
@@ -59,7 +73,8 @@ def _is_team_member(team_id: int, user_id: int) -> bool:
 def _dish_active(dish_id: int) -> bool:
     db = SessionLocal()
     try:
-        return db.get(Dish, dish_id) is not None and db.get(Dish, dish_id).is_active
+        dish = db.get(Dish, dish_id)
+        return dish is not None and dish.is_active
     finally:
         db.close()
 
@@ -105,8 +120,8 @@ async def handle_text(websocket: WebSocket, team_id: int, user: User, raw: str) 
 
 
 async def team_room(websocket: WebSocket, team_id: int) -> None:
-    """/ws/team/{team_id} 入口：鉴权 → 校验成员 → 加入房间 → 循环分发。"""
-    token = websocket.query_params.get("token", "")
+    """/ws/team/{team_id} 入口：鉴权（子协议优先，兼容 query token）→ 校验成员 → 加入房间 → 循环分发。"""
+    token, via_protocol = _extract_token(websocket)
     user: User | None = None
     try:
         user = _auth_user(token)
@@ -114,8 +129,9 @@ async def team_room(websocket: WebSocket, team_id: int) -> None:
     except ApiError:
         is_member = False
 
-    # 先 accept（starlette 要求 accept 后才能 close/send），再按鉴权结果关闭
-    await manager.connect(team_id, websocket)
+    # 先 accept（starlette 要求 accept 后才能 close/send），再按鉴权结果关闭；
+    # 走子协议鉴权时必须回显子协议，否则浏览器会主动断开
+    await manager.connect(team_id, websocket, subprotocol=WS_AUTH_PROTOCOL if via_protocol else None)
     if user is None or not is_member:
         await websocket.close(code=4401 if user is None else 4403)
         manager.disconnect(team_id, websocket)

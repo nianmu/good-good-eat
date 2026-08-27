@@ -180,19 +180,23 @@ def _collect_dish_ingredients(db: Session, activity_id: int) -> list[str]:
 
 
 def _sync_activity_ingredients(db: Session, activity_id: int) -> None:
-    """同步 activity_ingredients 表：新增菜品中尚未记录的食材自动补充（is_ready=false），已有的不动。"""
-    names = _collect_dish_ingredients(db, activity_id)
-    if not names:
-        return
-    existing = {
-        row[0]
-        for row in db.execute(
-            select(ActivityIngredient.ingredient_name).where(ActivityIngredient.activity_id == activity_id)
-        ).all()
-    }
-    for n in names:
-        if n not in existing:
-            db.add(ActivityIngredient(activity_id=activity_id, ingredient_name=n, is_ready=False))
+    """同步 activity_ingredients 表：
+    - 新增菜品中尚未记录的食材自动补充（is_ready=false）
+    - 已不在任何菜品中的食材（移菜后残留）自动剪枝，避免幽灵配料
+    """
+    names = set(_collect_dish_ingredients(db, activity_id))
+    existing_rows = db.scalars(
+        select(ActivityIngredient).where(ActivityIngredient.activity_id == activity_id)
+    ).all()
+    existing_names = {r.ingredient_name for r in existing_rows}
+
+    # 剪枝：菜品已不含该食材则删除记录
+    for row in existing_rows:
+        if row.ingredient_name not in names:
+            db.delete(row)
+    # 补充：新食材追加
+    for n in sorted(names - existing_names):
+        db.add(ActivityIngredient(activity_id=activity_id, ingredient_name=n, is_ready=False))
     db.flush()
 
 
@@ -539,6 +543,9 @@ def remove_activity_item(
         raise ApiError(403, 40301, "仅点菜人或组织者可移除")
 
     db.delete(item)
+    db.commit()
+    # 移菜后同步剪枝：不再被任何菜品引用的食材自动删除
+    _sync_activity_ingredients(db, activity_id)
     db.commit()
     try:
         from app.ws.handlers import manager

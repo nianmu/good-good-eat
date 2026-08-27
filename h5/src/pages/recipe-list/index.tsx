@@ -38,7 +38,7 @@ export default function RecipeListPage() {
     recipes.list(params)
       .then((res: any) => {
         const items = res.items || []
-        setList(reset ? items : (prev: any[]) => prev.concat(items))
+        setList(prev => (reset ? items : prev.concat(items)))
         setTotal(res.total || 0)
         setPage(p + 1)
         setHasMore(items.length >= PAGE_SIZE)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -24,10 +25,12 @@ class ConnectionManager:
         # carts: {team_id: {dish_id: {"quantity": int, "users": {user_id: nickname}}}}
         self.carts: dict[int, dict[int, dict[str, Any]]] = {}
         self._seq: dict[int, int] = {}
+        # 持有后台广播任务强引用，防止任务被 GC 半途丢弃
+        self._bg_tasks: set[asyncio.Task] = set()
 
     # ===== 连接管理 =====
-    async def connect(self, team_id: int, websocket: WebSocket) -> None:
-        await websocket.accept()
+    async def connect(self, team_id: int, websocket: WebSocket, subprotocol: str | None = None) -> None:
+        await websocket.accept(subprotocol=subprotocol)
         self.rooms.setdefault(team_id, set()).add(websocket)
 
     def disconnect(self, team_id: int, websocket: WebSocket) -> None:
@@ -58,20 +61,25 @@ class ConnectionManager:
                 self.disconnect(team_id, ws)
 
     def broadcast_sync(self, team_id: int, event: str, data: dict, exclude: WebSocket | None = None) -> None:
-        """同步上下文中触发广播（订单状态等），兼容 sync 路由。"""
-        import asyncio
+        """同步上下文中触发广播（订单状态等），兼容 sync 路由。
 
+        - 当前线程有运行中的事件循环（async 路由内调用）→ 创建后台任务
+        - 否则（FastAPI sync 路由跑在线程池、无 loop）→ 新建临时循环执行
+        """
         try:
             loop = asyncio.get_running_loop()
-            # 已在事件循环中（如 async 路由），创建任务
-            loop.create_task(self.broadcast(team_id, event, data, exclude))
         except RuntimeError:
-            # 无事件循环（sync 路由/测试），新建循环执行
-            try:
-                asyncio.run(self.broadcast(team_id, event, data, exclude))
-            except RuntimeError:
-                # 已有 loop 但未运行时的兜底（极少见）
-                pass
+            loop = None
+
+        if loop is not None and loop.is_running():
+            task = loop.create_task(self.broadcast(team_id, event, data, exclude))
+            self._bg_tasks.add(task)
+            task.add_done_callback(self._bg_tasks.discard)
+            return
+        try:
+            asyncio.run(self.broadcast(team_id, event, data, exclude))
+        except RuntimeError:
+            pass  # 极端嵌套场景下放弃本次广播，不影响主流程
 
     # ===== 团队购物车 =====
     def cart_snapshot(self, team_id: int) -> dict:

@@ -162,7 +162,7 @@ export default function RecipeEditPage() {
           <Text style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>公开到菜谱库</Text>
           <Text style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-placeholder)', marginTop: '2px' }}>所有人可见此菜谱</Text>
         </View>
-        <Switch checked={!!form.isPublic} onChange={(v: boolean) => set('isPublic', v)} color="#4CAF50" />
+        <Switch checked={!!form.isPublic} onChange={(v: boolean) => set('isPublic', v)} />
       </View>
 
       {/* 保存栏 */}

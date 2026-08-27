@@ -21,6 +21,9 @@ router = APIRouter()
 
 RAW_BASE = "https://gitee.com/Anduin2017/HowToCook/raw/master"
 
+# 单图下载上限：防止超大文件/异常响应把内存打爆
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 _CT_HINTS = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -60,11 +63,19 @@ async def htc_media(path: str) -> Response:
     url = f"{RAW_BASE}/{quote(path, safe='/')}"
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-            resp = await client.get(url)
+            # 流式下载并限流：超过 MAX_IMAGE_BYTES 立即中断，不整包载入内存
+            async with client.stream("GET", url) as resp:
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=404, detail="图片不存在")
+                chunks: list[bytes] = []
+                received = 0
+                async for chunk in resp.aiter_bytes():
+                    received += len(chunk)
+                    if received > MAX_IMAGE_BYTES:
+                        raise HTTPException(status_code=502, detail="图片过大")
+                    chunks.append(chunk)
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=502, detail="图片源不可达") from exc
-    if resp.status_code != 200:
-        raise HTTPException(status_code=404, detail="图片不存在")
 
     content_type = _CT_HINTS.get(norm.suffix.lower(), "application/octet-stream")
-    return Response(content=resp.content, media_type=content_type, headers=_CACHE_HEADERS)
+    return Response(content=b"".join(chunks), media_type=content_type, headers=_CACHE_HEADERS)

@@ -6,6 +6,7 @@ import json
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -42,7 +43,7 @@ def upsert_fridge(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """添加冰箱食材；同名覆盖 quantity。"""
+    """添加冰箱食材；同名覆盖 quantity。并发插入撞唯一约束时回落为更新。"""
     name = body.name.strip()
     existing = db.scalar(
         select(FridgeItem)
@@ -52,13 +53,25 @@ def upsert_fridge(
     if existing is None:
         item = FridgeItem(user_id=user.id, name=name, quantity=body.quantity)
         db.add(item)
-        db.commit()
-        db.refresh(item)
-        return ok(fridge_item_to_dict(item))
-    existing.quantity = body.quantity
+        try:
+            db.commit()
+        except IntegrityError:
+            # 并发下另一请求已插入同名 → 回滚后转为更新
+            db.rollback()
+            item = db.scalar(
+                select(FridgeItem).where(FridgeItem.user_id == user.id, FridgeItem.name == name).limit(1)
+            )
+            if item is None:
+                raise ApiError(500, 50000, "冰箱保存失败，请重试") from None
+        else:
+            db.refresh(item)
+            return ok(fridge_item_to_dict(item))
+    else:
+        item = existing
+    item.quantity = body.quantity
     db.commit()
-    db.refresh(existing)
-    return ok(fridge_item_to_dict(existing))
+    db.refresh(item)
+    return ok(fridge_item_to_dict(item))
 
 
 @router.delete("/fridge/{item_id}")

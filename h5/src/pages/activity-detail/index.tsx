@@ -12,6 +12,7 @@ import { showModal } from '../../components/app-modal'
 import { activities as activityApi, teams as teamApi, recipes } from '../../api'
 import { loadToken, request } from '../../api/request'
 import { TeamCartSocket } from '../../utils/team_ws'
+import { setPendingActivity } from '../../utils/pending-activity'
 import { formatTime } from '../../utils/format'
 
 const STATUS_STEPS = [{ key: 'ordering', label: '点菜中' }, { key: 'preparing', label: '备菜中' }, { key: 'cooking', label: '烹饪中' }, { key: 'completed', label: '已完成' }]
@@ -171,7 +172,7 @@ export default function ActivityDetailPage() {
   // 去加菜
   const handleAddGoMenu = () => {
     if (!activity) return; if (!['ordering', 'cooking'].includes(activity.status)) { showToast({ title: '仅点菜中/烹饪中可加菜', icon: 'none' }); return }
-    try { Taro.setStorageSync('pendingActivityId', String(activity.id)); Taro.setStorageSync('pendingActivityTeamId', String(activity.team_id)); Taro.setStorageSync('pendingActivityType', String(activity.type || 'daily')); Taro.setStorageSync('pendingActivityName', String(activity.name || '')) } catch {}
+    setPendingActivity({ id: activity.id, team_id: activity.team_id, type: activity.type, name: activity.name })
     Taro.navigateTo({ url: '/pages/menu/index' })
   }
   const handleAgain = async () => {

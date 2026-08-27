@@ -6,9 +6,7 @@
 
 from __future__ import annotations
 
-import json
-import urllib.request
-
+import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -27,17 +25,22 @@ router = APIRouter()
 
 
 def _wx_code2session(code: str) -> str:
-    """调用微信 jscode2session 换 openid；失败抛 50101。"""
+    """调用微信 jscode2session 换 openid；失败抛 50101。参数走 params 编码，避免拼接注入。"""
     settings = get_settings()
-    url = (
-        "https://api.weixin.qq.com/sns/jscode2session"
-        f"?appid={settings.wx_appid}&secret={settings.wx_secret}"
-        f"&js_code={code}&grant_type=authorization_code"
-    )
     try:
-        with urllib.request.urlopen(url, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:
+        with httpx.Client(timeout=5) as client:
+            resp = client.get(
+                "https://api.weixin.qq.com/sns/jscode2session",
+                params={
+                    "appid": settings.wx_appid,
+                    "secret": settings.wx_secret,
+                    "js_code": code,
+                    "grant_type": "authorization_code",
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
         raise ApiError(500, 50101, "微信服务暂不可用，请稍后再试") from exc
     openid = data.get("openid")
     if not openid:

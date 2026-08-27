@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -38,7 +39,7 @@ def upsert_basket(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """添加菜篮待购项；同名合并。"""
+    """添加菜篮待购项；同名合并。并发插入撞唯一约束时回落为更新。"""
     name = body.name.strip()
     existing = db.scalar(
         select(BasketItem)
@@ -48,15 +49,27 @@ def upsert_basket(
     if existing is None:
         item = BasketItem(user_id=user.id, name=name, quantity=body.quantity)
         db.add(item)
-        db.commit()
-        db.refresh(item)
-        return ok(basket_item_to_dict(item))
+        try:
+            db.commit()
+        except IntegrityError:
+            # 并发下另一请求已插入同名 → 回滚后转为更新
+            db.rollback()
+            item = db.scalar(
+                select(BasketItem).where(BasketItem.user_id == user.id, BasketItem.name == name).limit(1)
+            )
+            if item is None:
+                raise ApiError(500, 50000, "菜篮保存失败，请重试") from None
+        else:
+            db.refresh(item)
+            return ok(basket_item_to_dict(item))
+    else:
+        item = existing
     if body.quantity:
-        existing.quantity = body.quantity
-    existing.checked = False
+        item.quantity = body.quantity
+    item.checked = False
     db.commit()
-    db.refresh(existing)
-    return ok(basket_item_to_dict(existing))
+    db.refresh(item)
+    return ok(basket_item_to_dict(item))
 
 
 @router.put("/basket/{item_id}")

@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.19.1",
     "cryptography>=50.0.0",
     "fastapi>=0.141.1",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.13.0",
     "pymysql>=1.2.0",
@@ -18,6 +19,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]
