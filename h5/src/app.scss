@@ -215,56 +215,58 @@ taro-input-core {
 }
 
 // ===== AI 对话 Markdown 渲染（.md-body，H5 dangerouslySetInnerHTML）=====
+// 注意：全用大写 PX —— Taro postcss-pxtransform 会把小写 px 按 750 设计稿换算成 rem，
+// 导致字体/间距缩小一半；大写 PX 保留原始像素，与组件内联样式（用户消息气泡）一致。
 // marked 输出真实 HTML 标签，此处定义展示规范；变量随全局明/暗主题切换。
 .md-body {
-  font-size: 15px;
+  font-size: 14PX;
   line-height: 1.65;
   color: var(--color-text-primary);
   word-break: break-word;
   // 相邻块间距
   > :first-child { margin-top: 0; }
   > :last-child { margin-bottom: 0; }
-  p { margin: 0 0 6px; }
+  p { margin: 0 0 6PX; }
   h1, h2, h3, h4 {
-    margin: 10px 0 6px;
+    margin: 10PX 0 6PX;
     font-weight: 700;
     color: var(--color-text-primary);
     line-height: 1.4;
   }
-  h1 { font-size: 18px; }
-  h2 { font-size: 17px; }
-  h3, h4 { font-size: 16px; }
+  h1 { font-size: 17PX; }
+  h2 { font-size: 16PX; }
+  h3, h4 { font-size: 15PX; }
   ul, ol {
-    margin: 0 0 6px;
-    padding-left: 20px;
+    margin: 0 0 6PX;
+    padding-left: 20PX;
   }
-  li { margin: 2px 0; }
+  li { margin: 2PX 0; }
   blockquote {
-    margin: 0 0 8px;
-    padding: 6px 10px;
-    border-left: 3px solid #81C784;
+    margin: 0 0 8PX;
+    padding: 6PX 10PX;
+    border-left: 3PX solid #81C784;
     background: var(--color-primary-bg);
-    border-radius: 4px;
+    border-radius: 4PX;
     color: var(--color-text-secondary);
     > :last-child { margin-bottom: 0; }
   }
   code {
     font-family: Consolas, Menlo, monospace;
-    font-size: 14px;
+    font-size: 13PX;
     background: var(--color-bg-page);
-    padding: 1px 5px;
-    border-radius: 4px;
+    padding: 1PX 5PX;
+    border-radius: 4PX;
   }
   pre {
-    margin: 0 0 8px;
-    padding: 10px;
+    margin: 0 0 8PX;
+    padding: 10PX;
     background: var(--color-bg-page);
-    border-radius: 8px;
+    border-radius: 8PX;
     overflow-x: auto;
     code {
       background: transparent;
       padding: 0;
-      font-size: 14px;
+      font-size: 13PX;
       color: var(--color-text-primary);
       white-space: pre-wrap;
       word-break: break-all;
@@ -276,25 +278,25 @@ taro-input-core {
     word-break: break-all;
   }
   table {
-    margin: 0 0 8px;
+    margin: 0 0 8PX;
     border-collapse: collapse;
-    border: 1px solid var(--color-divider);
+    border: 1PX solid var(--color-divider);
     width: 100%;
     th, td {
-      border: 1px solid var(--color-divider);
-      padding: 6px 8px;
-      font-size: 14px;
+      border: 1PX solid var(--color-divider);
+      padding: 6PX 8PX;
+      font-size: 13PX;
       text-align: left;
     }
     th { background: var(--color-bg-page); font-weight: 700; }
   }
   hr {
     border: none;
-    border-top: 1px solid var(--color-divider);
-    margin: 10px 0;
+    border-top: 1PX solid var(--color-divider);
+    margin: 10PX 0;
   }
   img {
     max-width: 100%;
-    border-radius: 8px;
+    border-radius: 8PX;
   }
 }
