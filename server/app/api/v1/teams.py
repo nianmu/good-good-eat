@@ -292,8 +292,8 @@ def team_cart_snapshot(
 ) -> dict:
     """团队协作购物车快照（三期 WS 购物车的 REST 读兜底）：仅团队内成员可见。
 
-    购物车为单进程内存态（WS 房间维持），此处返回当前房间快照，
-    供未接入 WebSocket 的客户端（如 H5 初始加载）同步同行点菜情况。
+    购物车存储由 Redis 承载（Redis 不可用时回落进程内存，见 ws/cart_store.py），
+    此处返回当前团队快照，供未接入 WebSocket 的客户端（如 H5 初始加载）同步同行点菜情况。
     """
     if _member_role(db, team_id, user.id) is None:
         raise ApiError(403, 40301, "无权查看该团队")

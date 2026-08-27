@@ -395,6 +395,10 @@ export default function MenuPage() {
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '36px', borderRadius: '8px', background: '#E3F2FD', color: '#1565C0', fontWeight: 500, fontSize: '14px' }}>
           <Text>✨</Text><Text>{randomLoading ? '推荐中…' : '惊喜推荐'}</Text>
         </View>
+        <View onClick={() => Taro.navigateTo({ url: '/pages/ai-chat/index' })}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '36px', borderRadius: '8px', background: '#E8F5E9', color: '#388E3C', fontWeight: 500, fontSize: '14px' }}>
+          <Text>🤖</Text><Text>AI 点菜</Text>
+        </View>
       </View>
 
       <View style={{ height: '70vh', display: 'flex', overflow: 'hidden', paddingBottom: '90px' }}>

@@ -1,4 +1,4 @@
-"""WebSocket 多人房间：连接管理 + 团队购物车（内存态）。"""
+"""WebSocket 多人房间：连接管理 + 团队购物车（Redis/内存可切换存储）。"""
 
 from __future__ import annotations
 
@@ -8,22 +8,25 @@ from typing import Any
 
 from fastapi import WebSocket
 
+from app.ws.cart_store import CartStore, create_default_store
+
 
 class ConnectionManager:
-    """按团队分房的 WS 连接管理 + 该团队的协作购物车（内存）。
+    """按团队分房的 WS 连接管理 + 该团队的协作购物车。
+
+    购物车存储由 CartStore 提供（默认 Redis，Redis 不可用时回退内存），
+    使多 worker 可共享、服务重启不丢失（Redis 时）。
 
     事件协议（与小程序端契约一致）：
       服务端 → 客户端：joined / member.joined / cart.snapshot / cart.upsert / cart.clear
                       / order.created / order.status_changed / ping
       客户端 → 服务端：join / cart.upsert / cart.clear / pong
     所有广播消息均带递增 seq（按房间）。
-    注意：购物车为单进程内存态，服务重启即清空（三期范围设计如此）。
     """
 
-    def __init__(self) -> None:
+    def __init__(self, store: CartStore | None = None) -> None:
         self.rooms: dict[int, set[WebSocket]] = {}
-        # carts: {team_id: {dish_id: {"quantity": int, "users": {user_id: nickname}}}}
-        self.carts: dict[int, dict[int, dict[str, Any]]] = {}
+        self._store: CartStore = store if store is not None else create_default_store()
         self._seq: dict[int, int] = {}
         # 持有后台广播任务强引用，防止任务被 GC 半途丢弃
         self._bg_tasks: set[asyncio.Task] = set()
@@ -84,7 +87,7 @@ class ConnectionManager:
     # ===== 团队购物车 =====
     def cart_snapshot(self, team_id: int) -> dict:
         """当前团队购物车快照（供 join 时下发与 REST 查询）。"""
-        cart = self.carts.get(team_id, {})
+        cart = self._store.get(team_id)
         items = [
             {
                 "dish_id": dish_id,
@@ -100,7 +103,7 @@ class ConnectionManager:
         self, team_id: int, dish_id: int, quantity: int, action: str, user_id: int, nickname: str
     ) -> dict:
         """应用一次购物车变更，返回要广播的 data（含变更后合计数量）。"""
-        cart = self.carts.setdefault(team_id, {})
+        cart = self._store.get(team_id)
         entry = cart.setdefault(dish_id, {"quantity": 0, "users": {}})
 
         if action == "set":
@@ -128,6 +131,8 @@ class ConnectionManager:
                 # set 语义：该用户单人数量；多人场景下累加
                 entry["quantity"] = quantity
 
+        self._store.set(team_id, cart)
+
         return {
             "dish_id": dish_id,
             "quantity": entry.get("quantity", 0),
@@ -139,4 +144,4 @@ class ConnectionManager:
         }
 
     def clear_cart(self, team_id: int) -> None:
-        self.carts.pop(team_id, None)
+        self._store.delete(team_id)

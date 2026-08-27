@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     activities,
+    ai,
     auth,
     basket,
     dishes,
@@ -28,3 +29,4 @@ api_router.include_router(basket.router)
 api_router.include_router(plans.router)
 api_router.include_router(activities.router)
 api_router.include_router(media.router)
+api_router.include_router(ai.router)

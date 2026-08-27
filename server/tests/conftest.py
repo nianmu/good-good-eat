@@ -68,6 +68,26 @@ def _patch_ws_session():
     yield
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _patch_ws_cart_store():
+    """测试期间把 WS 管理器购物车存储固定为内存实现：
+    - 不依赖本机 Redis 是否在跑、是否有上次运行残留 key（团队 id 跨次运行会复用，
+      残留 Redis 数据会让「空快照」等断言偶发失败）
+    - RedisCartStore 本身由 tests/test_cart_store.py 以假客户端单测覆盖
+    """
+    import app.ws.handlers as ws_handlers
+    import app.ws.manager as manager_module
+    from app.ws.cart_store import MemoryCartStore
+
+    original_store = ws_handlers.manager._store
+    original_factory = manager_module.create_default_store
+    ws_handlers.manager._store = MemoryCartStore()
+    manager_module.create_default_store = lambda: MemoryCartStore()
+    yield
+    ws_handlers.manager._store = original_store
+    manager_module.create_default_store = original_factory
+
+
 @pytest.fixture(autouse=True)
 def _clean_tables(_schema):
     """每个测试函数前清空全部表。"""

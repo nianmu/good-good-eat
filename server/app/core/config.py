@@ -34,6 +34,15 @@ class Settings(BaseSettings):
 
     cors_origins: str = "*"
 
+    # 团队协作购物车存储：Redis（多 worker 共享 + 重启保留）。
+    # 本机开发默认 127.0.0.1:6379 无密码；生产在 .env 覆盖。
+    redis_url: str = "redis://127.0.0.1:6379/0"
+
+    # AI 智能推荐（通用 OpenAI 兼容接口；ai_api_key 为空则功能禁用）
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = ""
+    ai_api_key: str = ""
+
     @model_validator(mode="after")
     def _check_prod_secrets(self) -> "Settings":
         if not self.debug:
