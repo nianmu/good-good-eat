@@ -20,12 +20,21 @@ echo "已备份 -> h5_dist_bak_$TS"
 
 echo "== 2/4 解压新包 =="
 rm -rf /tmp/ggc-h5 && mkdir -p /tmp/ggc-h5
-unzip -o "$ZIP" -d /tmp/ggc-h5 > /dev/null 2>&1 || echo "⚠️ unzip 返回非零（多为 Windows 历史打包 zip 的反斜杠警告），文件应已解压"
-[ -d /tmp/ggc-h5/h5/dist ] || { echo "❌ zip 结构不符合约定（缺少 h5/dist/）" >&2; exit 1; }
+unzip -o "$ZIP" -d /tmp/ggc-h5 > /dev/null 2>&1 || echo "⚠️ unzip 返回非零（多为 Windows 打包 zip 的反斜杠警告），文件应已解压"
+# 兼容两种布局：h5/dist/（推荐）或 dist/（老打包工具产物）
+if [ -d /tmp/ggc-h5/h5/dist ]; then
+  SRC=/tmp/ggc-h5/h5/dist
+elif [ -d /tmp/ggc-h5/dist ]; then
+  SRC=/tmp/ggc-h5/dist
+  echo "⚠️ zip 顶层为 dist/（老打包工具），已自动兼容"
+else
+  echo "❌ zip 结构不符合约定（缺少 h5/dist/ 或 dist/）" >&2
+  exit 1
+fi
 
 echo "== 3/4 替换 h5_dist =="
 rm -rf "$APP/h5_dist"/*
-cp -r /tmp/ggc-h5/h5/dist/* "$APP/h5_dist/"
+cp -r "$SRC"/* "$APP/h5_dist/"
 chmod -R 755 "$APP/h5_dist"
 
 echo "== 4/4 校验 =="

@@ -1,4 +1,4 @@
-﻿# 好好吃饭 · 本机打包脚本（Windows PowerShell）
+# 好好吃饭 · 本机打包脚本（Windows PowerShell）
 # 用法：在仓库根目录执行  powershell -ExecutionPolicy Bypass -File deploy\package.ps1
 # 产物：
 #   h5-deploy.zip      —— H5 前端产物（zip 内为 h5/dist/... 布局，与服务器端 release-h5.sh 约定一致）
@@ -30,7 +30,9 @@ New-Item -ItemType Directory -Path (Join-Path $h5Stage 'h5') | Out-Null
 Copy-Item -Path "$root\h5\dist" -Destination (Join-Path $h5Stage 'h5\dist') -Recurse -Force
 $h5Zip = Join-Path $root 'h5-deploy.zip'
 if (Test-Path $h5Zip) { Remove-Item $h5Zip }
-[System.IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $h5Stage 'h5'), $h5Zip)
+# staging 根下仅有 h5/ 目录 → 打包后顶层为 h5/dist/...（与 release-h5.sh 约定一致）
+# 注意：CreateFromDirectory 只打包目录内容、不含目录本身，故传 $h5Stage 而非其下的 h5
+[System.IO.Compression.ZipFile]::CreateFromDirectory($h5Stage, $h5Zip)
 
 Write-Host "== 3/3 打包 server-deploy.zip =" -ForegroundColor Cyan
 $serverStage = Join-Path $env:TEMP 'ggc-deploy-stage'
